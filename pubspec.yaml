@@ -1,0 +1,49 @@
+name: farm_to_home_app
+description: "Farm To Home - Production-ready retail and wholesale grocery application."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.7.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  animate_do: ^3.0.2
+  shimmer: ^3.0.0
+
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.17.4
+  cloud_firestore: ^4.15.4
+  firebase_messaging: ^14.7.10
+  cloud_functions: ^4.6.0
+  firebase_storage: ^11.6.0
+  firebase_analytics: ^10.8.10
+
+  google_sign_in: ^7.2.0
+
+  geolocator: ^10.1.0
+  geocoding: ^4.0.0
+
+  flutter_local_notifications: ^19.5.0
+  flutter_secure_storage: ^9.2.4
+  http: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/images/categories/
+    - assets/images/vegetables/
+    - assets/images/fruits/
+    - assets/images/dairy/

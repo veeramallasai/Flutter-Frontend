@@ -1,0 +1,2019 @@
+{
+  "info": {
+    "_postman_id": "e5bff84a-6019-47f5-9b3d-650e3d566c35",
+    "name": "Farm To Home Backend v9 - Complete Production API Flow",
+    "description": "Runs the complete Farm To Home Spring Boot API flow in a safe order: security, Firebase user sync, products, addresses, cart, coupons, COD orders, categories, banners, offers, farmers, delivery slots, favorites, reviews, notifications, preferences, support tickets, devices, and cleanup. A valid Firebase ID token is required.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{firebaseToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response time is below 10 seconds', function () { pm.expect(pm.response.responseTime).to.be.below(10000); });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Health and Security",
+      "item": [
+        {
+          "name": "1. Backend and Database Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/actuator/health",
+            "description": "Public health check. Spring Boot and PostgreSQL must return UP.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backend status is UP', function () { pm.expect(pm.response.json().status).to.eql('UP'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Protected API Rejects Missing Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/products?limit=1",
+            "description": "Security test. Protected API must reject an unauthenticated request.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token is rejected', function () { pm.expect(pm.response.code).to.be.oneOf([401, 403]); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 User Profile",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "1. Synchronize Firebase User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/users/me",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Flow Test\",\n  \"phoneNumber\": \"+919999999999\",\n  \"photoUrl\": \"\",\n  \"shoppingMode\": \"home\",\n  \"accountType\": \"customer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Firebase UID is present', function () { pm.expect(pm.response.json().data.firebaseUid).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/users/me",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Profile belongs to logged-in user', function () { pm.expect(pm.response.json().data.firebaseUid).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Products",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "1. List Products and Capture Test Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/products?shoppingMode=home&limit=250",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Product catalog is not empty', function () { const data = pm.response.json().data; pm.expect(data).to.be.an('array').and.not.empty; });",
+                  "const products = pm.response.json().data || [];",
+                  "const stocked = products.filter(p => p.inStock && Number(p.stockQuantity) >= 2 && Number(p.price) > 0);",
+                  "const product = stocked.find(p => Number(p.price) * Math.min(Number(p.stockQuantity), 99) >= 310) || stocked[0];",
+                  "pm.test('A testable in-stock product exists', function () { pm.expect(product).to.exist; });",
+                  "if (product) {",
+                  "  const price = Number(product.price);",
+                  "  const stock = Number(product.stockQuantity);",
+                  "  const quantity = Math.max(2, Math.min(stock, 99, Math.ceil(310 / price)));",
+                  "  pm.environment.set('productId', product.id);",
+                  "  pm.environment.set('productUnit', product.unit || '1 unit');",
+                  "  pm.environment.set('testQuantity', String(quantity));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get Captured Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/products/{{productId}}?shoppingMode=home",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('productId')) throw new Error('Run List Products first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Correct product returned', function () { pm.expect(pm.response.json().data.id).to.eql(pm.environment.get('productId')); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Saved Addresses",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "1. List My Addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Address list returned', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Create Dedicated Test Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Full Flow User\",\n  \"phone\": \"+919999999999\",\n  \"addressLine1\": \"10-1, Farm Fresh Test Street\",\n  \"addressLine2\": \"Near Green Market\",\n  \"city\": \"Hyderabad\",\n  \"state\": \"Telangana\",\n  \"postalCode\": \"500001\",\n  \"landmark\": \"Created by Postman v9 full flow\",\n  \"type\": \"Home\",\n  \"isDefault\": false,\n  \"latitude\": 17.385,\n  \"longitude\": 78.4867\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Address ID captured', function () { const id = pm.response.json().data.id; pm.expect(id).to.be.a('string').and.not.empty; pm.environment.set('addressId', id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Update Test Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses/{{addressId}}",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Updated Flow User\",\n  \"phone\": \"+919999999999\",\n  \"addressLine1\": \"10-1, Farm Fresh Test Street\",\n  \"addressLine2\": \"Updated by v9 runner\",\n  \"city\": \"Hyderabad\",\n  \"state\": \"Telangana\",\n  \"postalCode\": \"500001\",\n  \"landmark\": \"Created by Postman v9 full flow\",\n  \"type\": \"Work\",\n  \"isDefault\": false,\n  \"latitude\": 17.385,\n  \"longitude\": 78.4867\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('addressId')) throw new Error('Run Create Dedicated Test Address first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Address was updated', function () { pm.expect(pm.response.json().data.fullName).to.eql('Postman Updated Flow User'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Set Test Address as Default",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses/{{addressId}}/default",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('addressId')) throw new Error('Run Create Dedicated Test Address first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Default flag is true', function () { pm.expect(pm.response.json().data.isDefault).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Cart",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "1. Clear Test Cart Before Flow",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Cart is empty', function () { pm.expect(pm.response.json().data.items).to.be.an('array').and.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Get Empty Cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Cart object returned', function () { pm.expect(pm.response.json().data).to.have.property('items'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Add Captured Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"shoppingMode\": \"home\",\n  \"unit\": \"{{productUnit}}\",\n  \"quantity\": {{testQuantity}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('productId')) throw new Error('Run Products folder first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Cart item captured', function () { const item = pm.response.json().data.items[0]; pm.expect(item.id).to.be.a('string').and.not.empty; pm.environment.set('cartItemId', item.id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Update Cart Quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items/{{cartItemId}}",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": {{testQuantity}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('cartItemId')) throw new Error('Run Add Captured Product first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Cart still contains item', function () { pm.expect(pm.response.json().data.items).to.have.length.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Remove Cart Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items/{{cartItemId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('cartItemId')) throw new Error('Run Add Captured Product first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Item removed', function () { pm.expect(pm.response.json().data.items).to.be.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Add Product Again for Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/items",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"shoppingMode\": \"home\",\n  \"unit\": \"{{productUnit}}\",\n  \"quantity\": {{testQuantity}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "const cart = pm.response.json().data; if (cart.items && cart.items[0]) pm.environment.set('cartItemId', cart.items[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Apply FRESH10 Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/coupon",
+            "description": "A 409 is also valid if the selected catalog item cannot reach the coupon minimum with available stock.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"FRESH10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Coupon validation behaved correctly', function () { pm.expect(pm.response.code).to.be.oneOf([200, 409]); });",
+                  "if (pm.response.code === 200) { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.environment.set('couponCode', 'FRESH10'); } else { pm.environment.set('couponCode', ''); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Remove Coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart/coupon",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Coupon was removed', function () { pm.expect(pm.response.json().data.couponCode || '').to.eql(''); });",
+                  "pm.environment.set('couponCode', '');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Orders and Payments",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "1. Online Payment Is Safely Blocked Without Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shoppingMode\": \"home\",\n  \"paymentMethod\": \"google_pay\",\n  \"addressId\": \"{{addressId}}\",\n  \"address\": {\n    \"fullName\": \"Postman Full Flow User\",\n    \"phone\": \"+919999999999\",\n    \"addressLine1\": \"10-1, Farm Fresh Test Street\",\n    \"addressLine2\": \"Near Green Market\",\n    \"city\": \"Hyderabad\",\n    \"state\": \"Telangana\",\n    \"postalCode\": \"500001\",\n    \"landmark\": \"Created by Postman v9 full flow\",\n    \"type\": \"Home\"\n  },\n  \"deliveryMethod\": \"quick\",\n  \"deliverySlot\": \"Earliest available\",\n  \"couponCode\": \"{{couponCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('addressId')) throw new Error('Run Saved Addresses folder first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unconfigured online gateway is blocked', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Safe gateway message returned', function () { pm.expect(pm.response.text()).to.include('production credentials'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Place Cash on Delivery Test Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shoppingMode\": \"home\",\n  \"paymentMethod\": \"cash_on_delivery\",\n  \"addressId\": \"{{addressId}}\",\n  \"address\": {\n    \"fullName\": \"Postman Full Flow User\",\n    \"phone\": \"+919999999999\",\n    \"addressLine1\": \"10-1, Farm Fresh Test Street\",\n    \"addressLine2\": \"Near Green Market\",\n    \"city\": \"Hyderabad\",\n    \"state\": \"Telangana\",\n    \"postalCode\": \"500001\",\n    \"landmark\": \"Created by Postman v9 full flow\",\n    \"type\": \"Home\"\n  },\n  \"deliveryMethod\": \"quick\",\n  \"deliverySlot\": \"Earliest available\",\n  \"couponCode\": \"{{couponCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Order ID captured', function () { const data = pm.response.json().data; pm.expect(data.orderId).to.be.a('string').and.not.empty; pm.environment.set('orderId', data.orderId); });",
+                  "pm.test('Payment remains pending for COD', function () { pm.expect(pm.response.json().data.paymentStatus).to.eql('pending'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. List My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Order list returned', function () { pm.expect(pm.response.json().data).to.be.an('array').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Get Test Order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('orderId')) throw new Error('Run Place Cash on Delivery Test Order first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Correct order returned', function () { pm.expect(pm.response.json().data.id).to.eql(pm.environment.get('orderId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Cancel Test Order and Restore Stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Automated Postman v9 verification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Order is cancelled', function () { pm.expect(pm.response.json().data.status).to.eql('cancelled'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Reorder Cancelled Test Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/reorder",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('At least one item was reordered', function () { pm.expect(Number(pm.response.json().data)).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Verify Reordered Cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Reordered cart contains items', function () { pm.expect(pm.response.json().data.items).to.have.length.above(0); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Catalog and Platform Modules",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "1. List Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/categories",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Categories returned', function () { pm.expect(pm.response.json().data).to.be.an('array').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. List Banners",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/catalog/banners",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Banners returned', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. List Offers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/offers",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Offers returned', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. List Farmers and Capture One",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/farmers?limit=50",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "const farmers = pm.response.json().data || []; pm.test('Farmers returned', function () { pm.expect(farmers).to.be.an('array').and.not.empty; });",
+                  "if (farmers[0]) pm.environment.set('farmerId', farmers[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Get Captured Farmer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/farmers/{{farmerId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('farmerId')) throw new Error('Run List Farmers first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Correct farmer returned', function () { pm.expect(pm.response.json().data.id).to.eql(pm.environment.get('farmerId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. List Delivery Slots and Capture One",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/delivery-slots?method=standard",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "const slots = pm.response.json().data || []; pm.test('Delivery slots returned', function () { pm.expect(slots).to.be.an('array').and.not.empty; });",
+                  "if (slots[0]) pm.environment.set('deliverySlotId', slots[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Reserve Delivery Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/delivery-slots/{{deliverySlotId}}/reserve",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('deliverySlotId')) throw new Error('Run List Delivery Slots first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. List Favorites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/favorites",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Favorites list returned', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Add Product to Favorites",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/favorites/{{productId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Favorite product matches', function () { pm.expect(pm.response.json().data.productId).to.eql(pm.environment.get('productId')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Remove Product from Favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/favorites/{{productId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. List Product Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/products/{{productId}}/reviews",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Review list returned', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12. Save Product Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/products/{{productId}}/reviews",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"Postman Flow User\",\n  \"rating\": 4.8,\n  \"comment\": \"Automated production API verification review.\",\n  \"images\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "const id = pm.response.json().data.id; pm.test('Review ID captured', function () { pm.expect(id).to.be.a('string').and.not.empty; }); if (id) pm.environment.set('reviewId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13. Get Notification Preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notification-preferences",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Preference fields returned', function () { const data = pm.response.json().data; pm.expect(data).to.have.property('orderUpdates'); pm.expect(data).to.have.property('offers'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14. Update Notification Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notification-preferences",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderUpdates\": true,\n  \"offers\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Preferences saved', function () { const data = pm.response.json().data; pm.expect(data.orderUpdates).to.eql(true); pm.expect(data.offers).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15. List Order Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notifications?limit=100",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "const rows = pm.response.json().data || []; pm.test('Notifications returned', function () { pm.expect(rows).to.be.an('array').and.not.empty; }); if (rows[0]) pm.environment.set('notificationId', rows[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16. Mark One Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/read",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('notificationId')) throw new Error('Run List Order Notifications first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Notification read flag is true', function () { pm.expect(pm.response.json().data.isRead).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17. Mark All Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notifications/read-all",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18. List Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/support-tickets",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Support list returned', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19. Create Support Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/support-tickets",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Automated Postman verification\",\n  \"message\": \"Full backend support API flow test.\",\n  \"category\": \"technical\",\n  \"priority\": \"normal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "const id = pm.response.json().data.id; pm.test('Support ticket captured', function () { pm.expect(id).to.be.a('string').and.not.empty; }); if (id) pm.environment.set('supportTicketId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20. Close Support Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/support-tickets/{{supportTicketId}}/close",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('supportTicketId')) throw new Error('Run Create Support Ticket first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Support ticket closed', function () { pm.expect(pm.response.json().data.status).to.eql('closed'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21. Register Test Device",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/devices",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{deviceToken}}\",\n  \"platform\": \"postman\",\n  \"deviceName\": \"Automated API Runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22. Remove Test Device",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/devices?token={{deviceToken}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 Cleanup and Final Verification",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.environment.get('firebaseToken');",
+              "if (!token || !token.trim()) {",
+              "  throw new Error('firebaseToken is empty. Select the Farm To Home - Local Full Test environment and paste a valid Firebase ID token.');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "00. Release Reserved Delivery Slot",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/delivery-slots/{{deliverySlotId}}/reserve",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('deliverySlotId')) throw new Error('Run Reserve Delivery Slot first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "0. Delete Automated Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/reviews/{{reviewId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('reviewId')) throw new Error('Run Save Product Review first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "0B. Delete Captured Test Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('notificationId')) throw new Error('Run List Order Notifications first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1. Clear Reordered Test Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/cart",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Test cart cleaned', function () { pm.expect(pm.response.json().data.items).to.be.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Delete Dedicated Test Address",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses/{{addressId}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('addressId')) throw new Error('Run Create Dedicated Test Address first.');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Only the dedicated test address was deleted', function () { pm.expect(pm.response.json().data.id).to.eql(pm.environment.get('addressId')); });",
+                  "if (pm.response.code === 200) pm.environment.set('addressId', '');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Final Address List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/addresses",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP request succeeded', function () { pm.expect(pm.response.code).to.be.within(200, 299); });",
+                  "pm.test('API success is true', function () { const body = pm.response.json(); pm.expect(body.success).to.eql(true); });",
+                  "pm.test('Address endpoint remains healthy', function () { pm.expect(pm.response.json().data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Final Backend Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/actuator/health",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Backend is still UP', function () { pm.expect(pm.response.json().status).to.eql('UP'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

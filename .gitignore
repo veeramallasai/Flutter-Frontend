@@ -1,0 +1,90 @@
+# =========================
+# FARM TO HOME - GITIGNORE
+# =========================
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code local settings
+.vscode/
+
+# Flutter / Dart
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication / Obfuscation
+app.*.symbols
+app.*.map.json
+
+# Android build outputs
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# =========================
+# SECRETS / ENVIRONMENT
+# =========================
+.env
+.env.*
+!.env.example
+
+**/.env
+**/.env.*
+!**/.env.example
+
+# Firebase / Google service-account private keys
+*service-account*.json
+*serviceAccount*.json
+*firebase-admin*.json
+*firebase-key*.json
+*google-credentials*.json
+
+# Java keystores / certificates
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+
+# Local backend startup scripts may contain passwords
+start_backend_smtp.ps1
+start_backend.ps1
+
+# Local generated/debug files
+otp_screen_full.txt
+register_screen_full.txt
+lib_old/
+
+# Backend build output
+backend/target/
+
+# OS temporary files
+Thumbs.db
+Desktop.ini
+
+# Android generated build files
+android/build/
