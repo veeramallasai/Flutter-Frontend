@@ -1,11 +1,13 @@
 package com.farmtohome.api.config;
 
+import com.farmtohome.api.auth.FirebaseTokenFilter;
 import java.util.Arrays;
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,28 +19,28 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import com.farmtohome.api.auth.FirebaseTokenFilter;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
   @Bean
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       FirebaseTokenFilter firebaseTokenFilter) throws Exception {
     return http
         .csrf(csrf -> csrf.disable())
-        .cors(cors -> {})
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .sessionManagement(session ->
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/actuator/health", "/actuator/info", "/error").permitAll()
             .requestMatchers("/api/v1/auth/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**", "/api/v1/products/**", "/api/v1/offers", "/api/v1/farmers/**", "/api/v1/delivery-slots").permitAll()
             .requestMatchers("/api/**").authenticated()
-            .anyRequest().denyAll())
+            .anyRequest().permitAll())
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint((request, response, error) -> {
               response.setStatus(401);
@@ -66,21 +68,30 @@ public class SecurityConfig {
   }
 
   @Bean
-  CorsConfigurationSource corsConfigurationSource(
-      @Value("${app.cors-origins:https://*.railway.app,https://*.up.railway.app,http://localhost:*,http://10.0.2.2:*,*}") String origins) {
+  public FilterRegistrationBean<CorsFilter> corsFilterRegistrationBean() {
     CorsConfiguration configuration = new CorsConfiguration();
-    List<String> patterns = Arrays.stream(origins.split(","))
-        .map(String::trim)
-        .filter(value -> !value.isBlank())
-        .toList();
-    if (patterns.isEmpty() || patterns.contains("*")) {
-      configuration.addAllowedOriginPattern("*");
-    } else {
-      configuration.setAllowedOriginPatterns(patterns);
-    }
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin"));
-    configuration.setExposedHeaders(List.of("Location"));
+    configuration.setAllowedOriginPatterns(List.of("*"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "X-Total-Count", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
+    configuration.setAllowCredentials(true);
+    configuration.setMaxAge(3600L);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+
+    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
+    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    return bean;
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(List.of("*"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "X-Total-Count", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(3600L);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -88,4 +99,3 @@ public class SecurityConfig {
     return source;
   }
 }
-
