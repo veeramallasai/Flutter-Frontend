@@ -11,7 +11,8 @@ enum PaymentStatus {
 
   bool get isSuccessful =>
       this == PaymentStatus.paid || this == PaymentStatus.paidTest;
-  bool get canRetry => this == PaymentStatus.pending || this == PaymentStatus.failed;
+  bool get canRetry =>
+      this == PaymentStatus.pending || this == PaymentStatus.failed;
 
   static PaymentStatus fromValue(String? value) {
     final String normalized = value?.trim().toLowerCase() ?? '';

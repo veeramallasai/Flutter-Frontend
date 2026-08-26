@@ -22,7 +22,8 @@ enum OrderStatus {
       this == OrderStatus.placed ||
       this == OrderStatus.confirmed ||
       this == OrderStatus.processing;
-  bool get canTrack => this != OrderStatus.cancelled && this != OrderStatus.failed;
+  bool get canTrack =>
+      this != OrderStatus.cancelled && this != OrderStatus.failed;
 
   int get trackingIndex {
     const List<OrderStatus> flow = <OrderStatus>[

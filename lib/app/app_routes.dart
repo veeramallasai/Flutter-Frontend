@@ -10,6 +10,7 @@ class AppRoutes {
   static const String otp = '/otp';
   static const String forgotPassword = '/forgot-password';
   static const String home = '/home';
+  static const String deliveryPartner = '/delivery-partner';
 
   // Reserved now so feature screens can navigate without renaming later.
   static const String categories = '/categories';

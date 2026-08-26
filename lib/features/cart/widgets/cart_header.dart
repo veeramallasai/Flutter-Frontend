@@ -23,7 +23,7 @@ class CartHeader extends StatelessWidget {
           width: 43,
           height: 43,
           decoration: const BoxDecoration(
-            color: Color(0xFFEAF7EF),
+            color: Color(0xFFE8F5E9),
             shape: BoxShape.circle,
           ),
           child: Icon(

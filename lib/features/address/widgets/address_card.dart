@@ -31,7 +31,7 @@ class AddressCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEAF7EF) : Colors.white,
+          color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.border,
@@ -58,7 +58,10 @@ class AddressCard extends StatelessWidget {
                   Row(
                     children: <Widget>[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
@@ -116,8 +119,14 @@ class AddressCard extends StatelessWidget {
                   const SizedBox(height: 7),
                   Row(
                     children: <Widget>[
-                      TextButton(onPressed: enabled ? onEdit : null, child: const Text('EDIT')),
-                      TextButton(onPressed: enabled ? onDelete : null, child: const Text('DELETE')),
+                      TextButton(
+                        onPressed: enabled ? onEdit : null,
+                        child: const Text('EDIT'),
+                      ),
+                      TextButton(
+                        onPressed: enabled ? onDelete : null,
+                        child: const Text('DELETE'),
+                      ),
                       if (!address.isDefault && onSetDefault != null)
                         TextButton(
                           onPressed: enabled ? onSetDefault : null,

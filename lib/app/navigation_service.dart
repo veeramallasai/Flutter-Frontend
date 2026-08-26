@@ -26,19 +26,19 @@ class NavigationService {
     Object? arguments,
     TO? result,
   }) => navigator.pushReplacementNamed<T, TO>(
-        route,
-        arguments: arguments,
-        result: result,
-      );
+    route,
+    arguments: arguments,
+    result: result,
+  );
 
   static Future<T?> clearAndPush<T extends Object?>(
     String route, {
     Object? arguments,
   }) => navigator.pushNamedAndRemoveUntil<T>(
-        route,
-        (Route<dynamic> current) => false,
-        arguments: arguments,
-      );
+    route,
+    (Route<dynamic> current) => false,
+    arguments: arguments,
+  );
 
   static bool canPop() => navigator.canPop();
 

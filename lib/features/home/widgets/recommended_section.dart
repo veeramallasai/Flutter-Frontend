@@ -7,11 +7,11 @@ class RecommendedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: <Widget>[
-          for (int index = 0; index < children.length; index++) ...<Widget>[
-            children[index],
-            if (index != children.length - 1) const SizedBox(height: 28),
-          ],
-        ],
-      );
+    children: <Widget>[
+      for (int index = 0; index < children.length; index++) ...<Widget>[
+        children[index],
+        if (index != children.length - 1) const SizedBox(height: 28),
+      ],
+    ],
+  );
 }

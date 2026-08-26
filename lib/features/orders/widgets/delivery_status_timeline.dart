@@ -47,22 +47,19 @@ class DeliveryStatusTimeline extends StatelessWidget {
                       width: compact ? 30 : 38,
                       height: compact ? 30 : 38,
                       decoration: BoxDecoration(
-                        color: active
-                            ? AppColors.primary
-                            : const Color(0xFFF1F4F2),
+                        color:
+                            active
+                                ? AppColors.primary
+                                : const Color(0xFFF5F5F5),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: active
-                              ? AppColors.primary
-                              : AppColors.border,
+                          color: active ? AppColors.primary : AppColors.border,
                         ),
                       ),
                       child: Icon(
                         complete ? Icons.check_rounded : step.icon,
                         size: compact ? 16 : 19,
-                        color: active
-                            ? Colors.white
-                            : AppColors.textSecondary,
+                        color: active ? Colors.white : AppColors.textSecondary,
                       ),
                     ),
                     SizedBox(height: compact ? 5 : 8),
@@ -72,12 +69,12 @@ class DeliveryStatusTimeline extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: active
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                        color:
+                            active
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
                         fontSize: compact ? 8 : 10,
-                        fontWeight:
-                        active ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       ),
                     ),
                   ],
@@ -89,9 +86,10 @@ class DeliveryStatusTimeline extends StatelessWidget {
                     height: 3,
                     margin: EdgeInsets.only(top: compact ? 14 : 18),
                     decoration: BoxDecoration(
-                      color: index < activeIndex
-                          ? AppColors.primary
-                          : AppColors.border,
+                      color:
+                          index < activeIndex
+                              ? AppColors.primary
+                              : AppColors.border,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),

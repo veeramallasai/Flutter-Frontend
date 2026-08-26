@@ -12,8 +12,8 @@ class NutritionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (product.nutritionInfo.isEmpty) return const SizedBox.shrink();
 
-    final List<MapEntry<String, String>> values =
-    product.nutritionInfo.entries.toList(growable: false);
+    final List<MapEntry<String, String>> values = product.nutritionInfo.entries
+        .toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +42,7 @@ class NutritionSection extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5FAF7),
+                color: const Color(0xFFF9FAF9),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFDCECE2)),
               ),

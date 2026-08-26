@@ -9,9 +9,10 @@ class NetworkInfo {
     ConnectivityChecker? checker,
     http.Client? client,
     Uri? probeUri,
-  })  : _checker = checker,
-        _client = client ?? http.Client(),
-        _probeUri = probeUri ?? Uri.parse('https://www.gstatic.com/generate_204');
+  }) : _checker = checker,
+       _client = client ?? http.Client(),
+       _probeUri =
+           probeUri ?? Uri.parse('https://www.gstatic.com/generate_204');
 
   final ConnectivityChecker? _checker;
   final http.Client _client;

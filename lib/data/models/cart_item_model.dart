@@ -33,17 +33,17 @@ class CartItemModel {
   double get savings => mrpTotal > subtotal ? mrpTotal - subtotal : 0;
 
   factory CartItemModel.fromProduct(
-      ProductModel product, {
-        int quantity = 1,
-        String? unit,
-        String? shoppingMode,
-      }) {
-    final String itemUnit = unit?.trim().isNotEmpty == true
-        ? unit!.trim()
-        : product.unit;
-    final String mode = shoppingMode?.trim().toLowerCase() == 'shop'
-        ? 'shop'
-        : product.shoppingMode;
+    ProductModel product, {
+    int quantity = 1,
+    String? unit,
+    String? shoppingMode,
+  }) {
+    final String itemUnit =
+        unit?.trim().isNotEmpty == true ? unit!.trim() : product.unit;
+    final String mode =
+        shoppingMode?.trim().toLowerCase() == 'shop'
+            ? 'shop'
+            : product.shoppingMode;
 
     return CartItemModel(
       id: '${product.id}_${_key(itemUnit)}_$mode',
@@ -71,7 +71,7 @@ class CartItemModel {
       category: _text(map['category']),
       unit: _text(map['unit'], fallback: '1 unit'),
       shoppingMode:
-      _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
+          _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
       unitPrice: _toDouble(map['unitPrice'] ?? map['price']),
       mrp: _toDouble(map['mrp'] ?? map['unitPrice'] ?? map['price']),
       quantity: _toInt(map['quantity'], fallback: 1),
@@ -123,10 +123,7 @@ class CartItemModel {
 }
 
 String _key(String value) {
-  return value
-      .trim()
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+  return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
 }
 
 String _text(dynamic value, {String fallback = ''}) {

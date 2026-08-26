@@ -3,7 +3,7 @@ import '../models/review_model.dart';
 
 class ReviewRepository {
   ReviewRepository({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
@@ -16,14 +16,12 @@ class ReviewRepository {
     if (id.isEmpty) return <ReviewModel>[];
     final dynamic data =
         (await _apiClient.get('/api/v1/products/$id/reviews')).data;
-    final List<ReviewModel> values = _maps(data)
-        .map(ReviewModel.fromMap)
-        .toList(growable: true)
-      ..sort(
-        (ReviewModel a, ReviewModel b) =>
-            (b.createdAt ?? DateTime(1970))
-                .compareTo(a.createdAt ?? DateTime(1970)),
-      );
+    final List<ReviewModel> values = _maps(
+      data,
+    ).map(ReviewModel.fromMap).toList(growable: true)..sort(
+      (ReviewModel a, ReviewModel b) => (b.createdAt ?? DateTime(1970))
+          .compareTo(a.createdAt ?? DateTime(1970)),
+    );
     return List<ReviewModel>.unmodifiable(values);
   }
 
@@ -33,16 +31,16 @@ class ReviewRepository {
       throw ArgumentError('Product is required.');
     }
 
-    final dynamic data = (await _apiClient.post(
-      '/api/v1/products/$productId/reviews',
-      body: <String, dynamic>{
-        'userName': review.userName,
-        'rating': review.rating,
-        'comment': review.comment,
-        'images': review.images,
-      },
-    ))
-        .data;
+    final dynamic data =
+        (await _apiClient.post(
+          '/api/v1/products/$productId/reviews',
+          body: <String, dynamic>{
+            'userName': review.userName,
+            'rating': review.rating,
+            'comment': review.comment,
+            'images': review.images,
+          },
+        )).data;
 
     return data is Map ? (data['id']?.toString() ?? '') : '';
   }
@@ -65,7 +63,9 @@ class ReviewRepository {
     final String id = orderId.trim();
     if (id.isEmpty) return <String, dynamic>{};
     final dynamic data =
-        (await _apiClient.get('/api/v1/orders/$id/delivery-partner/review')).data;
+        (await _apiClient.get(
+          '/api/v1/orders/$id/delivery-partner/review',
+        )).data;
     return _map(data);
   }
 
@@ -79,14 +79,11 @@ class ReviewRepository {
       throw ArgumentError('Order is required.');
     }
 
-    final dynamic data = (await _apiClient.post(
-      '/api/v1/orders/$id/delivery-partner/review',
-      body: <String, dynamic>{
-        'rating': rating,
-        'comment': comment.trim(),
-      },
-    ))
-        .data;
+    final dynamic data =
+        (await _apiClient.post(
+          '/api/v1/orders/$id/delivery-partner/review',
+          body: <String, dynamic>{'rating': rating, 'comment': comment.trim()},
+        )).data;
 
     return _map(data);
   }
@@ -98,12 +95,13 @@ class ReviewRepository {
   }
 }
 
-List<Map<String, dynamic>> _maps(dynamic data) => data is Iterable
-    ? data
-        .whereType<Map>()
-        .map((Map value) => Map<String, dynamic>.from(value))
-        .toList()
-    : <Map<String, dynamic>>[];
+List<Map<String, dynamic>> _maps(dynamic data) =>
+    data is Iterable
+        ? data
+            .whereType<Map>()
+            .map((Map value) => Map<String, dynamic>.from(value))
+            .toList()
+        : <Map<String, dynamic>>[];
 
 Map<String, dynamic> _map(dynamic data) =>
     data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};

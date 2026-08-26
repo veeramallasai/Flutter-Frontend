@@ -21,15 +21,15 @@ class CartModel {
 
   int get itemCount => items.fold<int>(
     0,
-        (int total, CartItemModel item) => total + item.quantity,
+    (int total, CartItemModel item) => total + item.quantity,
   );
   double get subtotal => items.fold<double>(
     0,
-        (double total, CartItemModel item) => total + item.subtotal,
+    (double total, CartItemModel item) => total + item.subtotal,
   );
   double get productSavings => items.fold<double>(
     0,
-        (double total, CartItemModel item) => total + item.savings,
+    (double total, CartItemModel item) => total + item.savings,
   );
   double get total =>
       (subtotal - couponDiscount).clamp(0, double.infinity).toDouble();
@@ -44,8 +44,8 @@ class CartModel {
   }
 
   factory CartModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> document,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
     return CartModel.fromMap(
       document.data() ?? <String, dynamic>{},
       documentId: document.id,
@@ -53,28 +53,29 @@ class CartModel {
   }
 
   factory CartModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     final dynamic rawItems = map['items'];
-    final List<CartItemModel> items = rawItems is Iterable
-        ? rawItems
-        .whereType<Map>()
-        .map(
-          (Map item) => CartItemModel.fromMap(
-        item.map(
-              (dynamic key, dynamic value) =>
-              MapEntry<String, dynamic>(key.toString(), value),
-        ),
-      ),
-    )
-        .toList(growable: false)
-        : <CartItemModel>[];
+    final List<CartItemModel> items =
+        rawItems is Iterable
+            ? rawItems
+                .whereType<Map>()
+                .map(
+                  (Map item) => CartItemModel.fromMap(
+                    item.map(
+                      (dynamic key, dynamic value) =>
+                          MapEntry<String, dynamic>(key.toString(), value),
+                    ),
+                  ),
+                )
+                .toList(growable: false)
+            : <CartItemModel>[];
 
     return CartModel(
       userId: _text(map['userId'], fallback: documentId),
       shoppingMode:
-      _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
+          _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
       items: items,
       couponCode: _text(map['couponCode']),
       couponDiscount: _toDouble(map['couponDiscount']),

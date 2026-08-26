@@ -84,7 +84,11 @@ class _PreorderDeliveryScreenState extends State<PreorderDeliveryScreen> {
           const SizedBox(height: 20),
           const Text(
             'Preferred Time',
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 10),
           DeliveryTimeSelector(
@@ -100,7 +104,13 @@ class _PreorderDeliveryScreenState extends State<PreorderDeliveryScreen> {
           padding: const EdgeInsets.all(16),
           child: FilledButton.icon(
             onPressed: _continue,
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF073D24), minimumSize: const Size.fromHeight(56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1B5E20),
+              minimumSize: const Size.fromHeight(56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
             icon: const Icon(Icons.eco_rounded),
             label: const Text('CONTINUE • FREE DELIVERY'),
           ),
@@ -114,20 +124,58 @@ class _PreorderHero extends StatelessWidget {
   const _PreorderHero();
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: <Color>[Color(0xFF052F1C), Color(0xFF0B7A3E), Color(0xFF28A964)]),
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: const <BoxShadow>[BoxShadow(color: Color(0x280B7A3E), blurRadius: 25, offset: Offset(0, 12))],
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: <Color>[
+          Color(0xFF1B5E20),
+          Color(0xFF2E7D32),
+          Color(0xFF28A964),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(26),
+      boxShadow: const <BoxShadow>[
+        BoxShadow(
+          color: Color(0x280B7A3E),
+          blurRadius: 25,
+          offset: Offset(0, 12),
         ),
-        child: const Row(children: <Widget>[
-          CircleAvatar(radius: 31, backgroundColor: Color(0x24FFFFFF), child: Icon(Icons.eco_rounded, color: Colors.white, size: 36)),
-          SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            Text('Closer to the harvest', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-            SizedBox(height: 5),
-            Text('Reserve produce early and receive it at peak freshness.', style: TextStyle(color: Color(0xFFD4F2E2), fontSize: 10, height: 1.45, fontWeight: FontWeight.w600)),
-          ])),
-        ]),
-      );
+      ],
+    ),
+    child: const Row(
+      children: <Widget>[
+        CircleAvatar(
+          radius: 31,
+          backgroundColor: Color(0x24FFFFFF),
+          child: Icon(Icons.eco_rounded, color: Colors.white, size: 36),
+        ),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Closer to the harvest',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Reserve produce early and receive it at peak freshness.',
+                style: TextStyle(
+                  color: Color(0xFFD4F2E2),
+                  fontSize: 10,
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }

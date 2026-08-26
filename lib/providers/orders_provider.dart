@@ -191,9 +191,8 @@ class OrdersProvider extends ChangeNotifier {
       'cancelled',
     };
 
-    _selectedFilter = supportedFilters.contains(normalized)
-        ? normalized
-        : 'all';
+    _selectedFilter =
+        supportedFilters.contains(normalized) ? normalized : 'all';
     _errorMessage = null;
     _notify();
   }

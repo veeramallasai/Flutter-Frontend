@@ -222,128 +222,135 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             tooltip: 'Favourite',
             onPressed: _isFavoriteBusy ? null : _toggleFavorite,
             icon: Icon(
-              _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              _isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
               color: _isFavorite ? AppColors.error : AppColors.textPrimary,
             ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      )
-          : _errorMessage != null || product == null
-          ? _ErrorView(
-        message: _errorMessage ?? 'Unable to load product.',
-        onRetry: () {
-          setState(() {
-            _isLoading = true;
-            _errorMessage = null;
-          });
-          _loadProduct();
-        },
-      )
-          : RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: _loadProduct,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
-          children: <Widget>[
-            ProductImageGallery(product: product),
-            const SizedBox(height: 20),
-            ProductTitleSection(product: product),
-            const SizedBox(height: 17),
-            ProductPriceSection(product: product),
-            const SizedBox(height: 18),
-            ProductUnitSelector(
-              units: _availableUnits(product),
-              selectedUnit: _selectedUnit,
-              onChanged: (String value) {
-                setState(() => _selectedUnit = value);
-              },
-            ),
-            const SizedBox(height: 17),
-            if (_isShopMode)
-              ShopOwnerBulkSelector(
-                selectedPackSize: _bulkPackSize,
-                packCount: _bulkPackCount,
-                unit: _selectedUnit,
-                onPackSizeChanged: (int value) {
-                  setState(() => _bulkPackSize = value);
-                },
-                onPackCountChanged: (int value) {
-                  setState(() => _bulkPackCount = value);
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
+              : _errorMessage != null || product == null
+              ? _ErrorView(
+                message: _errorMessage ?? 'Unable to load product.',
+                onRetry: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = null;
+                  });
+                  _loadProduct();
                 },
               )
-            else
-              RetailQuantitySelector(
-                quantity: _quantity,
-                unit: _selectedUnit,
-                unitPrice: product.price,
-                maximumQuantity: product.stockQuantity > 0
-                    ? product.stockQuantity
-                    : 20,
-                onChanged: (int value) {
-                  setState(() => _quantity = value);
-                },
+              : RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: _loadProduct,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
+                  children: <Widget>[
+                    ProductImageGallery(product: product),
+                    const SizedBox(height: 20),
+                    ProductTitleSection(product: product),
+                    const SizedBox(height: 17),
+                    ProductPriceSection(product: product),
+                    const SizedBox(height: 18),
+                    ProductUnitSelector(
+                      units: _availableUnits(product),
+                      selectedUnit: _selectedUnit,
+                      onChanged: (String value) {
+                        setState(() => _selectedUnit = value);
+                      },
+                    ),
+                    const SizedBox(height: 17),
+                    if (_isShopMode)
+                      ShopOwnerBulkSelector(
+                        selectedPackSize: _bulkPackSize,
+                        packCount: _bulkPackCount,
+                        unit: _selectedUnit,
+                        onPackSizeChanged: (int value) {
+                          setState(() => _bulkPackSize = value);
+                        },
+                        onPackCountChanged: (int value) {
+                          setState(() => _bulkPackCount = value);
+                        },
+                      )
+                    else
+                      RetailQuantitySelector(
+                        quantity: _quantity,
+                        unit: _selectedUnit,
+                        unitPrice: product.price,
+                        maximumQuantity:
+                            product.stockQuantity > 0
+                                ? product.stockQuantity
+                                : 20,
+                        onChanged: (int value) {
+                          setState(() => _quantity = value);
+                        },
+                      ),
+                    const SizedBox(height: 17),
+                    DeliveryPreview(
+                      shoppingMode: _isShopMode ? 'shop' : 'home',
+                    ),
+                    const SizedBox(height: 22),
+                    ProductOfferSection(product: product),
+                    if (product.discountPercent > 0) const SizedBox(height: 22),
+                    ProductDescription(product: product),
+                    const SizedBox(height: 22),
+                    ProductBenefits(product: product),
+                    if (product.nutritionInfo.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 22),
+                      NutritionSection(product: product),
+                    ],
+                    if (_farmer != null) ...<Widget>[
+                      const SizedBox(height: 22),
+                      FarmerDetailsSection(farmer: _farmer!),
+                    ],
+                    const SizedBox(height: 22),
+                    ProductReviews(
+                      rating: product.rating,
+                      reviewCount: product.reviewCount,
+                    ),
+                    if (_relatedProducts.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 24),
+                      RelatedProducts(
+                        products: _relatedProducts,
+                        onProductTap: _openRelatedProduct,
+                        onAddTap: (ProductModel item) async {
+                          try {
+                            await _cartRepository.addProduct(item);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${item.name} added to cart.'),
+                              ),
+                            );
+                          } catch (error) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(_friendlyError(error))),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            const SizedBox(height: 17),
-            DeliveryPreview(
-              shoppingMode: _isShopMode ? 'shop' : 'home',
-            ),
-            const SizedBox(height: 22),
-            ProductOfferSection(product: product),
-            if (product.discountPercent > 0) const SizedBox(height: 22),
-            ProductDescription(product: product),
-            const SizedBox(height: 22),
-            ProductBenefits(product: product),
-            if (product.nutritionInfo.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 22),
-              NutritionSection(product: product),
-            ],
-            if (_farmer != null) ...<Widget>[
-              const SizedBox(height: 22),
-              FarmerDetailsSection(farmer: _farmer!),
-            ],
-            const SizedBox(height: 22),
-            ProductReviews(
-              rating: product.rating,
-              reviewCount: product.reviewCount,
-            ),
-            if (_relatedProducts.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 24),
-              RelatedProducts(
-                products: _relatedProducts,
-                onProductTap: _openRelatedProduct,
-                onAddTap: (ProductModel item) async {
-                  try {
-                    await _cartRepository.addProduct(item);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${item.name} added to cart.')),
-                    );
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(_friendlyError(error))),
-                    );
-                  }
-                },
+      bottomNavigationBar:
+          product == null
+              ? null
+              : AddToCartBar(
+                totalPrice: _totalPrice,
+                quantity: _cartQuantity,
+                isLoading: _isAdding,
+                enabled: product.inStock,
+                onAddToCart: _addToCart,
+                onBuyNow: () => _addToCart(openCart: true),
               ),
-            ],
-          ],
-        ),
-      ),
-      bottomNavigationBar: product == null
-          ? null
-          : AddToCartBar(
-        totalPrice: _totalPrice,
-        quantity: _cartQuantity,
-        isLoading: _isAdding,
-        enabled: product.inStock,
-        onAddToCart: _addToCart,
-        onBuyNow: () => _addToCart(openCart: true),
-      ),
     );
   }
 
@@ -352,7 +359,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     if (message.startsWith('Bad state: ')) {
       message = message.substring('Bad state: '.length);
     }
-    return message.isEmpty ? 'Something went wrong. Please try again.' : message;
+    return message.isEmpty
+        ? 'Something went wrong. Please try again.'
+        : message;
   }
 }
 

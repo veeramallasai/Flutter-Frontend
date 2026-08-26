@@ -16,15 +16,11 @@ dependencies:
   animate_do: ^3.0.2
   shimmer: ^3.0.0
 
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.17.4
-  cloud_firestore: ^4.15.4
-  firebase_messaging: ^14.7.10
-  cloud_functions: ^4.6.0
-  firebase_storage: ^11.6.0
-  firebase_analytics: ^10.8.10
-
-  google_sign_in: ^7.2.0
+  firebase_core: 4.14.0
+  cloud_firestore: 6.9.0
+  cloud_functions: 6.4.0
+  firebase_storage: 13.5.0
+  firebase_analytics: 12.5.0
 
   geolocator: ^10.1.0
   geocoding: ^4.0.0

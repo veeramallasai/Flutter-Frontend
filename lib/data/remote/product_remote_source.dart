@@ -14,7 +14,7 @@ class ProductRemoteSource {
   }) {
     return Stream<List<ProductModel>>.fromFuture(
       getProducts(category: category, shoppingMode: shoppingMode, limit: limit),
-    );
+    ).asBroadcastStream();
   }
 
   Future<List<ProductModel>> getProducts({
@@ -46,7 +46,9 @@ class ProductRemoteSource {
   }
 
   Stream<ProductModel?> watchProduct(String productId) =>
-      Stream<ProductModel?>.fromFuture(getProduct(productId));
+      Stream<ProductModel?>.fromFuture(
+        getProduct(productId),
+      ).asBroadcastStream();
 
   Future<ProductModel?> getProduct(
     String productId, {

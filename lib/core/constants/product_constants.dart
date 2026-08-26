@@ -22,7 +22,16 @@ class ProductConstants {
   static const double maximumRating = 5;
 
   static const List<String> supportedUnits = <String>[
-    '100 g', '250 g', '500 g', '1 kg', '1 piece', '1 fresh bunch',
-    '500 ml', '1 litre', '6 pieces', '12 pack', '10 kg crate',
+    '100 g',
+    '250 g',
+    '500 g',
+    '1 kg',
+    '1 piece',
+    '1 fresh bunch',
+    '500 ml',
+    '1 litre',
+    '6 pieces',
+    '12 pack',
+    '10 kg crate',
   ];
 }

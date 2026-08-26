@@ -40,5 +40,6 @@ class PriceUtils {
     return '${groups.join(',')},$lastThree';
   }
 
-  static String _trim(double value) => value.toStringAsFixed(1).replaceFirst(RegExp(r'\.0$'), '');
+  static String _trim(double value) =>
+      value.toStringAsFixed(1).replaceFirst(RegExp(r'\.0$'), '');
 }

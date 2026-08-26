@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,18 +19,13 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _firstNameController =
-  TextEditingController();
-  final TextEditingController _lastNameController =
-  TextEditingController();
-  final TextEditingController _phoneController =
-  TextEditingController();
-  final TextEditingController _emailController =
-  TextEditingController();
-  final TextEditingController _passwordController =
-  TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
-  TextEditingController();
+      TextEditingController();
 
   bool _hidePassword = true;
   bool _hideConfirmPassword = true;
@@ -49,13 +44,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String _normalizePhone(String value) {
-    String digits = value.replaceAll(
-      RegExp(r'\D'),
-      '',
-    );
+    String digits = value.replaceAll(RegExp(r'\D'), '');
 
-    if (digits.startsWith('91') &&
-        digits.length == 12) {
+    if (digits.startsWith('91') && digits.length == 12) {
       digits = digits.substring(2);
     }
 
@@ -91,14 +82,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validatePhone(String? value) {
-    final String phone =
-    _normalizePhone(value ?? '');
-
-    if (!RegExp(r'^[6-9]\d{9}$')
-        .hasMatch(phone)) {
-      return 'Enter a valid 10-digit mobile number';
+    final String raw = value?.trim() ?? '';
+    if (raw.isEmpty) return null;
+    final String phone = _normalizePhone(raw);
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(phone)) {
+      return 'Enter a valid 10-digit mobile number or leave it blank';
     }
-
     return null;
   }
 
@@ -109,9 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'Enter your email address';
     }
 
-    if (!RegExp(
-      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-    ).hasMatch(email)) {
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       return 'Enter a valid email address';
     }
 
@@ -140,9 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  String? _validateConfirmPassword(
-      String? value,
-      ) {
+  String? _validateConfirmPassword(String? value) {
     if ((value ?? '').isEmpty) {
       return 'Confirm your password';
     }
@@ -159,35 +144,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required String password,
   }) async {
     try {
-      final UserCredential credential =
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential credential = await BackendAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final User? user = credential.user;
       if (user == null) {
-        throw FirebaseAuthException(
+        throw BackendAuthException(
           code: 'registration-failed',
           message: 'Unable to create your account.',
         );
       }
 
       return user;
-    } on FirebaseAuthException catch (error) {
+    } on BackendAuthException catch (error) {
       if (error.code != 'email-already-in-use') {
         rethrow;
       }
 
-      final UserCredential credential =
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential credential = await BackendAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
       final User? user = credential.user;
       if (user == null) {
-        throw FirebaseAuthException(
+        throw BackendAuthException(
           code: 'registration-failed',
           message: 'Unable to resume account setup.',
         );
@@ -202,15 +181,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     for (int attempt = 1; attempt <= 3; attempt++) {
       try {
-        await FirebaseAuth.instance.currentUser?.getIdToken(true);
+        await BackendAuth.instance.currentUser?.getIdToken(true);
         await UserRepository().syncCurrentUser();
         return;
       } catch (error) {
         lastError = error;
         if (attempt < 3) {
-          await Future<void>.delayed(
-            Duration(milliseconds: 450 * attempt),
-          );
+          await Future<void>.delayed(Duration(milliseconds: 450 * attempt));
         }
       }
     }
@@ -228,9 +205,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (!_termsAccepted) {
-      _showMessage(
-        'Please accept Terms of Service and Privacy Policy.',
-      );
+      _showMessage('Please accept Terms of Service and Privacy Policy.');
       return;
     }
 
@@ -239,19 +214,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final String firstName =
-      _firstNameController.text.trim();
+      final String firstName = _firstNameController.text.trim();
 
-      final String lastName =
-      _lastNameController.text.trim();
+      final String lastName = _lastNameController.text.trim();
 
-      final String email =
-      _emailController.text
-          .trim()
-          .toLowerCase();
+      final String email = _emailController.text.trim().toLowerCase();
 
-      final String phone =
-          '+91${_normalizePhone(_phoneController.text)}';
+      final String phoneDigits = _normalizePhone(_phoneController.text);
+      final String phone = phoneDigits.isEmpty ? '' : '+91$phoneDigits';
 
       final String password = _passwordController.text;
 
@@ -260,25 +230,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: password,
       );
 
-      final String displayName =
-      '$firstName $lastName'.trim();
+      final String displayName = '$firstName $lastName'.trim();
 
       await user.updateDisplayName(displayName);
       await user.reload();
 
-      final User refreshedUser =
-          FirebaseAuth.instance.currentUser ?? user;
+      final User refreshedUser = BackendAuth.instance.currentUser ?? user;
 
-      final DocumentReference<Map<String, dynamic>> userRef =
-      FirebaseFirestore.instance
+      final DocumentReference<Map<String, dynamic>> userRef = FirebaseFirestore
+          .instance
           .collection('users')
           .doc(refreshedUser.uid);
 
       final DocumentSnapshot<Map<String, dynamic>> existing =
-      await userRef.get();
+          await userRef.get();
 
-      final Map<String, dynamic> profile =
-      <String, dynamic>{
+      final Map<String, dynamic> profile = <String, dynamic>{
         'uid': refreshedUser.uid,
         'firstName': firstName,
         'lastName': lastName,
@@ -288,65 +255,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'phoneNumber': phone,
         'photoUrl': refreshedUser.photoURL ?? '',
         'phoneVerified': false,
-        'shoppingMode':
-        existing.data()?['shoppingMode'] ?? 'home',
-        'accountType':
-        existing.data()?['accountType'] ?? 'customer',
-        'isActive': true,
+        'shoppingMode': existing.data()?['shoppingMode'] ?? 'home',
+        'accountType': existing.data()?['accountType'] ?? 'customer',
+        'isActive': false,
         'updatedAt': FieldValue.serverTimestamp(),
         'lastLoginAt': FieldValue.serverTimestamp(),
       };
 
       if (!existing.exists) {
-        profile['createdAt'] =
-            FieldValue.serverTimestamp();
+        profile['createdAt'] = FieldValue.serverTimestamp();
       }
 
-      await userRef.set(
-        profile,
-        SetOptions(merge: true),
-      );
+      await userRef.set(profile, SetOptions(merge: true));
 
       await _syncBackendProfileWithRetry();
 
       if (!mounted) return;
 
-      Navigator.of(context)
-          .pushReplacementNamed(
+      Navigator.of(context).pushReplacementNamed(
         AppRoutes.otp,
         arguments: <String, dynamic>{
           'phoneNumber': phone,
           'email': email,
           'emailVerificationSent': false,
           'userId': refreshedUser.uid,
-          'source': 'register',
+          'source': 'register-email-only',
         },
       );
-    } on FirebaseAuthException catch (error) {
+    } on BackendAuthException catch (error) {
       if (!mounted) return;
 
-      _showMessage(
-        _firebaseErrorMessage(error),
-      );
+      _showMessage(_firebaseErrorMessage(error));
     } on FirebaseException catch (error) {
       if (!mounted) return;
 
-      _showMessage(
-        error.message ??
-            'Unable to save account information.',
-      );
+      _showMessage(error.message ?? 'Unable to save account information.');
     } catch (error, stackTrace) {
       debugPrint('REGISTER SETUP ERROR: $error');
-      debugPrintStack(
-        label: 'REGISTER SETUP STACK',
-        stackTrace: stackTrace,
-      );
+      debugPrintStack(label: 'REGISTER SETUP STACK', stackTrace: stackTrace);
 
       if (!mounted) return;
 
       _showMessage(
         'Account was created, but setup could not finish. '
-            'Please press Create Account again with the same email and password.',
+        'Please press Create Account again with the same email and password.',
       );
     } finally {
       if (mounted) {
@@ -357,9 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String _firebaseErrorMessage(
-      FirebaseAuthException error,
-      ) {
+  String _firebaseErrorMessage(BackendAuthException error) {
     switch (error.code) {
       case 'email-already-in-use':
         return 'This email already has an account. Use the same password to continue setup.';
@@ -384,8 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return 'Email/Password authentication is not enabled in Firebase.';
 
       default:
-        return error.message ??
-            'Registration failed.';
+        return error.message ?? 'Registration failed.';
     }
   }
 
@@ -394,23 +343,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          behavior:
-          SnackBarBehavior.floating,
-          backgroundColor:
-          AppColors.error,
-          margin:
-          const EdgeInsets.all(16),
-          shape:
-          RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(16),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.error,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
           content: Text(
             message,
             style: const TextStyle(
               color: Colors.white,
-              fontWeight:
-              FontWeight.w700,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -423,25 +366,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    Navigator.of(context)
-        .pushReplacementNamed(
-      AppRoutes.login,
-    );
+    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool desktop =
-        MediaQuery.sizeOf(context).width >=
-            900;
+    final bool desktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor:
-      AppColors.background,
+      backgroundColor: AppColors.background,
       body: Container(
-        decoration:
-        const BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -453,67 +389,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         child: SafeArea(
-          child:
-          SingleChildScrollView(
-            keyboardDismissBehavior:
-            ScrollViewKeyboardDismissBehavior
-                .onDrag,
-            padding:
-            EdgeInsets.symmetric(
-              horizontal:
-              desktop ? 28 : 16,
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.symmetric(
+              horizontal: desktop ? 28 : 16,
               vertical: 18,
             ),
             child: Center(
-              child:
-              ConstrainedBox(
-                constraints:
-                const BoxConstraints(
-                  maxWidth: 1050,
-                ),
-                child:
-                Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment
-                      .stretch,
-                  children:
-                  <Widget>[
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1050),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
                     _buildHeader(),
 
-                    const SizedBox(
-                      height: 20,
-                    ),
+                    const SizedBox(height: 20),
 
                     if (desktop)
                       Row(
-                        crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
-                        children:
-                        <Widget>[
-                          const Expanded(
-                            flex: 4,
-                            child:
-                            _RegisterHero(),
-                          ),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          const Expanded(flex: 4, child: _RegisterHero()),
 
-                          const SizedBox(
-                            width: 20,
-                          ),
+                          const SizedBox(width: 20),
 
-                          Expanded(
-                            flex: 6,
-                            child:
-                            _buildForm(),
-                          ),
+                          Expanded(flex: 6, child: _buildForm()),
                         ],
                       )
                     else ...<Widget>[
                       const _RegisterHero(),
 
-                      const SizedBox(
-                        height: 18,
-                      ),
+                      const SizedBox(height: 18),
 
                       _buildForm(),
                     ],
@@ -532,24 +438,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: <Widget>[
         Material(
           color: Colors.white,
-          borderRadius:
-          BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15),
           child: InkWell(
-            borderRadius:
-            BorderRadius.circular(15),
-            onTap:
-            _loading
-                ? null
-                : _goLogin,
-            child:
-            const SizedBox(
+            borderRadius: BorderRadius.circular(15),
+            onTap: _loading ? null : _goLogin,
+            child: const SizedBox(
               width: 45,
               height: 45,
-              child: Icon(
-                Icons
-                    .arrow_back_ios_new_rounded,
-                size: 18,
-              ),
+              child: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             ),
           ),
         ),
@@ -559,11 +455,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const Text(
           'Farm To Home',
           style: TextStyle(
-            color:
-            AppColors.primaryDark,
+            color: AppColors.primaryDark,
             fontSize: 18,
-            fontWeight:
-            FontWeight.w900,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ],
@@ -572,23 +466,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildForm() {
     return Container(
-      padding:
-      const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(28),
-        border: Border.all(
-          color: AppColors.border,
-        ),
-        boxShadow:
-        const <BoxShadow>[
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const <BoxShadow>[
           BoxShadow(
-            color:
-            Color(0x12000000),
+            color: Color(0x12000000),
             blurRadius: 34,
-            offset:
-            Offset(0, 14),
+            offset: Offset(0, 14),
           ),
         ],
       ),
@@ -596,27 +483,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Row(
                 children: <Widget>[
                   const Expanded(
                     child: Text(
                       'Join Fresh Club',
-                      style: TextStyle(color: AppColors.textPrimary, fontSize: 27, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 27,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: const Color(0xFFEAF7EF), borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(Icons.shield_rounded, color: AppColors.primary, size: 14),
+                        Icon(
+                          Icons.shield_rounded,
+                          color: AppColors.primary,
+                          size: 14,
+                        ),
                         SizedBox(width: 5),
-                        Text('SECURE', style: TextStyle(color: AppColors.primary, fontSize: 8, fontWeight: FontWeight.w900)),
+                        Text(
+                          'SECURE',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -628,12 +534,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const Text(
                 'One account for fresh home shopping and business bulk orders.',
                 style: TextStyle(
-                  color:
-                  AppColors.textSecondary,
+                  color: AppColors.textSecondary,
                   fontSize: 12.5,
                   height: 1.45,
-                  fontWeight:
-                  FontWeight.w600,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
 
@@ -644,24 +548,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
 
               TextFormField(
-                controller:
-                _firstNameController,
+                controller: _firstNameController,
                 enabled: !_loading,
-                textCapitalization:
-                TextCapitalization.words,
-                textInputAction:
-                TextInputAction.next,
-                validator:
-                _validateFirstName,
-                decoration:
-                const InputDecoration(
-                  labelText:
-                  'First Name',
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                validator: _validateFirstName,
+                decoration: const InputDecoration(
+                  labelText: 'First Name',
                   prefixIcon: Icon(
-                    Icons
-                        .person_outline_rounded,
-                    color:
-                    AppColors.primary,
+                    Icons.person_outline_rounded,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -669,24 +565,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 14),
 
               TextFormField(
-                controller:
-                _lastNameController,
+                controller: _lastNameController,
                 enabled: !_loading,
-                textCapitalization:
-                TextCapitalization.words,
-                textInputAction:
-                TextInputAction.next,
-                validator:
-                _validateLastName,
-                decoration:
-                const InputDecoration(
-                  labelText:
-                  'Last Name',
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                validator: _validateLastName,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
                   prefixIcon: Icon(
-                    Icons
-                        .badge_outlined,
-                    color:
-                    AppColors.primary,
+                    Icons.badge_outlined,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -694,36 +582,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 14),
 
               TextFormField(
-                controller:
-                _phoneController,
+                controller: _phoneController,
                 enabled: !_loading,
-                keyboardType:
-                TextInputType.phone,
-                textInputAction:
-                TextInputAction.next,
-                inputFormatters:
-                <TextInputFormatter>[
-                  FilteringTextInputFormatter
-                      .digitsOnly,
-                  LengthLimitingTextInputFormatter(
-                    10,
-                  ),
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
                 ],
-                validator:
-                _validatePhone,
-                decoration:
-                const InputDecoration(
-                  labelText:
-                  'Phone Number',
-                  hintText:
-                  '9876543210',
-                  prefixText:
-                  '+91  ',
+                validator: _validatePhone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  hintText: '9876543210',
+                  prefixText: '+91  ',
                   prefixIcon: Icon(
-                    Icons
-                        .phone_iphone_rounded,
-                    color:
-                    AppColors.primary,
+                    Icons.phone_iphone_rounded,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -731,27 +605,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 14),
 
               TextFormField(
-                controller:
-                _emailController,
+                controller: _emailController,
                 enabled: !_loading,
-                keyboardType:
-                TextInputType
-                    .emailAddress,
-                textInputAction:
-                TextInputAction.next,
-                validator:
-                _validateEmail,
-                decoration:
-                const InputDecoration(
-                  labelText:
-                  'Email Address',
-                  hintText:
-                  'name@example.com',
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                validator: _validateEmail,
+                decoration: const InputDecoration(
+                  labelText: 'Email Address',
+                  hintText: 'name@example.com',
                   prefixIcon: Icon(
-                    Icons
-                        .alternate_email_rounded,
-                    color:
-                    AppColors.primary,
+                    Icons.alternate_email_rounded,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
@@ -759,45 +623,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 14),
 
               TextFormField(
-                controller:
-                _passwordController,
+                controller: _passwordController,
                 enabled: !_loading,
-                obscureText:
-                _hidePassword,
-                textInputAction:
-                TextInputAction.next,
-                validator:
-                _validatePassword,
-                decoration:
-                InputDecoration(
-                  labelText:
-                  'Password',
-                  prefixIcon:
-                  const Icon(
-                    Icons
-                        .lock_outline_rounded,
-                    color:
-                    AppColors.primary,
+                obscureText: _hidePassword,
+                textInputAction: TextInputAction.next,
+                validator: _validatePassword,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: const Icon(
+                    Icons.lock_outline_rounded,
+                    color: AppColors.primary,
                   ),
-                  suffixIcon:
-                  IconButton(
+                  suffixIcon: IconButton(
                     onPressed:
-                    _loading
-                        ? null
-                        : () {
-                      setState(
-                            () {
-                          _hidePassword =
-                          !_hidePassword;
-                        },
-                      );
-                    },
+                        _loading
+                            ? null
+                            : () {
+                              setState(() {
+                                _hidePassword = !_hidePassword;
+                              });
+                            },
                     icon: Icon(
                       _hidePassword
-                          ? Icons
-                          .visibility_outlined
-                          : Icons
-                          .visibility_off_outlined,
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
                 ),
@@ -805,58 +654,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: _passwordController,
-                builder: (BuildContext context, TextEditingValue value, Widget? child) =>
-                    PasswordStrength(password: value.text),
+                builder:
+                    (
+                      BuildContext context,
+                      TextEditingValue value,
+                      Widget? child,
+                    ) => PasswordStrength(password: value.text),
               ),
 
               const SizedBox(height: 14),
 
               TextFormField(
-                controller:
-                _confirmPasswordController,
+                controller: _confirmPasswordController,
                 enabled: !_loading,
-                obscureText:
-                _hideConfirmPassword,
-                textInputAction:
-                TextInputAction.done,
-                validator:
-                _validateConfirmPassword,
-                onFieldSubmitted:
-                    (_) {
+                obscureText: _hideConfirmPassword,
+                textInputAction: TextInputAction.done,
+                validator: _validateConfirmPassword,
+                onFieldSubmitted: (_) {
                   if (!_loading) {
                     _register();
                   }
                 },
-                decoration:
-                InputDecoration(
-                  labelText:
-                  'Confirm Password',
-                  prefixIcon:
-                  const Icon(
-                    Icons
-                        .verified_user_outlined,
-                    color:
-                    AppColors.primary,
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  prefixIcon: const Icon(
+                    Icons.verified_user_outlined,
+                    color: AppColors.primary,
                   ),
-                  suffixIcon:
-                  IconButton(
+                  suffixIcon: IconButton(
                     onPressed:
-                    _loading
-                        ? null
-                        : () {
-                      setState(
-                            () {
-                          _hideConfirmPassword =
-                          !_hideConfirmPassword;
-                        },
-                      );
-                    },
+                        _loading
+                            ? null
+                            : () {
+                              setState(() {
+                                _hideConfirmPassword = !_hideConfirmPassword;
+                              });
+                            },
                     icon: Icon(
                       _hideConfirmPassword
-                          ? Icons
-                          .visibility_outlined
-                          : Icons
-                          .visibility_off_outlined,
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
                 ),
@@ -878,13 +715,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  onChanged: _loading
-                      ? null
-                      : (bool? value) {
-                    setState(() {
-                      _termsAccepted = value ?? false;
-                    });
-                  },
+                  onChanged:
+                      _loading
+                          ? null
+                          : (bool? value) {
+                            setState(() {
+                              _termsAccepted = value ?? false;
+                            });
+                          },
                 ),
               ),
 
@@ -892,61 +730,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               SizedBox(
                 height: 56,
-                child:
-                FilledButton(
-                  onPressed:
-                  _loading
-                      ? null
-                      : _register,
+                child: FilledButton(
+                  onPressed: _loading ? null : _register,
                   child:
-                  _loading
-                      ? const SizedBox(
-                    width:
-                    23,
-                    height:
-                    23,
-                    child:
-                    CircularProgressIndicator(
-                      color:
-                      Colors.white,
-                      strokeWidth:
-                      2.5,
-                    ),
-                  )
-                      : const Text(
-                    'CREATE MY FRESH ACCOUNT',
-                  ),
+                      _loading
+                          ? const SizedBox(
+                            width: 23,
+                            height: 23,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                          : const Text('CREATE MY FRESH ACCOUNT'),
                 ),
               ),
 
               const SizedBox(height: 14),
 
               Row(
-                mainAxisAlignment:
-                MainAxisAlignment
-                    .center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   const Text(
                     'Already have an account?',
-                    style: TextStyle(
-                      color: AppColors
-                          .textSecondary,
-                    ),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                   TextButton(
-                    onPressed:
-                    _loading
-                        ? null
-                        : _goLogin,
-                    child:
-                    const Text(
+                    onPressed: _loading ? null : _goLogin,
+                    child: const Text(
                       'Login',
-                      style:
-                      TextStyle(
-                        fontWeight:
-                        FontWeight
-                            .w900,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ],
@@ -959,49 +772,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-class _RegisterHero
-    extends StatelessWidget {
+class _RegisterHero extends StatelessWidget {
   const _RegisterHero();
 
   @override
   Widget build(BuildContext context) {
     final bool compact = MediaQuery.sizeOf(context).width < 900;
     return Container(
-      constraints:
-      BoxConstraints(
-        minHeight: compact ? 215 : 430,
-      ),
+      constraints: BoxConstraints(minHeight: compact ? 215 : 430),
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        gradient:
-        const LinearGradient(
-          begin:
-          Alignment.topLeft,
-          end:
-          Alignment.bottomRight,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: <Color>[
-            Color(0xFF052E1B),
+            Color(0xFF1B5E20),
             Color(0xFF0B6F3B),
             Color(0xFF25A75D),
           ],
         ),
-        borderRadius:
-        BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const CircleAvatar(
             radius: 33,
-            backgroundColor:
-            Colors.white,
-            child: Icon(
-              Icons.eco_rounded,
-              color:
-              AppColors.primary,
-              size: 38,
-            ),
+            backgroundColor: Colors.white,
+            child: Icon(Icons.eco_rounded, color: AppColors.primary, size: 38),
           ),
 
           // This screen lives inside a vertical SingleChildScrollView. A
@@ -1015,8 +813,7 @@ class _RegisterHero
               color: Colors.white,
               fontSize: compact ? 26 : 34,
               height: 1.1,
-              fontWeight:
-              FontWeight.w900,
+              fontWeight: FontWeight.w900,
             ),
           ),
 
@@ -1025,12 +822,10 @@ class _RegisterHero
           const Text(
             'Retail shopping for home and bulk ordering for shop owners — all in one account.',
             style: TextStyle(
-              color:
-              Colors.white70,
+              color: Colors.white70,
               fontSize: 13,
               height: 1.5,
-              fontWeight:
-              FontWeight.w600,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 18),
@@ -1054,28 +849,70 @@ class _RegistrationSteps extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: const Color(0xFFF6FAF7), borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE2ECE6))),
-    child: const Row(children: <Widget>[
-      _StepDot(number: '1', label: 'DETAILS', active: true),
-      Expanded(child: Divider(color: Color(0xFFC7D9CF), indent: 7, endIndent: 7)),
-      _StepDot(number: '2', label: 'VERIFY'),
-      Expanded(child: Divider(color: Color(0xFFC7D9CF), indent: 7, endIndent: 7)),
-      _StepDot(number: '3', label: 'FRESH'),
-    ]),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF6FAF7),
+      borderRadius: BorderRadius.circular(17),
+      border: Border.all(color: const Color(0xFFE2ECE6)),
+    ),
+    child: const Row(
+      children: <Widget>[
+        _StepDot(number: '1', label: 'DETAILS', active: true),
+        Expanded(
+          child: Divider(color: Color(0xFFC7D9CF), indent: 7, endIndent: 7),
+        ),
+        _StepDot(number: '2', label: 'VERIFY'),
+        Expanded(
+          child: Divider(color: Color(0xFFC7D9CF), indent: 7, endIndent: 7),
+        ),
+        _StepDot(number: '3', label: 'FRESH'),
+      ],
+    ),
   );
 }
 
 class _StepDot extends StatelessWidget {
-  const _StepDot({required this.number, required this.label, this.active = false});
+  const _StepDot({
+    required this.number,
+    required this.label,
+    this.active = false,
+  });
   final String number;
   final String label;
   final bool active;
   @override
-  Widget build(BuildContext context) => Column(children: <Widget>[
-    Container(width: 28, height: 28, alignment: Alignment.center, decoration: BoxDecoration(color: active ? AppColors.primary : Colors.white, shape: BoxShape.circle, border: Border.all(color: active ? AppColors.primary : const Color(0xFFC7D9CF))), child: Text(number, style: TextStyle(color: active ? Colors.white : AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.w900))),
-    const SizedBox(height: 4),
-    Text(label, style: TextStyle(color: active ? AppColors.primary : AppColors.textSecondary, fontSize: 7, fontWeight: FontWeight.w900)),
-  ]);
+  Widget build(BuildContext context) => Column(
+    children: <Widget>[
+      Container(
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: active ? AppColors.primary : const Color(0xFFC7D9CF),
+          ),
+        ),
+        child: Text(
+          number,
+          style: TextStyle(
+            color: active ? Colors.white : AppColors.textSecondary,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        label,
+        style: TextStyle(
+          color: active ? AppColors.primary : AppColors.textSecondary,
+          fontSize: 7,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    ],
+  );
 }
 
 class _HeroPill extends StatelessWidget {
@@ -1085,11 +922,24 @@ class _HeroPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
-    child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
-      Icon(icon, color: const Color(0xFFFFD66B), size: 13),
-      const SizedBox(width: 5),
-      Text(label, style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800)),
-    ]),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Icon(icon, color: const Color(0xFFFFB300), size: 13),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 8,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    ),
   );
 }

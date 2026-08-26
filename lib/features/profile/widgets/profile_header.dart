@@ -31,9 +31,9 @@ class ProfileHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: <Color>[
-            Color(0xFF032A19),
-            Color(0xFF08723B),
-            Color(0xFF20A45A),
+            Color(0xFF1B5E20),
+            Color(0xFF2E7D32),
+            Color(0xFF2E7D32),
           ],
         ),
         borderRadius: BorderRadius.circular(30),
@@ -164,28 +164,28 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 76,
-        height: 76,
-        padding: const EdgeInsets.all(3),
-        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-        child: ClipOval(
-          child: photoUrl.startsWith('http')
-              ? Image.network(
-                  photoUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: _error,
-                )
+    width: 76,
+    height: 76,
+    padding: const EdgeInsets.all(3),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      shape: BoxShape.circle,
+    ),
+    child: ClipOval(
+      child:
+          photoUrl.startsWith('http')
+              ? Image.network(photoUrl, fit: BoxFit.cover, errorBuilder: _error)
               : _fallback(),
-        ),
-      );
+    ),
+  );
 
   Widget _error(BuildContext context, Object error, StackTrace? stackTrace) =>
       _fallback();
 
   Widget _fallback() => const ColoredBox(
-        color: Color(0xFFEAF7EF),
-        child: Icon(Icons.person_rounded, color: AppColors.primary, size: 40),
-      );
+    color: Color(0xFFE8F5E9),
+    child: Icon(Icons.person_rounded, color: AppColors.primary, size: 40),
+  );
 }
 
 class _ModePill extends StatelessWidget {
@@ -194,60 +194,64 @@ class _ModePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(20),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const Icon(Icons.verified_rounded, color: Color(0xFFFFB300), size: 15),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(Icons.verified_rounded, color: Color(0xFFFFD66B), size: 15),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 class _TrustStat extends StatelessWidget {
-  const _TrustStat({required this.icon, required this.value, required this.label});
+  const _TrustStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
   final IconData icon;
   final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) => Column(
-        children: <Widget>[
-          Icon(icon, color: const Color(0xFFFFD66B), size: 18),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFFBCE4CD),
-              fontSize: 7,
-              letterSpacing: 0.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      );
+    children: <Widget>[
+      Icon(icon, color: const Color(0xFFFFB300), size: 18),
+      const SizedBox(height: 5),
+      Text(
+        value,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 9.5,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFBCE4CD),
+          fontSize: 7,
+          letterSpacing: 0.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
 }
 
 class _Divider extends StatelessWidget {

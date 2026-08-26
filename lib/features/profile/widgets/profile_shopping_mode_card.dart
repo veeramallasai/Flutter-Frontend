@@ -21,7 +21,7 @@ class ProfileShoppingModeCard extends StatelessWidget {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF2FAF5)],
+          colors: <Color>[Color(0xFFFFFFFF), Color(0xFFE8F5E9)],
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFDDEBE3)),
@@ -105,48 +105,58 @@ class _ModeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: enabled ? onTap : null,
+    onTap: enabled ? onTap : null,
+    borderRadius: BorderRadius.circular(16),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFF1B5E20) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFF073D24) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? const Color(0xFF073D24) : const Color(0xFFDDE8E1),
+        border: Border.all(
+          color: selected ? const Color(0xFF1B5E20) : const Color(0xFFDDE8E1),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            icon,
+            color: selected ? const Color(0xFFFFB300) : AppColors.primary,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: selected ? Colors.white : AppColors.textPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color:
+                        selected
+                            ? const Color(0xFFC9E7D6)
+                            : AppColors.textSecondary,
+                    fontSize: 7.5,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: <Widget>[
-              Icon(icon, color: selected ? const Color(0xFFFFD66B) : AppColors.primary),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: selected ? Colors.white : AppColors.textPrimary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: selected ? const Color(0xFFC9E7D6) : AppColors.textSecondary,
-                        fontSize: 7.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (selected)
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 17),
-            ],
-          ),
-        ),
-      );
+          if (selected)
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+              size: 17,
+            ),
+        ],
+      ),
+    ),
+  );
 }

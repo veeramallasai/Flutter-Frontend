@@ -7,7 +7,7 @@ import '../data/repositories/notification_repository.dart';
 
 class NotificationProvider extends ChangeNotifier {
   NotificationProvider({NotificationRepository? repository})
-      : _repository = repository ?? NotificationRepository();
+    : _repository = repository ?? NotificationRepository();
 
   final NotificationRepository _repository;
   StreamSubscription<List<NotificationModel>>? _subscription;
@@ -51,8 +51,10 @@ class NotificationProvider extends ChangeNotifier {
   Future<void> markAsRead(String id) async {
     await _repository.markAsRead(id);
     _notifications = _notifications
-        .map((NotificationModel item) =>
-            item.id == id ? item.copyWith(isRead: true) : item)
+        .map(
+          (NotificationModel item) =>
+              item.id == id ? item.copyWith(isRead: true) : item,
+        )
         .toList(growable: false);
     _notify();
   }

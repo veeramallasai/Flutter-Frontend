@@ -29,8 +29,8 @@ class DeliverySlotModel {
   bool get canBook => isAvailable && hasCapacity;
 
   factory DeliverySlotModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> document,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
     return DeliverySlotModel.fromMap(
       document.data() ?? <String, dynamic>{},
       documentId: document.id,
@@ -38,9 +38,9 @@ class DeliverySlotModel {
   }
 
   factory DeliverySlotModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     return DeliverySlotModel(
       id: _text(documentId.isNotEmpty ? documentId : map['id']),
       method: _text(map['method'], fallback: 'scheduled').toLowerCase(),

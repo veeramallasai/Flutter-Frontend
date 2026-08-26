@@ -7,7 +7,7 @@ import '../data/repositories/payment_repository.dart';
 
 class PaymentProvider extends ChangeNotifier {
   PaymentProvider({PaymentRepository? repository})
-      : _repository = repository ?? PaymentRepository();
+    : _repository = repository ?? PaymentRepository();
 
   final PaymentRepository _repository;
 
@@ -19,15 +19,13 @@ class PaymentProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _disposed = false;
 
-  List<PaymentModel> get payments =>
-      List<PaymentModel>.unmodifiable(_payments);
+  List<PaymentModel> get payments => List<PaymentModel>.unmodifiable(_payments);
   bool get isLoading => _isLoading;
   bool get isProcessing => _isProcessing;
   String get processingPaymentId => _processingPaymentId;
   String? get errorMessage => _errorMessage;
   bool get hasError => _errorMessage?.trim().isNotEmpty ?? false;
-  PaymentModel? get latestPayment =>
-      _payments.isEmpty ? null : _payments.first;
+  PaymentModel? get latestPayment => _payments.isEmpty ? null : _payments.first;
 
   void listenToPayments({int limit = 50}) {
     _subscription?.cancel();
@@ -40,19 +38,19 @@ class PaymentProvider extends ChangeNotifier {
           .watchCurrentUserPayments(limit: limit)
           .listen(
             (List<PaymentModel> values) {
-          if (_disposed) return;
-          _payments = List<PaymentModel>.from(values);
-          _isLoading = false;
-          _errorMessage = null;
-          _notify();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          if (_disposed) return;
-          _isLoading = false;
-          _errorMessage = _friendlyError(error);
-          _notify();
-        },
-      );
+              if (_disposed) return;
+              _payments = List<PaymentModel>.from(values);
+              _isLoading = false;
+              _errorMessage = null;
+              _notify();
+            },
+            onError: (Object error, StackTrace stackTrace) {
+              if (_disposed) return;
+              _isLoading = false;
+              _errorMessage = _friendlyError(error);
+              _notify();
+            },
+          );
     } catch (error) {
       _isLoading = false;
       _errorMessage = _friendlyError(error);

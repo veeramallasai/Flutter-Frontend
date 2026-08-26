@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/app_routes.dart';
@@ -24,10 +24,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _savingMode = false;
   bool _loggingOut = false;
   final OrderRepository _orders = OrderRepository();
+  Stream<List<OrderModel>>? _profileOrdersStream;
+  String? _profileOrdersUserId;
 
   Future<void> _logout() async {
     setState(() => _loggingOut = true);
-    await FirebaseAuth.instance.signOut();
+    await BackendAuth.instance.signOut();
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -38,18 +40,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _changeShoppingMode(String mode) async {
     if (_savingMode) return;
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = BackendAuth.instance.currentUser;
     if (user == null) return;
     setState(() => _savingMode = true);
     try {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        <String, dynamic>{
-          'shoppingMode': mode == 'shop' ? 'shop' : 'home',
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      if (mounted) _message(mode == 'shop' ? 'Shop Owner mode selected.' : 'Home Shopping mode selected.');
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(<String, dynamic>{
+            'shoppingMode': mode == 'shop' ? 'shop' : 'home',
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+      if (mounted)
+        _message(
+          mode == 'shop'
+              ? 'Shop Owner mode selected.'
+              : 'Home Shopping mode selected.',
+        );
     } catch (error) {
       if (mounted) _message('Unable to change shopping mode.', error: true);
     } finally {
@@ -57,14 +64,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _orderOverview() {
+  Widget _orderOverview(User? user) {
+    if (user == null || user.uid.trim().isEmpty) {
+      return OrderSummaryCard(
+        totalOrders: 0,
+        activeOrders: 0,
+        totalSavings: 0,
+        onTap: () => Navigator.pushNamed(context, AppRoutes.orders),
+      );
+    }
+
+    if (_profileOrdersUserId != user.uid || _profileOrdersStream == null) {
+      _profileOrdersUserId = user.uid;
+      _profileOrdersStream =
+          _orders.watchCurrentUserOrders(limit: 50).asBroadcastStream();
+    }
+
     return StreamBuilder<List<OrderModel>>(
-      stream: _orders.watchCurrentUserOrders(limit: 50),
-      builder: (BuildContext context, AsyncSnapshot<List<OrderModel>> snapshot) {
+      stream: _profileOrdersStream,
+      builder: (
+        BuildContext context,
+        AsyncSnapshot<List<OrderModel>> snapshot,
+      ) {
+        if (snapshot.hasError) {
+          return OrderSummaryCard(
+            totalOrders: 0,
+            activeOrders: 0,
+            totalSavings: 0,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.orders),
+          );
+        }
+
         final List<OrderModel> orders = snapshot.data ?? <OrderModel>[];
-        final int active = orders.where((OrderModel order) {
-          return !order.isDelivered && !order.isCancelled && !order.isFailed;
-        }).length;
+        final int active =
+            orders.where((OrderModel order) {
+              return !order.isDelivered &&
+                  !order.isCancelled &&
+                  !order.isFailed;
+            }).length;
         final double savings = orders.fold<double>(
           0,
           (double value, OrderModel order) => value + order.totalSavings,
@@ -80,10 +117,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _setLoginPassword() async {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = BackendAuth.instance.currentUser;
     final String email = user?.email?.trim() ?? '';
     if (user == null || email.isEmpty) {
-      _message('A verified email is required to set a login password.', error: true);
+      _message(
+        'A verified email is required to set a login password.',
+        error: true,
+      );
       return;
     }
 
@@ -92,72 +132,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     final String? value = await showDialog<String>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Set login password'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Use $email with this password on your next login.',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                  height: 1.45,
-                ),
+      builder:
+          (BuildContext dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: const Text('Set login password'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Use $email with this password on your next login.',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: password,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'New password',
+                      prefixIcon: Icon(Icons.lock_outline_rounded),
+                    ),
+                    validator: (String? input) {
+                      final String text = input ?? '';
+                      if (text.length < 8) return 'Use at least 8 characters';
+                      if (!RegExp(r'[A-Z]').hasMatch(text) ||
+                          !RegExp(r'[a-z]').hasMatch(text) ||
+                          !RegExp(r'\d').hasMatch(text)) {
+                        return 'Add uppercase, lowercase and a number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: confirm,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm password',
+                      prefixIcon: Icon(Icons.verified_user_outlined),
+                    ),
+                    validator:
+                        (String? input) =>
+                            input != password.text
+                                ? 'Passwords do not match'
+                                : null,
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: password,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New password',
-                  prefixIcon: Icon(Icons.lock_outline_rounded),
-                ),
-                validator: (String? input) {
-                  final String text = input ?? '';
-                  if (text.length < 8) return 'Use at least 8 characters';
-                  if (!RegExp(r'[A-Z]').hasMatch(text) ||
-                      !RegExp(r'[a-z]').hasMatch(text) ||
-                      !RegExp(r'\d').hasMatch(text)) {
-                    return 'Add uppercase, lowercase and a number';
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('CANCEL'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (formKey.currentState?.validate() == true) {
+                    Navigator.pop(dialogContext, password.text);
                   }
-                  return null;
                 },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: confirm,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm password',
-                  prefixIcon: Icon(Icons.verified_user_outlined),
-                ),
-                validator: (String? input) => input != password.text
-                    ? 'Passwords do not match'
-                    : null,
+                child: const Text('SAVE PASSWORD'),
               ),
             ],
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('CANCEL'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() == true) {
-                Navigator.pop(dialogContext, password.text);
-              }
-            },
-            child: const Text('SAVE PASSWORD'),
-          ),
-        ],
-      ),
     );
     password.dispose();
     confirm.dispose();
@@ -185,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       if (!mounted) return;
       _message('Email & password login is ready.');
-    } on FirebaseAuthException catch (error) {
+    } on BackendAuthException catch (error) {
       if (!mounted) return;
       _message(
         error.code == 'requires-recent-login'
@@ -205,37 +250,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
         SnackBar(
           content: Text(value),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: error ? AppColors.error : const Color(0xFF073D24),
+          backgroundColor: error ? AppColors.error : const Color(0xFF1B5E20),
         ),
       );
   }
 
   @override
   Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = BackendAuth.instance.currentUser;
     final String uid = user?.uid ?? '';
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7F5),
+      backgroundColor: const Color(0xFFF9FAF9),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: uid.isEmpty
-              ? const Stream<DocumentSnapshot<Map<String, dynamic>>>.empty()
-              : FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+          stream:
+              uid.isEmpty
+                  ? const Stream<DocumentSnapshot<Map<String, dynamic>>>.empty()
+                  : FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .snapshots(),
           builder: (
             BuildContext context,
             AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot,
           ) {
             final Map<String, dynamic> data =
                 snapshot.data?.data() ?? <String, dynamic>{};
-            final String name = (data['displayName'] ?? user?.displayName ?? '')
-                .toString()
-                .trim();
+            final String name =
+                (data['displayName'] ?? user?.displayName ?? '')
+                    .toString()
+                    .trim();
             final String displayName = name.isEmpty ? 'Fresh Shopper' : name;
-            final String email = (data['email'] ?? user?.email ?? '').toString();
-            final String phone = (data['phoneNumber'] ?? user?.phoneNumber ?? '').toString();
-            final String photo = (data['photoUrl'] ?? user?.photoURL ?? '').toString();
-            final String rawMode = data['shoppingMode'] == 'shop' ? 'shop' : 'home';
-            final String mode = rawMode == 'shop' ? 'Shop Owner' : 'Home Shopping';
+            final String email =
+                (data['email'] ?? user?.email ?? '').toString();
+            final String phone =
+                (data['phoneNumber'] ?? user?.phoneNumber ?? '').toString();
+            final String photo =
+                (data['photoUrl'] ?? user?.photoURL ?? '').toString();
+            final String rawMode =
+                data['shoppingMode'] == 'shop' ? 'shop' : 'home';
+            final String mode =
+                rawMode == 'shop' ? 'Shop Owner' : 'Home Shopping';
 
             return CustomScrollView(
               slivers: <Widget>[
@@ -246,14 +301,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     phone: phone,
                     photoUrl: photo,
                     shoppingMode: mode,
-                    onEdit: () => Navigator.pushNamed(context, AppRoutes.editProfile),
+                    onEdit:
+                        () =>
+                            Navigator.pushNamed(context, AppRoutes.editProfile),
                   ),
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate(<Widget>[
-                      _orderOverview(),
+                      _orderOverview(user),
                       const SizedBox(height: 13),
                       ProfileShoppingModeCard(
                         mode: rawMode,
@@ -267,19 +324,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.manage_accounts_rounded,
                         title: 'Edit profile',
                         subtitle: 'Name, phone and profile photo',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.editProfile),
+                        onTap:
+                            () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.editProfile,
+                            ),
                       ),
                       ProfileMenuItem(
                         icon: Icons.receipt_long_rounded,
                         title: 'Orders & live tracking',
                         subtitle: 'Track deliveries, invoices and reorder',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.orders),
+                        onTap:
+                            () =>
+                                Navigator.pushNamed(context, AppRoutes.orders),
                       ),
                       ProfileMenuItem(
                         icon: Icons.location_on_rounded,
                         title: 'Saved delivery addresses',
                         subtitle: 'Home, shop and preferred locations',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.savedAddresses),
+                        onTap:
+                            () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.savedAddresses,
+                            ),
                       ),
                       ProfileMenuItem(
                         icon: Icons.lock_person_rounded,
@@ -295,26 +362,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.notifications_rounded,
                         title: 'Notifications',
                         subtitle: 'Order alerts and fresh deal preferences',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.notifications),
+                        onTap:
+                            () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.notifications,
+                            ),
                       ),
                       ProfileMenuItem(
                         icon: Icons.tune_rounded,
                         title: 'App preferences',
                         subtitle: 'Notifications, language and privacy',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
+                        onTap:
+                            () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.settings,
+                            ),
                       ),
                       ProfileMenuItem(
                         icon: Icons.support_agent_rounded,
                         title: 'Priority support',
                         subtitle: 'Help with orders, refunds and payments',
                         badge: 'LIVE',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.support),
+                        onTap:
+                            () =>
+                                Navigator.pushNamed(context, AppRoutes.support),
                       ),
                       ProfileMenuItem(
                         icon: Icons.shield_rounded,
                         title: 'Privacy & security',
                         subtitle: 'Account protection and data controls',
-                        onTap: () => Navigator.pushNamed(context, AppRoutes.privacy),
+                        onTap:
+                            () =>
+                                Navigator.pushNamed(context, AppRoutes.privacy),
                       ),
                       const SizedBox(height: 18),
                       LogoutButton(onPressed: _logout, loading: _loggingOut),
@@ -336,19 +415,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             AppRoutes.orders,
             AppRoutes.profile,
           ];
-          if (index != 4) Navigator.pushReplacementNamed(context, routes[index]);
+          if (index != 4)
+            Navigator.pushReplacementNamed(context, routes[index]);
         },
         destinations: const <NavigationDestination>[
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.grid_view_rounded), label: 'Categories'),
-          NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), label: 'Cart'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'Orders'),
-          NavigationDestination(icon: Icon(Icons.person_rounded), label: 'Profile'),
+          NavigationDestination(
+            icon: Icon(Icons.grid_view_rounded),
+            label: 'Categories',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_bag_outlined),
+            label: 'Cart',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            label: 'Orders',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
         ],
       ),
     );
   }
-
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -356,7 +447,12 @@ class _SectionTitle extends StatelessWidget {
   final String value;
   @override
   Widget build(BuildContext context) => Text(
-        value,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 9.5, letterSpacing: 1.15, fontWeight: FontWeight.w900),
-      );
+    value,
+    style: const TextStyle(
+      color: AppColors.textSecondary,
+      fontSize: 9.5,
+      letterSpacing: 1.15,
+      fontWeight: FontWeight.w900,
+    ),
+  );
 }

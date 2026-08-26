@@ -19,23 +19,27 @@ class DeliveryTimeSelector extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: times.map((String time) {
-        final bool selected = time == selectedTime;
-        return ChoiceChip(
-          label: Text(time),
-          selected: selected,
-          showCheckmark: false,
-          onSelected: (_) => onChanged(time),
-          selectedColor: const Color(0xFFE4F6EB),
-          backgroundColor: Colors.white,
-          side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
-          labelStyle: TextStyle(
-            color: selected ? AppColors.primary : AppColors.textSecondary,
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-          ),
-        );
-      }).toList(growable: false),
+      children: times
+          .map((String time) {
+            final bool selected = time == selectedTime;
+            return ChoiceChip(
+              label: Text(time),
+              selected: selected,
+              showCheckmark: false,
+              onSelected: (_) => onChanged(time),
+              selectedColor: const Color(0xFFE8F5E9),
+              backgroundColor: Colors.white,
+              side: BorderSide(
+                color: selected ? AppColors.primary : AppColors.border,
+              ),
+              labelStyle: TextStyle(
+                color: selected ? AppColors.primary : AppColors.textSecondary,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+              ),
+            );
+          })
+          .toList(growable: false),
     );
   }
 }

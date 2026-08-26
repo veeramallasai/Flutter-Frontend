@@ -8,7 +8,7 @@ import '../data/repositories/delivery_repository.dart';
 
 class DeliveryProvider extends ChangeNotifier {
   DeliveryProvider({DeliveryRepository? repository})
-      : _repository = repository ?? DeliveryRepository();
+    : _repository = repository ?? DeliveryRepository();
 
   final DeliveryRepository _repository;
   StreamSubscription<List<DeliverySlotModel>>? _subscription;
@@ -32,10 +32,7 @@ class DeliveryProvider extends ChangeNotifier {
   bool get isReserving => _isReserving;
   String? get errorMessage => _errorMessage;
 
-  void initialize({
-    required String shoppingMode,
-    String method = 'quick',
-  }) {
+  void initialize({required String shoppingMode, String method = 'quick'}) {
     _shoppingMode = shoppingMode.toLowerCase() == 'shop' ? 'shop' : 'home';
     _method = method.trim().toLowerCase();
     _selectedDate ??= DateTime.now();
@@ -72,19 +69,19 @@ class DeliveryProvider extends ChangeNotifier {
           .watchSlots(method: _method, date: _selectedDate)
           .listen(
             (List<DeliverySlotModel> values) {
-          if (_disposed) return;
-          _slots = List<DeliverySlotModel>.from(values);
-          _isLoading = false;
-          _errorMessage = null;
-          _notify();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          if (_disposed) return;
-          _isLoading = false;
-          _errorMessage = _friendlyError(error);
-          _notify();
-        },
-      );
+              if (_disposed) return;
+              _slots = List<DeliverySlotModel>.from(values);
+              _isLoading = false;
+              _errorMessage = null;
+              _notify();
+            },
+            onError: (Object error, StackTrace stackTrace) {
+              if (_disposed) return;
+              _isLoading = false;
+              _errorMessage = _friendlyError(error);
+              _notify();
+            },
+          );
     } catch (error) {
       _isLoading = false;
       _errorMessage = _friendlyError(error);

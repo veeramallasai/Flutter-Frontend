@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -86,9 +86,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         _orderId = orderValue.id;
       }
 
-      final String argumentOrderId = (map['orderId'] ?? map['id'] ?? '')
-          .toString()
-          .trim();
+      final String argumentOrderId =
+          (map['orderId'] ?? map['id'] ?? '').toString().trim();
 
       if (argumentOrderId.isNotEmpty) {
         _orderId = argumentOrderId;
@@ -105,41 +104,41 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           children: <Widget>[
             _buildHeader(),
             Expanded(
-              child: _orderStream == null
-                  ? _buildWithoutStream()
-                  : StreamBuilder<OrderModel?>(
-                      stream: _orderStream,
-                      initialData: _initialOrder,
-                      builder:
-                          (
-                            BuildContext context,
-                            AsyncSnapshot<OrderModel?> snapshot,
-                          ) {
-                            if (snapshot.connectionState ==
-                                    ConnectionState.waiting &&
-                                snapshot.data == null) {
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primary,
-                                ),
-                              );
-                            }
+              child:
+                  _orderStream == null
+                      ? _buildWithoutStream()
+                      : StreamBuilder<OrderModel?>(
+                        stream: _orderStream,
+                        initialData: _initialOrder,
+                        builder: (
+                          BuildContext context,
+                          AsyncSnapshot<OrderModel?> snapshot,
+                        ) {
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              snapshot.data == null) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                            );
+                          }
 
-                            if (snapshot.hasError) {
-                              return _buildErrorState(
-                                _friendlyError(snapshot.error),
-                              );
-                            }
+                          if (snapshot.hasError) {
+                            return _buildErrorState(
+                              _friendlyError(snapshot.error),
+                            );
+                          }
 
-                            final OrderModel? order = snapshot.data;
+                          final OrderModel? order = snapshot.data;
 
-                            if (order == null) {
-                              return _buildErrorState('Order not found.');
-                            }
+                          if (order == null) {
+                            return _buildErrorState('Order not found.');
+                          }
 
-                            return _buildOrderContent(order);
-                          },
-                    ),
+                          return _buildOrderContent(order);
+                        },
+                      ),
             ),
           ],
         ),
@@ -172,7 +171,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             width: 43,
             height: 43,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(13),
             ),
             child: const Icon(
@@ -240,54 +239,54 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               const SizedBox(height: 18),
               desktop
                   ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          flex: 6,
-                          child: Column(
-                            children: <Widget>[
-                              _buildItemsCard(order),
-                              if (order.isDelivered) ...<Widget>[
-                                const SizedBox(height: 16),
-                                _buildReviewSection(order),
-                              ],
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                        flex: 6,
+                        child: Column(
+                          children: <Widget>[
+                            _buildItemsCard(order),
+                            if (order.isDelivered) ...<Widget>[
                               const SizedBox(height: 16),
-                              _buildDeliveryCard(order),
+                              _buildReviewSection(order),
                             ],
-                          ),
+                            const SizedBox(height: 16),
+                            _buildDeliveryCard(order),
+                          ],
                         ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          flex: 4,
-                          child: Column(
-                            children: <Widget>[
-                              _buildPriceCard(order),
-                              const SizedBox(height: 16),
-                              _buildPaymentCard(order),
-                              const SizedBox(height: 16),
-                              _buildAddressCard(order),
-                            ],
-                          ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          children: <Widget>[
+                            _buildPriceCard(order),
+                            const SizedBox(height: 16),
+                            _buildPaymentCard(order),
+                            const SizedBox(height: 16),
+                            _buildAddressCard(order),
+                          ],
                         ),
-                      ],
-                    )
+                      ),
+                    ],
+                  )
                   : Column(
-                      children: <Widget>[
-                        _buildItemsCard(order),
-                        if (order.isDelivered) ...<Widget>[
-                          const SizedBox(height: 16),
-                          _buildReviewSection(order),
-                        ],
+                    children: <Widget>[
+                      _buildItemsCard(order),
+                      if (order.isDelivered) ...<Widget>[
                         const SizedBox(height: 16),
-                        _buildPriceCard(order),
-                        const SizedBox(height: 16),
-                        _buildDeliveryCard(order),
-                        const SizedBox(height: 16),
-                        _buildPaymentCard(order),
-                        const SizedBox(height: 16),
-                        _buildAddressCard(order),
+                        _buildReviewSection(order),
                       ],
-                    ),
+                      const SizedBox(height: 16),
+                      _buildPriceCard(order),
+                      const SizedBox(height: 16),
+                      _buildDeliveryCard(order),
+                      const SizedBox(height: 16),
+                      _buildPaymentCard(order),
+                      const SizedBox(height: 16),
+                      _buildAddressCard(order),
+                    ],
+                  ),
               const SizedBox(height: 22),
               _buildActions(order),
             ],
@@ -307,7 +306,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFF043D22), Color(0xFF17A45B)],
+          colors: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: const <BoxShadow>[
@@ -346,7 +345,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 Text(
                   _statusMessage(order.status),
                   style: const TextStyle(
-                    color: Color(0xFFDDF4E7),
+                    color: Color(0xFFE8F5E9),
                     fontSize: 10.5,
                     height: 1.4,
                     fontWeight: FontWeight.w600,
@@ -370,7 +369,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             _formatDate(order.createdAt),
             textAlign: TextAlign.right,
             style: const TextStyle(
-              color: Color(0xFFDDF4E7),
+              color: Color(0xFFE8F5E9),
               fontSize: 9,
               fontWeight: FontWeight.w700,
             ),
@@ -398,32 +397,32 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       icon: Icons.shopping_basket_rounded,
       title: 'Order Items',
       trailing: '${order.calculatedItemCount} items',
-      child: order.items.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Center(
-                child: Text(
-                  'Item details are unavailable.',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+      child:
+          order.items.isEmpty
+              ? const Padding(
+                padding: EdgeInsets.symmetric(vertical: 14),
+                child: Center(
+                  child: Text(
+                    'Item details are unavailable.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+              )
+              : Column(
+                children: <Widget>[
+                  for (int index = 0; index < order.items.length; index++)
+                    OrderItemTile(
+                      item: order.items[index],
+                      showDivider: index < order.items.length - 1,
+                    ),
+                ],
               ),
-            )
-          : Column(
-              children: <Widget>[
-                for (int index = 0; index < order.items.length; index++)
-                  OrderItemTile(
-                    item: order.items[index],
-                    showDivider: index < order.items.length - 1,
-                  ),
-              ],
-            ),
     );
   }
-
 
   Widget _buildReviewSection(OrderModel order) {
     return _sectionCard(
@@ -454,7 +453,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: <Color>[Color(0xFFEAF7EF), Color(0xFFFFFBEC)],
+                colors: <Color>[Color(0xFFE8F5E9), Color(0xFFFFFBEC)],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFCDE5D7)),
@@ -472,9 +471,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       item['productName'] ?? item['name'] ?? item['title'],
       fallback: 'Product ${index + 1}',
     );
-    final String productId = _text(
-      item['productId'] ?? item['id'],
-    );
+    final String productId = _text(item['productId'] ?? item['id']);
 
     return Row(
       children: <Widget>[
@@ -520,9 +517,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         ),
         const SizedBox(width: 8),
         FilledButton.icon(
-          onPressed: productId.isEmpty
-              ? null
-              : () => _openProductReviewDialog(
+          onPressed:
+              productId.isEmpty
+                  ? null
+                  : () => _openProductReviewDialog(
                     order: order,
                     productId: productId,
                     productName: productName,
@@ -576,7 +574,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           );
         }
 
-        if (snapshot.hasError || snapshot.data == null || snapshot.data!.isEmpty) {
+        if (snapshot.hasError ||
+            snapshot.data == null ||
+            snapshot.data!.isEmpty) {
           return const Row(
             children: <Widget>[
               Icon(
@@ -601,11 +601,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         }
 
         final Map<String, dynamic> partner = snapshot.data!;
-        final String partnerName =
-            _text(partner['name'], fallback: 'Delivery Partner');
+        final String partnerName = _text(
+          partner['name'],
+          fallback: 'Delivery Partner',
+        );
         final String vehicle = _text(partner['vehicleNumber']);
-        final double rating =
-            double.tryParse('${partner['rating'] ?? 0}') ?? 0;
+        final double rating = double.tryParse('${partner['rating'] ?? 0}') ?? 0;
 
         return Row(
           children: <Widget>[
@@ -650,10 +651,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () => _openDeliveryPartnerReviewDialog(
-                order: order,
-                partnerName: partnerName,
-              ),
+              onPressed:
+                  () => _openDeliveryPartnerReviewDialog(
+                    order: order,
+                    partnerName: partnerName,
+                  ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 side: const BorderSide(color: AppColors.primary),
@@ -737,51 +739,56 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               actions: <Widget>[
                 TextButton(
                   onPressed:
-                      saving ? null : () => Navigator.of(dialogContext).pop(false),
+                      saving
+                          ? null
+                          : () => Navigator.of(dialogContext).pop(false),
                   child: const Text('CANCEL'),
                 ),
                 FilledButton(
-                  onPressed: saving
-                      ? null
-                      : () async {
-                          setDialogState(() => saving = true);
-                          try {
-                            final User? user = FirebaseAuth.instance.currentUser;
-                            final String userName = _reviewUserName(user);
-                            await _reviewRepository.saveReview(
-                              ReviewModel(
-                                id: '',
-                                productId: productId,
-                                userId: user?.uid ?? '',
-                                userName: userName,
-                                rating: rating,
-                                comment: commentController.text.trim(),
-                                isVerifiedPurchase: true,
-                              ),
-                            );
-                            if (dialogContext.mounted) {
-                              Navigator.of(dialogContext).pop(true);
-                            }
-                          } catch (error) {
-                            setDialogState(() => saving = false);
-                            if (mounted) {
-                              _showMessage(
-                                _friendlyError(error),
-                                error: true,
+                  onPressed:
+                      saving
+                          ? null
+                          : () async {
+                            setDialogState(() => saving = true);
+                            try {
+                              final User? user =
+                                  BackendAuth.instance.currentUser;
+                              final String userName = _reviewUserName(user);
+                              await _reviewRepository.saveReview(
+                                ReviewModel(
+                                  id: '',
+                                  productId: productId,
+                                  userId: user?.uid ?? '',
+                                  userName: userName,
+                                  rating: rating,
+                                  comment: commentController.text.trim(),
+                                  isVerifiedPurchase: true,
+                                ),
                               );
+                              if (dialogContext.mounted) {
+                                Navigator.of(dialogContext).pop(true);
+                              }
+                            } catch (error) {
+                              setDialogState(() => saving = false);
+                              if (mounted) {
+                                _showMessage(
+                                  _friendlyError(error),
+                                  error: true,
+                                );
+                              }
                             }
-                          }
-                        },
-                  child: saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('SUBMIT REVIEW'),
+                          },
+                  child:
+                      saving
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text('SUBMIT REVIEW'),
                 ),
               ],
             );
@@ -807,8 +814,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     bool saving = false;
 
     try {
-      final Map<String, dynamic> existing =
-          await _reviewRepository.getDeliveryPartnerReview(order.id);
+      final Map<String, dynamic> existing = await _reviewRepository
+          .getDeliveryPartnerReview(order.id);
       if (existing.isNotEmpty) {
         rating = double.tryParse('${existing['rating'] ?? 5}') ?? 5;
         commentController.text = _text(existing['comment']);
@@ -877,43 +884,47 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               actions: <Widget>[
                 TextButton(
                   onPressed:
-                      saving ? null : () => Navigator.of(dialogContext).pop(false),
+                      saving
+                          ? null
+                          : () => Navigator.of(dialogContext).pop(false),
                   child: const Text('CANCEL'),
                 ),
                 FilledButton(
-                  onPressed: saving
-                      ? null
-                      : () async {
-                          setDialogState(() => saving = true);
-                          try {
-                            await _reviewRepository.saveDeliveryPartnerReview(
-                              orderId: order.id,
-                              rating: rating,
-                              comment: commentController.text,
-                            );
-                            if (dialogContext.mounted) {
-                              Navigator.of(dialogContext).pop(true);
-                            }
-                          } catch (error) {
-                            setDialogState(() => saving = false);
-                            if (mounted) {
-                              _showMessage(
-                                _friendlyError(error),
-                                error: true,
+                  onPressed:
+                      saving
+                          ? null
+                          : () async {
+                            setDialogState(() => saving = true);
+                            try {
+                              await _reviewRepository.saveDeliveryPartnerReview(
+                                orderId: order.id,
+                                rating: rating,
+                                comment: commentController.text,
                               );
+                              if (dialogContext.mounted) {
+                                Navigator.of(dialogContext).pop(true);
+                              }
+                            } catch (error) {
+                              setDialogState(() => saving = false);
+                              if (mounted) {
+                                _showMessage(
+                                  _friendlyError(error),
+                                  error: true,
+                                );
+                              }
                             }
-                          }
-                        },
-                  child: saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('SUBMIT REVIEW'),
+                          },
+                  child:
+                      saving
+                          ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text('SUBMIT REVIEW'),
                 ),
               ],
             );
@@ -945,7 +956,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               index <= rating.round()
                   ? Icons.star_rounded
                   : Icons.star_border_rounded,
-              color: const Color(0xFFFFB000),
+              color: const Color(0xFFFFB300),
               size: 34,
             ),
           ),
@@ -985,7 +996,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Row(
@@ -1025,9 +1036,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           _detailRow(
             'Status',
             order.paymentStatusLabel,
-            valueColor: order.isPaid
-                ? AppColors.primary
-                : const Color(0xFFE28A00),
+            valueColor:
+                order.isPaid ? AppColors.primary : const Color(0xFFE28A00),
           ),
           if (order.transactionId.isNotEmpty)
             _detailRow('Transaction ID', order.transactionId),
@@ -1074,7 +1084,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             FilledButton.icon(
               onPressed: () => _payNow(order),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF073D24),
+                backgroundColor: const Color(0xFF1B5E20),
                 minimumSize: const Size.fromHeight(50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -1167,7 +1177,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
+                  color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 21),
@@ -1216,9 +1226,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: important
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
+                color:
+                    important ? AppColors.textPrimary : AppColors.textSecondary,
                 fontSize: important ? 12.5 : 10.5,
                 fontWeight: important ? FontWeight.w900 : FontWeight.w600,
               ),
@@ -1284,16 +1293,17 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   borderRadius: BorderRadius.circular(15),
                 ),
               ),
-              icon: _cancelling
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        color: AppColors.error,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : const Icon(Icons.close_rounded),
+              icon:
+                  _cancelling
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: AppColors.error,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                      : const Icon(Icons.close_rounded),
               label: Text(
                 _cancelling ? 'CANCELLING...' : 'CANCEL ORDER',
                 style: const TextStyle(fontWeight: FontWeight.w900),
@@ -1437,8 +1447,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Future<void> _openOrderTracking(OrderModel order) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            OrderTrackingScreen(orderId: order.id, initialOrder: order),
+        builder:
+            (_) => OrderTrackingScreen(orderId: order.id, initialOrder: order),
       ),
     );
   }
@@ -1446,21 +1456,25 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Future<void> _payNow(OrderModel order) async {
     await showDialog<void>(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        icon: const Icon(Icons.verified_user_rounded, color: AppColors.primary),
-        title: const Text('Secure online payment'),
-        content: Text(
-          'Your COD order for ₹${order.totalAmount.toStringAsFixed(0)} is safe. '
-          'UPI and card payment will be enabled after the Razorpay production '
-          'account and webhook secret are configured.',
-        ),
-        actions: <Widget>[
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('OK'),
+      builder:
+          (BuildContext dialogContext) => AlertDialog(
+            icon: const Icon(
+              Icons.verified_user_rounded,
+              color: AppColors.primary,
+            ),
+            title: const Text('Secure online payment'),
+            content: Text(
+              'Your COD order for ₹${order.totalAmount.toStringAsFixed(0)} is safe. '
+              'UPI and card payment will be enabled after the Razorpay production '
+              'account and webhook secret are configured.',
+            ),
+            actions: <Widget>[
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -1606,16 +1620,17 @@ String _formatDate(DateTime? date) {
 }
 
 String _formatAddress(Map<String, dynamic> address) {
-  final List<String> parts = <String>[
-    _text(address['houseNumber'] ?? address['houseNo']),
-    _text(address['building'] ?? address['apartment']),
-    _text(address['street'] ?? address['addressLine1']),
-    _text(address['landmark']),
-    _text(address['area'] ?? address['addressLine2']),
-    _text(address['city']),
-    _text(address['state']),
-    _text(address['pincode'] ?? address['postalCode']),
-  ].where((String value) => value.isNotEmpty).toList();
+  final List<String> parts =
+      <String>[
+        _text(address['houseNumber'] ?? address['houseNo']),
+        _text(address['building'] ?? address['apartment']),
+        _text(address['street'] ?? address['addressLine1']),
+        _text(address['landmark']),
+        _text(address['area'] ?? address['addressLine2']),
+        _text(address['city']),
+        _text(address['state']),
+        _text(address['pincode'] ?? address['postalCode']),
+      ].where((String value) => value.isNotEmpty).toList();
 
   if (parts.isNotEmpty) {
     return parts.join(', ');

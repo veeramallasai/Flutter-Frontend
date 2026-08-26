@@ -111,7 +111,9 @@ class _SearchScreenState extends State<SearchScreen> {
     if (query.isEmpty) return;
     setState(() {
       _recentSearches
-        ..removeWhere((String item) => item.toLowerCase() == query.toLowerCase())
+        ..removeWhere(
+          (String item) => item.toLowerCase() == query.toLowerCase(),
+        )
         ..insert(0, query);
       if (_recentSearches.length > 5) _recentSearches.removeLast();
     });
@@ -136,122 +138,157 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final double width = MediaQuery.sizeOf(context).width;
-    final int columns = width >= 1100 ? 5 : width >= 800 ? 4 : width >= 560 ? 3 : 2;
+    final int columns =
+        width >= 1100
+            ? 5
+            : width >= 800
+            ? 4
+            : width >= 560
+            ? 3
+            : 2;
     return ListenableBuilder(
       listenable: _cartProvider,
-      builder: (BuildContext context, Widget? child) => Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Search Products'),
-        actions: <Widget>[
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
-            icon: CartBadgeIcon(count: _cartProvider.itemCount),
-          ),
-        ],
-      ),
-      body: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: PremiumSearchInput(
-              controller: _controller,
-              onChanged: _updateQuery,
-              onSubmitted: _rememberQuery,
-              onClear: () {
-                _controller.clear();
-                _updateQuery('');
-              },
-              onFilterTap: _openFilters,
-              hasFilters: _filters.isActive,
+      builder:
+          (BuildContext context, Widget? child) => Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              title: const Text('Search Products'),
+              actions: <Widget>[
+                IconButton(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
+                  icon: CartBadgeIcon(count: _cartProvider.itemCount),
+                ),
+              ],
             ),
-          ),
-          if (_query.isEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  RecentSearches(
-                    queries: _recentSearches,
-                    onSelected: _selectSuggestion,
-                    onClear: () => setState(_recentSearches.clear),
+            body: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                  child: PremiumSearchInput(
+                    controller: _controller,
+                    onChanged: _updateQuery,
+                    onSubmitted: _rememberQuery,
+                    onClear: () {
+                      _controller.clear();
+                      _updateQuery('');
+                    },
+                    onFilterTap: _openFilters,
+                    hasFilters: _filters.isActive,
                   ),
-                  if (_recentSearches.isNotEmpty) const SizedBox(height: 12),
-                  PopularSearches(onSelected: _selectSuggestion),
-                ],
-              ),
-            ),
-          Expanded(
-            child: StreamBuilder<List<ProductModel>>(
-              stream: _products.watchProducts(limit: 200),
-              builder: (BuildContext context, AsyncSnapshot<List<ProductModel>> snapshot) {
-                final String query = _query.toLowerCase();
-                final List<ProductModel> values = (snapshot.data ?? <ProductModel>[])
-                    .where((ProductModel product) {
-                      final bool matchesQuery = query.isEmpty ||
-                          product.name.toLowerCase().contains(query) ||
-                          product.category.toLowerCase().contains(query);
-                      final bool matchesCategory = _filters.category == 'all' ||
-                          product.category.toLowerCase() == _filters.category;
-                      final bool matchesOffer = !_filters.offersOnly || product.savings > 0;
-                      return matchesQuery && matchesCategory && matchesOffer;
-                    })
-                    .toList();
-
-                switch (_filters.sort) {
-                  case 'low':
-                    values.sort((ProductModel a, ProductModel b) => a.price.compareTo(b.price));
-                    break;
-                  case 'high':
-                    values.sort((ProductModel a, ProductModel b) => b.price.compareTo(a.price));
-                    break;
-                  case 'rating':
-                    values.sort((ProductModel a, ProductModel b) => b.rating.compareTo(a.rating));
-                    break;
-                  case 'discount':
-                    values.sort((ProductModel a, ProductModel b) => b.discountPercent.compareTo(a.discountPercent));
-                    break;
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting && values.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (values.isEmpty) {
-                  return const _SearchEmpty();
-                }
-                return GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 306,
+                ),
+                if (_query.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        RecentSearches(
+                          queries: _recentSearches,
+                          onSelected: _selectSuggestion,
+                          onClear: () => setState(_recentSearches.clear),
+                        ),
+                        if (_recentSearches.isNotEmpty)
+                          const SizedBox(height: 12),
+                        PopularSearches(onSelected: _selectSuggestion),
+                      ],
+                    ),
                   ),
-                  itemCount: values.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final ProductModel product = values[index];
-                    return _SearchProductCard(
-                      product: product,
-                      quantity: _cartItem(product)?.quantity ?? 0,
-                      adding: _adding.contains(product.id),
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        AppRoutes.productDetails,
-                        arguments: <String, dynamic>{'productId': product.id},
-                      ),
-                      onAdd: () => _add(product),
-                      onDecrease: () => _changeQuantity(product, -1),
-                      onIncrease: () => _changeQuantity(product, 1),
-                    );
-                  },
-                );
-              },
+                Expanded(
+                  child: StreamBuilder<List<ProductModel>>(
+                    stream: _products.watchProducts(limit: 200),
+                    builder: (
+                      BuildContext context,
+                      AsyncSnapshot<List<ProductModel>> snapshot,
+                    ) {
+                      final String query = _query.toLowerCase();
+                      final List<ProductModel> values =
+                          (snapshot.data ?? <ProductModel>[]).where((
+                            ProductModel product,
+                          ) {
+                            final bool matchesQuery =
+                                query.isEmpty ||
+                                product.name.toLowerCase().contains(query) ||
+                                product.category.toLowerCase().contains(query);
+                            final bool matchesCategory =
+                                _filters.category == 'all' ||
+                                product.category.toLowerCase() ==
+                                    _filters.category;
+                            final bool matchesOffer =
+                                !_filters.offersOnly || product.savings > 0;
+                            return matchesQuery &&
+                                matchesCategory &&
+                                matchesOffer;
+                          }).toList();
+
+                      switch (_filters.sort) {
+                        case 'low':
+                          values.sort(
+                            (ProductModel a, ProductModel b) =>
+                                a.price.compareTo(b.price),
+                          );
+                          break;
+                        case 'high':
+                          values.sort(
+                            (ProductModel a, ProductModel b) =>
+                                b.price.compareTo(a.price),
+                          );
+                          break;
+                        case 'rating':
+                          values.sort(
+                            (ProductModel a, ProductModel b) =>
+                                b.rating.compareTo(a.rating),
+                          );
+                          break;
+                        case 'discount':
+                          values.sort(
+                            (ProductModel a, ProductModel b) =>
+                                b.discountPercent.compareTo(a.discountPercent),
+                          );
+                          break;
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          values.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (values.isEmpty) {
+                        return const _SearchEmpty();
+                      }
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          mainAxisExtent: 306,
+                        ),
+                        itemCount: values.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final ProductModel product = values[index];
+                          return _SearchProductCard(
+                            product: product,
+                            quantity: _cartItem(product)?.quantity ?? 0,
+                            adding: _adding.contains(product.id),
+                            onTap:
+                                () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.productDetails,
+                                  arguments: <String, dynamic>{
+                                    'productId': product.id,
+                                  },
+                                ),
+                            onAdd: () => _add(product),
+                            onDecrease: () => _changeQuantity(product, -1),
+                            onIncrease: () => _changeQuantity(product, 1),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-      ),
     );
   }
 }
@@ -280,92 +317,101 @@ class _SearchProductCard extends StatelessWidget {
     return SearchResultCard(
       productName: product.name,
       child: Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F8F5),
-                    borderRadius: BorderRadius.circular(15),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F8F5),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: PremiumProductImage(path: product.imageUrl),
                   ),
-                  child: PremiumProductImage(path: product.imageUrl),
                 ),
-              ),
-              const SizedBox(height: 9),
-              Text(
-                product.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-              ),
-              Text(
-                product.unit,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 9),
-              ),
-              const SizedBox(height: 7),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
+                const SizedBox(height: 9),
+                Text(
+                  product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  product.unit,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 9,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Text(
+                                '₹${product.price.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                '₹${product.mrp.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 8.5,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (product.savings > 0)
                             Text(
-                              '₹${product.price.toStringAsFixed(0)}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              '₹${product.mrp.toStringAsFixed(0)}',
+                              'Save ₹${product.savings.toStringAsFixed(0)}',
                               style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 8.5,
-                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.primary,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                          ],
-                        ),
-                        if (product.savings > 0)
-                          Text(
-                            'Save ₹${product.savings.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  ProductQuantityControl(
-                    quantity: quantity,
-                    loading: adding,
-                    compact: true,
-                    onAdd: onAdd,
-                    onDecrease: onDecrease,
-                    onIncrease: onIncrease,
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 6),
+                    ProductQuantityControl(
+                      quantity: quantity,
+                      loading: adding,
+                      compact: true,
+                      onAdd: onAdd,
+                      onDecrease: onDecrease,
+                      onIncrease: onIncrease,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -382,7 +428,10 @@ class _SearchEmpty extends StatelessWidget {
         children: <Widget>[
           Icon(Icons.search_off_rounded, size: 58, color: AppColors.primary),
           SizedBox(height: 12),
-          Text('No matching products', style: TextStyle(fontWeight: FontWeight.w900)),
+          Text(
+            'No matching products',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
         ],
       ),
     );

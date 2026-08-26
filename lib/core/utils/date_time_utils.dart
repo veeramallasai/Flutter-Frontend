@@ -2,11 +2,27 @@ class DateTimeUtils {
   DateTimeUtils._();
 
   static const List<String> _months = <String>[
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   static const List<String> _weekdays = <String>[
-    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
   ];
 
   static String formatDate(DateTime? value) {
@@ -33,7 +49,9 @@ class DateTimeUtils {
   static String weekday(DateTime value) => _weekdays[value.weekday - 1];
 
   static bool isSameDay(DateTime first, DateTime second) =>
-      first.year == second.year && first.month == second.month && first.day == second.day;
+      first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
 
   static String relative(DateTime? value, {DateTime? now}) {
     if (value == null) return '';
@@ -47,7 +65,8 @@ class DateTimeUtils {
     return formatDate(value);
   }
 
-  static DateTime startOfDay(DateTime value) => DateTime(value.year, value.month, value.day);
+  static DateTime startOfDay(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
   static DateTime endOfDay(DateTime value) =>
       DateTime(value.year, value.month, value.day, 23, 59, 59, 999);
 }

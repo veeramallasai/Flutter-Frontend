@@ -22,17 +22,18 @@ class QuantitySelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final int safeMinimum = minimum < 0 ? 0 : minimum;
     final int safeMaximum = maximum < safeMinimum ? safeMinimum : maximum;
-    final int safeQuantity = quantity < safeMinimum
-        ? safeMinimum
-        : quantity > safeMaximum
-        ? safeMaximum
-        : quantity;
+    final int safeQuantity =
+        quantity < safeMinimum
+            ? safeMinimum
+            : quantity > safeMaximum
+            ? safeMaximum
+            : quantity;
     final double buttonSize = compact ? 30 : 38;
 
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5FAF7),
+        color: const Color(0xFFF9FAF9),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFD6EBDD)),
       ),

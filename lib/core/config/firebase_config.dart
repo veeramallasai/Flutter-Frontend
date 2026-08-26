@@ -7,7 +7,8 @@ class FirebaseConfig {
 
   static bool get isInitialized => Firebase.apps.isNotEmpty;
   static FirebaseApp? get app => isInitialized ? Firebase.app() : null;
-  static String get projectId => DefaultFirebaseOptions.currentPlatform.projectId;
+  static String get projectId =>
+      DefaultFirebaseOptions.currentPlatform.projectId;
 
   static Future<FirebaseApp> initialize() async {
     if (isInitialized) return Firebase.app();

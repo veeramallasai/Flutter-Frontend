@@ -6,9 +6,6 @@ class GoogleLoginButton extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: 'Continue with Google',
-        child: child,
-      );
+  Widget build(BuildContext context) =>
+      Semantics(button: true, label: 'Continue with Google', child: child);
 }

@@ -52,14 +52,15 @@ class ApiResponse<T> {
     T Function(dynamic value) decoder,
   ) {
     final int statusCode = _integer(json['statusCode'] ?? json['status']);
-    final bool success = json['success'] == true ||
-        (statusCode >= 200 && statusCode < 300);
+    final bool success =
+        json['success'] == true || (statusCode >= 200 && statusCode < 300);
     return ApiResponse<T>(
       isSuccess: success,
       data: json['data'] == null ? null : decoder(json['data']),
       message: json['message']?.toString() ?? '',
       statusCode: statusCode,
-      errorCode: json['errorCode']?.toString() ?? json['code']?.toString() ?? '',
+      errorCode:
+          json['errorCode']?.toString() ?? json['code']?.toString() ?? '',
       metadata: _map(json['metadata'] ?? json['meta']),
     );
   }
@@ -76,6 +77,7 @@ class ApiResponse<T> {
   }
 }
 
-int _integer(dynamic value) => value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+int _integer(dynamic value) =>
+    value is num ? value.toInt() : int.tryParse('$value') ?? 0;
 Map<String, dynamic> _map(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};

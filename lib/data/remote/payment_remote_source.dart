@@ -4,7 +4,7 @@ import '../models/payment_model.dart';
 
 class PaymentRemoteSource {
   PaymentRemoteSource({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -12,9 +12,9 @@ class PaymentRemoteSource {
       _firestore.collection('payments');
 
   Stream<List<PaymentModel>> watchUserPayments(
-      String userId, {
-        int limit = 50,
-      }) {
+    String userId, {
+    int limit = 50,
+  }) {
     final String normalizedUserId = userId.trim();
     if (normalizedUserId.isEmpty) {
       return Stream<List<PaymentModel>>.value(<PaymentModel>[]);
@@ -24,23 +24,22 @@ class PaymentRemoteSource {
         .where('userId', isEqualTo: normalizedUserId)
         .snapshots()
         .map((QuerySnapshot<Map<String, dynamic>> snapshot) {
-      final List<PaymentModel> payments = snapshot.docs
-          .map(PaymentModel.fromDocument)
-          .toList(growable: true);
-      return _sortAndLimit(payments, limit);
-    });
+          final List<PaymentModel> payments = snapshot.docs
+              .map(PaymentModel.fromDocument)
+              .toList(growable: true);
+          return _sortAndLimit(payments, limit);
+        });
   }
 
   Future<List<PaymentModel>> getUserPayments(
-      String userId, {
-        int limit = 50,
-      }) async {
+    String userId, {
+    int limit = 50,
+  }) async {
     final String normalizedUserId = userId.trim();
     if (normalizedUserId.isEmpty) return <PaymentModel>[];
 
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await _payments
-        .where('userId', isEqualTo: normalizedUserId)
-        .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _payments.where('userId', isEqualTo: normalizedUserId).get();
     final List<PaymentModel> payments = snapshot.docs
         .map(PaymentModel.fromDocument)
         .toList(growable: true);
@@ -51,12 +50,12 @@ class PaymentRemoteSource {
     final String id = paymentId.trim();
     if (id.isEmpty) return Stream<PaymentModel?>.value(null);
 
-    return _payments.doc(id).snapshots().map(
-          (DocumentSnapshot<Map<String, dynamic>> document) {
-        if (!document.exists || document.data() == null) return null;
-        return PaymentModel.fromDocument(document);
-      },
-    );
+    return _payments.doc(id).snapshots().map((
+      DocumentSnapshot<Map<String, dynamic>> document,
+    ) {
+      if (!document.exists || document.data() == null) return null;
+      return PaymentModel.fromDocument(document);
+    });
   }
 
   Future<PaymentModel?> getPayment(String paymentId) async {
@@ -64,7 +63,7 @@ class PaymentRemoteSource {
     if (id.isEmpty) return null;
 
     final DocumentSnapshot<Map<String, dynamic>> document =
-    await _payments.doc(id).get();
+        await _payments.doc(id).get();
     if (!document.exists || document.data() == null) return null;
     return PaymentModel.fromDocument(document);
   }
@@ -73,19 +72,17 @@ class PaymentRemoteSource {
     final String id = orderId.trim();
     if (id.isEmpty) return null;
 
-    final QuerySnapshot<Map<String, dynamic>> snapshot = await _payments
-        .where('orderId', isEqualTo: id)
-        .limit(1)
-        .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _payments.where('orderId', isEqualTo: id).limit(1).get();
     if (snapshot.docs.isEmpty) return null;
     return PaymentModel.fromDocument(snapshot.docs.first);
   }
 
   Future<String> createPayment(PaymentModel payment) async {
     final DocumentReference<Map<String, dynamic>> reference =
-    payment.id.trim().isEmpty
-        ? _payments.doc()
-        : _payments.doc(payment.id.trim());
+        payment.id.trim().isEmpty
+            ? _payments.doc()
+            : _payments.doc(payment.id.trim());
 
     await reference.set(<String, dynamic>{
       ...payment.toMap(),
@@ -116,10 +113,7 @@ class PaymentRemoteSource {
     });
   }
 
-  List<PaymentModel> _sortAndLimit(
-      List<PaymentModel> payments,
-      int limit,
-      ) {
+  List<PaymentModel> _sortAndLimit(List<PaymentModel> payments, int limit) {
     payments.sort((PaymentModel first, PaymentModel second) {
       final DateTime firstDate =
           first.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);

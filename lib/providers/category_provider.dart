@@ -7,7 +7,7 @@ import '../data/repositories/category_repository.dart';
 
 class CategoryProvider extends ChangeNotifier {
   CategoryProvider({CategoryRepository? repository})
-      : _repository = repository ?? CategoryRepository();
+    : _repository = repository ?? CategoryRepository();
 
   final CategoryRepository _repository;
   StreamSubscription<List<CategoryModel>>? _subscription;
@@ -30,9 +30,10 @@ class CategoryProvider extends ChangeNotifier {
     _subscription = _repository.watchCategories().listen(
       (List<CategoryModel> values) {
         _categories = values;
-        _selectedId = _selectedId.isEmpty && values.isNotEmpty
-            ? values.first.id
-            : _selectedId;
+        _selectedId =
+            _selectedId.isEmpty && values.isNotEmpty
+                ? values.first.id
+                : _selectedId;
         _isLoading = false;
         _errorMessage = null;
         _notify();

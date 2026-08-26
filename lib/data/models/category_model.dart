@@ -25,10 +25,17 @@ class CategoryModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  factory CategoryModel.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) =>
-      CategoryModel.fromMap(doc.data() ?? <String, dynamic>{}, documentId: doc.id);
+  factory CategoryModel.fromDocument(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) => CategoryModel.fromMap(
+    doc.data() ?? <String, dynamic>{},
+    documentId: doc.id,
+  );
 
-  factory CategoryModel.fromMap(Map<String, dynamic> map, {String documentId = ''}) {
+  factory CategoryModel.fromMap(
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     return CategoryModel(
       id: _text(documentId.isNotEmpty ? documentId : map['id']),
       name: _text(map['name'], fallback: 'Fresh Picks'),
@@ -44,21 +51,30 @@ class CategoryModel {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'name': name,
-        'description': description,
-        'imageUrl': imageUrl,
-        'iconName': iconName,
-        'productCount': productCount,
-        'sortOrder': sortOrder,
-        'isActive': isActive,
-        if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-        if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
-      };
+    'id': id,
+    'name': name,
+    'description': description,
+    'imageUrl': imageUrl,
+    'iconName': iconName,
+    'productCount': productCount,
+    'sortOrder': sortOrder,
+    'isActive': isActive,
+    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+  };
 
-  CategoryModel copyWith({String? id, String? name, String? description,
-      String? imageUrl, String? iconName, int? productCount, int? sortOrder,
-      bool? isActive, DateTime? createdAt, DateTime? updatedAt}) {
+  CategoryModel copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? imageUrl,
+    String? iconName,
+    int? productCount,
+    int? sortOrder,
+    bool? isActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
     return CategoryModel(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -78,10 +94,18 @@ String _text(dynamic value, {String fallback = ''}) {
   final String result = value?.toString().trim() ?? '';
   return result.isEmpty ? fallback : result;
 }
-int _integer(dynamic value) => value is num ? value.toInt() : int.tryParse('$value') ?? 0;
-bool _boolean(dynamic value, {bool fallback = false}) => value is bool
-    ? value
-    : value == null ? fallback : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
-DateTime? _date(dynamic value) => value is Timestamp
-    ? value.toDate()
-    : value is DateTime ? value : DateTime.tryParse(value?.toString() ?? '');
+
+int _integer(dynamic value) =>
+    value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+bool _boolean(dynamic value, {bool fallback = false}) =>
+    value is bool
+        ? value
+        : value == null
+        ? fallback
+        : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+DateTime? _date(dynamic value) =>
+    value is Timestamp
+        ? value.toDate()
+        : value is DateTime
+        ? value
+        : DateTime.tryParse(value?.toString() ?? '');

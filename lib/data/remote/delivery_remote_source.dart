@@ -3,7 +3,7 @@ import '../models/delivery_slot_model.dart';
 
 class DeliveryRemoteSource {
   DeliveryRemoteSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
@@ -18,18 +18,20 @@ class DeliveryRemoteSource {
     required String method,
     DateTime? date,
   }) async {
-    final dynamic data = (await _apiClient.get(
-      '/api/v1/delivery-slots',
-      queryParameters: <String, dynamic>{
-        'method': method,
-        if (date != null) 'date': _date(date),
-      },
-    )).data;
-    final List<DeliverySlotModel> values = _maps(data)
-        .map(DeliverySlotModel.fromMap)
-        .toList(growable: true)
-      ..sort((DeliverySlotModel a, DeliverySlotModel b) =>
-          a.startTime.compareTo(b.startTime));
+    final dynamic data =
+        (await _apiClient.get(
+          '/api/v1/delivery-slots',
+          queryParameters: <String, dynamic>{
+            'method': method,
+            if (date != null) 'date': _date(date),
+          },
+        )).data;
+    final List<DeliverySlotModel> values = _maps(
+      data,
+    ).map(DeliverySlotModel.fromMap).toList(growable: true)..sort(
+      (DeliverySlotModel a, DeliverySlotModel b) =>
+          a.startTime.compareTo(b.startTime),
+    );
     return List<DeliverySlotModel>.unmodifiable(values);
   }
 
@@ -45,6 +47,10 @@ String _date(DateTime value) =>
     '${value.month.toString().padLeft(2, '0')}-'
     '${value.day.toString().padLeft(2, '0')}';
 
-List<Map<String, dynamic>> _maps(dynamic data) => data is Iterable
-    ? data.whereType<Map>().map((Map value) => Map<String, dynamic>.from(value)).toList()
-    : <Map<String, dynamic>>[];
+List<Map<String, dynamic>> _maps(dynamic data) =>
+    data is Iterable
+        ? data
+            .whereType<Map>()
+            .map((Map value) => Map<String, dynamic>.from(value))
+            .toList()
+        : <Map<String, dynamic>>[];

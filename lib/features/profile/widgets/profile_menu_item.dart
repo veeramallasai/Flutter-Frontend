@@ -23,24 +23,35 @@ class ProfileMenuItem extends StatelessWidget {
   final Color iconColor;
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE5ECE8)),
+          border: Border.all(color: AppColors.border),
           boxShadow: const <BoxShadow>[
-            BoxShadow(color: Color(0x08000000), blurRadius: 16, offset: Offset(0, 7)),
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 16,
+              offset: Offset(0, 7),
+            ),
           ],
         ),
         child: ListTile(
           onTap: loading ? null : onTap,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 6,
+          ),
           leading: Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: iconColor, size: 22),
@@ -59,7 +70,10 @@ class ProfileMenuItem extends StatelessWidget {
               ),
               if (badge?.trim().isNotEmpty == true)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF1C7),
                     borderRadius: BorderRadius.circular(10),
@@ -86,17 +100,20 @@ class ProfileMenuItem extends StatelessWidget {
               ),
             ),
           ),
-          trailing: loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Color(0xFF9AA6A0),
-                  size: 14,
-                ),
+          trailing:
+              loading
+                  ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: Color(0xFF9AA6A0),
+                    size: 14,
+                  ),
         ),
-      );
+      ),
+    ),
+  );
 }

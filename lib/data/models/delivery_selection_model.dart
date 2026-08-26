@@ -24,7 +24,7 @@ class DeliverySelectionModel {
   factory DeliverySelectionModel.fromMap(Map<String, dynamic> map) {
     return DeliverySelectionModel(
       shoppingMode:
-      _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
+          _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
       method: _text(map['method'], fallback: 'quick').toLowerCase(),
       deliveryDate: _toDateTime(map['deliveryDate']),
       slotId: _text(map['slotId']),
@@ -38,8 +38,7 @@ class DeliverySelectionModel {
   Map<String, dynamic> toMap() => <String, dynamic>{
     'shoppingMode': shoppingMode,
     'method': method,
-    if (deliveryDate != null)
-      'deliveryDate': Timestamp.fromDate(deliveryDate!),
+    if (deliveryDate != null) 'deliveryDate': Timestamp.fromDate(deliveryDate!),
     'slotId': slotId,
     'slotLabel': slotLabel,
     'deliveryFee': deliveryFee,

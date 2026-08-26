@@ -19,8 +19,18 @@ class DeliveryMethodSelector extends StatelessWidget {
     final List<_Method> methods = <_Method>[
       if (allowQuick)
         const _Method('quick', 'Quick', '30–60 min', Icons.bolt_rounded),
-      const _Method('scheduled', 'Scheduled', 'Choose date', Icons.event_rounded),
-      const _Method('preorder', 'Pre-order', 'Future harvest', Icons.eco_rounded),
+      const _Method(
+        'scheduled',
+        'Scheduled',
+        'Choose date',
+        Icons.event_rounded,
+      ),
+      const _Method(
+        'preorder',
+        'Pre-order',
+        'Future harvest',
+        Icons.eco_rounded,
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,51 +45,64 @@ class DeliveryMethodSelector extends StatelessWidget {
         ),
         const SizedBox(height: 11),
         Row(
-          children: methods.map((_Method method) {
-            final bool selected = method.value == selectedMethod;
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(right: method == methods.last ? 0 : 8),
-                child: InkWell(
-                  onTap: () => onChanged(method.value),
-                  borderRadius: BorderRadius.circular(15),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 6),
-                    decoration: BoxDecoration(
-                      color: selected ? const Color(0xFFE4F6EB) : Colors.white,
+          children: methods
+              .map((_Method method) {
+                final bool selected = method.value == selectedMethod;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: method == methods.last ? 0 : 8,
+                    ),
+                    child: InkWell(
+                      onTap: () => onChanged(method.value),
                       borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: selected ? AppColors.primary : AppColors.border,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 13,
+                          horizontal: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              selected ? const Color(0xFFE8F5E9) : Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color:
+                                selected ? AppColors.primary : AppColors.border,
+                          ),
+                        ),
+                        child: Column(
+                          children: <Widget>[
+                            Icon(
+                              method.icon,
+                              color: AppColors.primary,
+                              size: 23,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              method.title,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              method.subtitle,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    child: Column(
-                      children: <Widget>[
-                        Icon(method.icon, color: AppColors.primary, size: 23),
-                        const SizedBox(height: 6),
-                        Text(
-                          method.title,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          method.subtitle,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 7.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ),
-              ),
-            );
-          }).toList(growable: false),
+                );
+              })
+              .toList(growable: false),
         ),
       ],
     );

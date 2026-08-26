@@ -11,9 +11,6 @@ class SearchResultCard extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        button: true,
-        label: '$productName product',
-        child: child,
-      );
+  Widget build(BuildContext context) =>
+      Semantics(button: true, label: '$productName product', child: child);
 }

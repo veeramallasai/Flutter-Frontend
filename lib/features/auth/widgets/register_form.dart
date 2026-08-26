@@ -7,8 +7,8 @@ class RegisterForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        container: true,
-        label: 'Secure registration form',
-        child: child,
-      );
+    container: true,
+    label: 'Secure registration form',
+    child: child,
+  );
 }

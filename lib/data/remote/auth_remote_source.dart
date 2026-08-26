@@ -1,9 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 class AuthRemoteSource {
-  AuthRemoteSource({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
+  AuthRemoteSource({BackendAuth? auth}) : _auth = auth ?? BackendAuth.instance;
 
-  final FirebaseAuth _auth;
+  final BackendAuth _auth;
 
   User? get currentUser => _auth.currentUser;
   Stream<User?> watchAuthState() => _auth.authStateChanges();
@@ -12,17 +12,17 @@ class AuthRemoteSource {
     required String email,
     required String password,
   }) => _auth.signInWithEmailAndPassword(
-        email: email.trim().toLowerCase(),
-        password: password,
-      );
+    email: email.trim().toLowerCase(),
+    password: password,
+  );
 
   Future<UserCredential> registerWithEmail({
     required String email,
     required String password,
   }) => _auth.createUserWithEmailAndPassword(
-        email: email.trim().toLowerCase(),
-        password: password,
-      );
+    email: email.trim().toLowerCase(),
+    password: password,
+  );
 
   Future<UserCredential> signInWithCredential(AuthCredential credential) =>
       _auth.signInWithCredential(credential);
@@ -31,31 +31,31 @@ class AuthRemoteSource {
     required String verificationId,
     required String smsCode,
   }) => signInWithCredential(
-        PhoneAuthProvider.credential(
-          verificationId: verificationId.trim(),
-          smsCode: smsCode.trim(),
-        ),
-      );
+    PhoneAuthProvider.credential(
+      verificationId: verificationId.trim(),
+      smsCode: smsCode.trim(),
+    ),
+  );
 
   Future<void> requestPhoneOtp({
     required String phoneNumber,
     required void Function(String verificationId, int? resendToken) onCodeSent,
-    required void Function(FirebaseAuthException error) onFailed,
+    required void Function(BackendAuthException error) onFailed,
     void Function(PhoneAuthCredential credential)? onAutoVerified,
     void Function(String verificationId)? onTimeout,
     int? forceResendingToken,
   }) => _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber.trim(),
-        forceResendingToken: forceResendingToken,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _auth.signInWithCredential(credential);
-          onAutoVerified?.call(credential);
-        },
-        verificationFailed: onFailed,
-        codeSent: onCodeSent,
-        codeAutoRetrievalTimeout: (String verificationId) =>
-            onTimeout?.call(verificationId),
-      );
+    phoneNumber: phoneNumber.trim(),
+    forceResendingToken: forceResendingToken,
+    verificationCompleted: (PhoneAuthCredential credential) async {
+      await _auth.signInWithCredential(credential);
+      onAutoVerified?.call(credential);
+    },
+    verificationFailed: onFailed,
+    codeSent: onCodeSent,
+    codeAutoRetrievalTimeout:
+        (String verificationId) => onTimeout?.call(verificationId),
+  );
 
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());

@@ -29,45 +29,44 @@ class ReviewModel {
 
   factory ReviewModel.fromDocument(
     DocumentSnapshot<Map<String, dynamic>> doc,
-  ) =>
-      ReviewModel.fromMap(
-        doc.data() ?? <String, dynamic>{},
-        documentId: doc.id,
-      );
+  ) => ReviewModel.fromMap(
+    doc.data() ?? <String, dynamic>{},
+    documentId: doc.id,
+  );
 
   factory ReviewModel.fromMap(
     Map<String, dynamic> map, {
     String documentId = '',
-  }) =>
-      ReviewModel(
-        id: _text(documentId.isNotEmpty ? documentId : map['id']),
-        productId: _text(map['productId']),
-        userId: _text(map['userId'] ?? map['uid']),
-        userName: _text(
-          map['userName'] ?? map['name'],
-          fallback: 'Verified customer',
-        ),
-        rating: _number(map['rating']).clamp(0, 5).toDouble(),
-        comment: _text(map['comment'] ?? map['review']),
-        images: _strings(map['images'] ?? map['imageUrls']),
-        isVerifiedPurchase:
-            _boolean(map['isVerifiedPurchase'] ?? map['verifiedPurchase']),
-        createdAt: _date(map['createdAt']),
-        updatedAt: _date(map['updatedAt']),
-      );
+  }) => ReviewModel(
+    id: _text(documentId.isNotEmpty ? documentId : map['id']),
+    productId: _text(map['productId']),
+    userId: _text(map['userId'] ?? map['uid']),
+    userName: _text(
+      map['userName'] ?? map['name'],
+      fallback: 'Verified customer',
+    ),
+    rating: _number(map['rating']).clamp(0, 5).toDouble(),
+    comment: _text(map['comment'] ?? map['review']),
+    images: _strings(map['images'] ?? map['imageUrls']),
+    isVerifiedPurchase: _boolean(
+      map['isVerifiedPurchase'] ?? map['verifiedPurchase'],
+    ),
+    createdAt: _date(map['createdAt']),
+    updatedAt: _date(map['updatedAt']),
+  );
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'productId': productId,
-        'userId': userId,
-        'userName': userName,
-        'rating': rating,
-        'comment': comment,
-        'images': images,
-        'isVerifiedPurchase': isVerifiedPurchase,
-        if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-        if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
-      };
+    'id': id,
+    'productId': productId,
+    'userId': userId,
+    'userName': userName,
+    'rating': rating,
+    'comment': comment,
+    'images': images,
+    'isVerifiedPurchase': isVerifiedPurchase,
+    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+  };
 
   ReviewModel copyWith({
     String? id,
@@ -80,19 +79,18 @@ class ReviewModel {
     bool? isVerifiedPurchase,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) =>
-      ReviewModel(
-        id: id ?? this.id,
-        productId: productId ?? this.productId,
-        userId: userId ?? this.userId,
-        userName: userName ?? this.userName,
-        rating: rating ?? this.rating,
-        comment: comment ?? this.comment,
-        images: images ?? this.images,
-        isVerifiedPurchase: isVerifiedPurchase ?? this.isVerifiedPurchase,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-      );
+  }) => ReviewModel(
+    id: id ?? this.id,
+    productId: productId ?? this.productId,
+    userId: userId ?? this.userId,
+    userName: userName ?? this.userName,
+    rating: rating ?? this.rating,
+    comment: comment ?? this.comment,
+    images: images ?? this.images,
+    isVerifiedPurchase: isVerifiedPurchase ?? this.isVerifiedPurchase,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 }
 
 String _text(dynamic value, {String fallback = ''}) {
@@ -103,19 +101,22 @@ String _text(dynamic value, {String fallback = ''}) {
 double _number(dynamic value) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
 
-bool _boolean(dynamic value) => value is bool
-    ? value
-    : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+bool _boolean(dynamic value) =>
+    value is bool
+        ? value
+        : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
 
-List<String> _strings(dynamic value) => value is Iterable
-    ? value
-        .map((dynamic item) => _text(item))
-        .where((String item) => item.isNotEmpty)
-        .toList()
-    : <String>[];
+List<String> _strings(dynamic value) =>
+    value is Iterable
+        ? value
+            .map((dynamic item) => _text(item))
+            .where((String item) => item.isNotEmpty)
+            .toList()
+        : <String>[];
 
-DateTime? _date(dynamic value) => value is Timestamp
-    ? value.toDate()
-    : value is DateTime
+DateTime? _date(dynamic value) =>
+    value is Timestamp
+        ? value.toDate()
+        : value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

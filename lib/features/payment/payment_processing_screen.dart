@@ -163,21 +163,14 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
       tween: Tween<double>(begin: 0.82, end: 1),
       duration: const Duration(milliseconds: 850),
       curve: Curves.elasticOut,
-      builder: (
-          BuildContext context,
-          double scale,
-          Widget? child,
-          ) {
-        return Transform.scale(
-          scale: scale,
-          child: child,
-        );
+      builder: (BuildContext context, double scale, Widget? child) {
+        return Transform.scale(scale: scale, child: child);
       },
       child: Container(
         width: 132,
         height: 132,
         decoration: const BoxDecoration(
-          color: Color(0xFFEAF7EF),
+          color: Color(0xFFE8F5E9),
           shape: BoxShape.circle,
           boxShadow: <BoxShadow>[
             BoxShadow(
@@ -255,11 +248,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
     );
   }
 
-  Widget _buildDetailRow(
-      String label,
-      String value, {
-        bool important = false,
-      }) {
+  Widget _buildDetailRow(String label, String value, {bool important = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -267,13 +256,10 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
           child: Text(
             label,
             style: TextStyle(
-              color: important
-                  ? AppColors.textPrimary
-                  : AppColors.textSecondary,
+              color:
+                  important ? AppColors.textPrimary : AppColors.textSecondary,
               fontSize: important ? 13 : 11,
-              fontWeight: important
-                  ? FontWeight.w900
-                  : FontWeight.w600,
+              fontWeight: important ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ),
@@ -283,9 +269,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
             value,
             textAlign: TextAlign.right,
             style: TextStyle(
-              color: important
-                  ? AppColors.primary
-                  : AppColors.textPrimary,
+              color: important ? AppColors.primary : AppColors.textPrimary,
               fontSize: important ? 18 : 11,
               fontWeight: FontWeight.w900,
             ),
@@ -300,7 +284,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -333,10 +317,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
   }
 }
 
-String _stringValue(
-    dynamic value, {
-      String fallback = '',
-    }) {
+String _stringValue(dynamic value, {String fallback = ''}) {
   if (value == null) {
     return fallback;
   }
@@ -345,10 +326,7 @@ String _stringValue(
   return text.isEmpty ? fallback : text;
 }
 
-double _toDouble(
-    dynamic value, {
-      double fallback = 0,
-    }) {
+double _toDouble(dynamic value, {double fallback = 0}) {
   if (value is num) {
     return value.toDouble();
   }
@@ -356,10 +334,7 @@ double _toDouble(
   return double.tryParse(value?.toString().trim() ?? '') ?? fallback;
 }
 
-int _toInt(
-    dynamic value, {
-      int fallback = 0,
-    }) {
+int _toInt(dynamic value, {int fallback = 0}) {
   if (value is int) {
     return value;
   }

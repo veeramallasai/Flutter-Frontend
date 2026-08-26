@@ -4,10 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/order_model.dart';
 
 class OrderStatusTracker extends StatelessWidget {
-  const OrderStatusTracker({
-    super.key,
-    required this.order,
-  });
+  const OrderStatusTracker({super.key, required this.order});
 
   final OrderModel order;
 
@@ -95,35 +92,36 @@ class OrderStatusTracker extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: current
-                        ? AppColors.primary
-                        : completed
-                        ? const Color(0xFFE5F7ED)
-                        : const Color(0xFFF1F4F2),
+                    color:
+                        current
+                            ? AppColors.primary
+                            : completed
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFF5F5F5),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: active
-                          ? AppColors.primary
-                          : AppColors.border,
+                      color: active ? AppColors.primary : AppColors.border,
                       width: current ? 3 : 1.5,
                     ),
-                    boxShadow: current
-                        ? const <BoxShadow>[
-                      BoxShadow(
-                        color: Color(0x2517A45B),
-                        blurRadius: 15,
-                        offset: Offset(0, 6),
-                      ),
-                    ]
-                        : null,
+                    boxShadow:
+                        current
+                            ? const <BoxShadow>[
+                              BoxShadow(
+                                color: Color(0x2517A45B),
+                                blurRadius: 15,
+                                offset: Offset(0, 6),
+                              ),
+                            ]
+                            : null,
                   ),
                   child: Icon(
                     completed ? Icons.check_rounded : step.icon,
-                    color: current
-                        ? Colors.white
-                        : active
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
+                    color:
+                        current
+                            ? Colors.white
+                            : active
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                     size: 23,
                   ),
                 ),
@@ -134,9 +132,7 @@ class OrderStatusTracker extends StatelessWidget {
                       constraints: const BoxConstraints(minHeight: 42),
                       margin: const EdgeInsets.symmetric(vertical: 5),
                       decoration: BoxDecoration(
-                        color: completed
-                            ? AppColors.primary
-                            : AppColors.border,
+                        color: completed ? AppColors.primary : AppColors.border,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -147,10 +143,7 @@ class OrderStatusTracker extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(
-                top: 3,
-                bottom: isLast ? 0 : 27,
-              ),
+              padding: EdgeInsets.only(top: 3, bottom: isLast ? 0 : 27),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -161,9 +154,10 @@ class OrderStatusTracker extends StatelessWidget {
                         child: Text(
                           step.title,
                           style: TextStyle(
-                            color: active
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
+                            color:
+                                active
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
                           ),
@@ -176,7 +170,7 @@ class OrderStatusTracker extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE5F7ED),
+                            color: const Color(0xFFE8F5E9),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
@@ -194,9 +188,10 @@ class OrderStatusTracker extends StatelessWidget {
                   Text(
                     step.subtitle,
                     style: TextStyle(
-                      color: active
-                          ? AppColors.textSecondary
-                          : const Color(0xFFADB5B0),
+                      color:
+                          active
+                              ? AppColors.textSecondary
+                              : const Color(0xFFADB5B0),
                       fontSize: 10,
                       height: 1.4,
                       fontWeight: FontWeight.w600,
@@ -242,10 +237,7 @@ class OrderStatusTracker extends StatelessWidget {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.cancel_rounded,
-              color: AppColors.error,
-            ),
+            child: const Icon(Icons.cancel_rounded, color: AppColors.error),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -299,8 +291,7 @@ class OrderStatusTracker extends StatelessWidget {
   }
 
   DateTime? _historyTimeFor(String status) {
-    for (final OrderStatusHistoryEntry entry
-    in order.statusHistory.reversed) {
+    for (final OrderStatusHistoryEntry entry in order.statusHistory.reversed) {
       final String historyStatus = entry.status;
 
       if (historyStatus == status ||
@@ -347,11 +338,12 @@ String _formatDateTime(DateTime date) {
     'Dec',
   ];
 
-  final int hour = date.hour == 0
-      ? 12
-      : date.hour > 12
-      ? date.hour - 12
-      : date.hour;
+  final int hour =
+      date.hour == 0
+          ? 12
+          : date.hour > 12
+          ? date.hour - 12
+          : date.hour;
   final String minute = date.minute.toString().padLeft(2, '0');
   final String period = date.hour >= 12 ? 'PM' : 'AM';
 

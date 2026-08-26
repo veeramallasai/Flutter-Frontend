@@ -4,11 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/order_item_model.dart';
 
 class OrderItemTile extends StatelessWidget {
-  const OrderItemTile({
-    super.key,
-    required this.item,
-    this.showDivider = true,
-  });
+  const OrderItemTile({super.key, required this.item, this.showDivider = true});
 
   final OrderItemModel item;
   final bool showDivider;
@@ -86,7 +82,7 @@ class OrderItemTile extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF7EF),
+                      color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -153,20 +149,22 @@ class _OrderProductImage extends StatelessWidget {
       return Image.network(
         imageUrl,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Icon(
-          Icons.image_not_supported_outlined,
-          color: AppColors.textSecondary,
-        ),
+        errorBuilder:
+            (_, __, ___) => const Icon(
+              Icons.image_not_supported_outlined,
+              color: AppColors.textSecondary,
+            ),
       );
     }
 
     return Image.asset(
       imageUrl,
       fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => const Icon(
-        Icons.image_not_supported_outlined,
-        color: AppColors.textSecondary,
-      ),
+      errorBuilder:
+          (_, __, ___) => const Icon(
+            Icons.image_not_supported_outlined,
+            color: AppColors.textSecondary,
+          ),
     );
   }
 }

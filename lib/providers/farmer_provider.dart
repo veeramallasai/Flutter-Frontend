@@ -7,7 +7,7 @@ import '../data/repositories/farmer_repository.dart';
 
 class FarmerProvider extends ChangeNotifier {
   FarmerProvider({FarmerRepository? repository})
-      : _repository = repository ?? FarmerRepository();
+    : _repository = repository ?? FarmerRepository();
 
   final FarmerRepository _repository;
 
@@ -23,8 +23,7 @@ class FarmerProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _disposed = false;
 
-  List<FarmerModel> get farmers =>
-      List<FarmerModel>.unmodifiable(_farmers);
+  List<FarmerModel> get farmers => List<FarmerModel>.unmodifiable(_farmers);
   FarmerModel? get selectedFarmer => _selectedFarmer;
   String get selectedFarmerId => _selectedFarmerId;
   String get searchQuery => _searchQuery;
@@ -37,12 +36,14 @@ class FarmerProvider extends ChangeNotifier {
     final String query = _searchQuery.trim().toLowerCase();
     if (query.isEmpty) return farmers;
 
-    return _farmers.where((FarmerModel farmer) {
-      return farmer.name.toLowerCase().contains(query) ||
-          farmer.farmName.toLowerCase().contains(query) ||
-          farmer.location.toLowerCase().contains(query) ||
-          farmer.speciality.toLowerCase().contains(query);
-    }).toList(growable: false);
+    return _farmers
+        .where((FarmerModel farmer) {
+          return farmer.name.toLowerCase().contains(query) ||
+              farmer.farmName.toLowerCase().contains(query) ||
+              farmer.location.toLowerCase().contains(query) ||
+              farmer.speciality.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
   }
 
   void listenToFarmers({int limit = 100}) {
@@ -53,22 +54,24 @@ class FarmerProvider extends ChangeNotifier {
     _notify();
 
     try {
-      _farmersSubscription = _repository.watchFarmers(limit: limit).listen(
+      _farmersSubscription = _repository
+          .watchFarmers(limit: limit)
+          .listen(
             (List<FarmerModel> values) {
-          if (_disposed) return;
-          _farmers = List<FarmerModel>.from(values);
-          _isLoading = false;
-          _errorMessage = null;
-          _syncSelectedFarmerFromList();
-          _notify();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          if (_disposed) return;
-          _isLoading = false;
-          _errorMessage = _friendlyError(error);
-          _notify();
-        },
-      );
+              if (_disposed) return;
+              _farmers = List<FarmerModel>.from(values);
+              _isLoading = false;
+              _errorMessage = null;
+              _syncSelectedFarmerFromList();
+              _notify();
+            },
+            onError: (Object error, StackTrace stackTrace) {
+              if (_disposed) return;
+              _isLoading = false;
+              _errorMessage = _friendlyError(error);
+              _notify();
+            },
+          );
     } catch (error) {
       _isLoading = false;
       _errorMessage = _friendlyError(error);
@@ -110,21 +113,23 @@ class FarmerProvider extends ChangeNotifier {
     _notify();
 
     try {
-      _selectedFarmerSubscription = _repository.watchFarmer(id).listen(
+      _selectedFarmerSubscription = _repository
+          .watchFarmer(id)
+          .listen(
             (FarmerModel? farmer) {
-          if (_disposed) return;
-          _selectedFarmer = farmer;
-          _isFarmerLoading = false;
-          _errorMessage = null;
-          _notify();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          if (_disposed) return;
-          _isFarmerLoading = false;
-          _errorMessage = _friendlyError(error);
-          _notify();
-        },
-      );
+              if (_disposed) return;
+              _selectedFarmer = farmer;
+              _isFarmerLoading = false;
+              _errorMessage = null;
+              _notify();
+            },
+            onError: (Object error, StackTrace stackTrace) {
+              if (_disposed) return;
+              _isFarmerLoading = false;
+              _errorMessage = _friendlyError(error);
+              _notify();
+            },
+          );
     } catch (error) {
       _isFarmerLoading = false;
       _errorMessage = _friendlyError(error);

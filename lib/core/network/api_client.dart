@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../config/backend_config.dart';
 import '../errors/error_handler.dart';
 import '../errors/network_exception.dart';
+import '../services/secure_storage_service.dart';
 import 'api_response.dart';
 import 'network_info.dart';
 import 'request_interceptor.dart';
@@ -16,14 +16,16 @@ class ApiClient {
     http.Client? client,
     NetworkInfo? networkInfo,
     RequestInterceptor? interceptor,
+    AccessTokenProvider? accessTokenProvider,
     Duration? timeout,
   }) : _client = client ?? http.Client(),
        _networkInfo = networkInfo,
        _interceptor =
            interceptor ??
            RequestInterceptor(
-             accessTokenProvider: () async =>
-                 FirebaseAuth.instance.currentUser?.getIdToken(),
+             accessTokenProvider:
+                 accessTokenProvider ??
+                 () => SecureStorageService().read('access_token'),
            ),
        _timeout = timeout ?? BackendConfig.receiveTimeout;
 
@@ -52,8 +54,11 @@ class ApiClient {
     headers: headers,
   );
 
-  Future<ApiResponse<dynamic>> put(String path, {Object? body}) =>
-      _request('PUT', path, body: body);
+  Future<ApiResponse<dynamic>> put(
+    String path, {
+    Object? body,
+    Map<String, dynamic>? queryParameters,
+  }) => _request('PUT', path, body: body, queryParameters: queryParameters);
   Future<ApiResponse<dynamic>> patch(String path, {Object? body}) =>
       _request('PATCH', path, body: body);
   Future<ApiResponse<dynamic>> delete(
@@ -61,14 +66,13 @@ class ApiClient {
     Object? body,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
-  }) =>
-      _request(
-        'DELETE',
-        path,
-        body: body,
-        queryParameters: queryParameters,
-        headers: headers,
-      );
+  }) => _request(
+    'DELETE',
+    path,
+    body: body,
+    queryParameters: queryParameters,
+    headers: headers,
+  );
 
   Future<ApiResponse<dynamic>> _request(
     String method,

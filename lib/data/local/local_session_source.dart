@@ -22,9 +22,8 @@ class LocalSessionSource {
     _changes.add(session);
   }
 
-  Future<void> clear() => save(
-        const AuthSessionModel(userId: '', isAuthenticated: false),
-      );
+  Future<void> clear() =>
+      save(const AuthSessionModel(userId: '', isAuthenticated: false));
 
   Future<void> dispose() => _changes.close();
 }

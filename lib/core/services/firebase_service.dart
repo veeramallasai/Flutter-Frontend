@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../config/firebase_config.dart';
 
@@ -10,9 +9,9 @@ class FirebaseService {
 
   static Future<FirebaseApp> initialize() => FirebaseConfig.initialize();
 
-  static FirebaseAuth get auth {
+  static BackendAuth get auth {
     _requireInitialized();
-    return FirebaseAuth.instance;
+    return BackendAuth.instance;
   }
 
   static FirebaseFirestore get firestore {
@@ -20,12 +19,8 @@ class FirebaseService {
     return FirebaseFirestore.instance;
   }
 
-  static FirebaseMessaging get messaging {
-    _requireInitialized();
-    return FirebaseMessaging.instance;
-  }
-
-  static bool get isSignedIn => FirebaseConfig.isInitialized && auth.currentUser != null;
+  static bool get isSignedIn =>
+      FirebaseConfig.isInitialized && auth.currentUser != null;
 
   static void _requireInitialized() {
     if (!FirebaseConfig.isInitialized) {

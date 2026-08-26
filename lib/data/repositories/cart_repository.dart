@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import '../models/cart_item_model.dart';
 import '../models/cart_model.dart';
@@ -6,14 +6,12 @@ import '../models/product_model.dart';
 import '../remote/cart_remote_source.dart';
 
 class CartRepository {
-  CartRepository({
-    CartRemoteSource? remoteSource,
-    FirebaseAuth? auth,
-  })  : _remoteSource = remoteSource ?? CartRemoteSource(),
-        _auth = auth ?? FirebaseAuth.instance;
+  CartRepository({CartRemoteSource? remoteSource, BackendAuth? auth})
+    : _remoteSource = remoteSource ?? CartRemoteSource(),
+      _auth = auth ?? BackendAuth.instance;
 
   final CartRemoteSource _remoteSource;
-  final FirebaseAuth _auth;
+  final BackendAuth _auth;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -26,11 +24,11 @@ class CartRepository {
   }
 
   Future<void> addProduct(
-      ProductModel product, {
-        int quantity = 1,
-        String? unit,
-        String? shoppingMode,
-      }) {
+    ProductModel product, {
+    int quantity = 1,
+    String? unit,
+    String? shoppingMode,
+  }) {
     final CartItemModel item = CartItemModel.fromProduct(
       product,
       quantity: quantity,

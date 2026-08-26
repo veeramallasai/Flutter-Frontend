@@ -21,7 +21,7 @@ class CartQuantityControl extends StatelessWidget {
     return Container(
       height: 34,
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(11),
         border: Border.all(color: const Color(0xFFD2E9DA)),
       ),
@@ -29,7 +29,10 @@ class CartQuantityControl extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           _Button(
-            icon: quantity <= 1 ? Icons.delete_outline_rounded : Icons.remove_rounded,
+            icon:
+                quantity <= 1
+                    ? Icons.delete_outline_rounded
+                    : Icons.remove_rounded,
             onPressed: enabled ? onDecrease : null,
           ),
           SizedBox(

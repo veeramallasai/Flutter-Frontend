@@ -1,15 +1,15 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import '../models/address_model.dart';
 import '../remote/address_remote_source.dart';
 
 class AddressRepository {
-  AddressRepository({AddressRemoteSource? remoteSource, FirebaseAuth? auth})
-      : _remoteSource = remoteSource ?? AddressRemoteSource(),
-        _auth = auth ?? FirebaseAuth.instance;
+  AddressRepository({AddressRemoteSource? remoteSource, BackendAuth? auth})
+    : _remoteSource = remoteSource ?? AddressRemoteSource(),
+      _auth = auth ?? BackendAuth.instance;
 
   final AddressRemoteSource _remoteSource;
-  final FirebaseAuth _auth;
+  final BackendAuth _auth;
 
   Stream<List<AddressModel>> watchAddresses() =>
       Stream<List<AddressModel>>.fromFuture(getAddresses());
@@ -33,7 +33,11 @@ class AddressRepository {
   Future<AddressModel> setDefault(String addressId) {
     _requireUserId();
     if (addressId.trim().isEmpty) {
-      throw ArgumentError.value(addressId, 'addressId', 'Address ID is required.');
+      throw ArgumentError.value(
+        addressId,
+        'addressId',
+        'Address ID is required.',
+      );
     }
     return _remoteSource.setDefault(addressId);
   }

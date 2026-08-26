@@ -3,7 +3,7 @@ import '../models/farmer_model.dart';
 
 class FarmerRemoteSource {
   FarmerRemoteSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
@@ -12,10 +12,11 @@ class FarmerRemoteSource {
   }
 
   Future<List<FarmerModel>> getFarmers({int limit = 100}) async {
-    final dynamic data = (await _apiClient.get(
-      '/api/v1/farmers',
-      queryParameters: <String, dynamic>{'limit': limit},
-    )).data;
+    final dynamic data =
+        (await _apiClient.get(
+          '/api/v1/farmers',
+          queryParameters: <String, dynamic>{'limit': limit},
+        )).data;
     return _sortAndLimit(
       _maps(data).map(FarmerModel.fromMap).toList(growable: true),
       limit,
@@ -43,7 +44,8 @@ class FarmerRemoteSource {
 
   List<FarmerModel> _sortAndLimit(List<FarmerModel> farmers, int limit) {
     farmers.sort((FarmerModel first, FarmerModel second) {
-      if (first.isVerified != second.isVerified) return first.isVerified ? -1 : 1;
+      if (first.isVerified != second.isVerified)
+        return first.isVerified ? -1 : 1;
       final int ratingComparison = second.rating.compareTo(first.rating);
       if (ratingComparison != 0) return ratingComparison;
       return first.name.toLowerCase().compareTo(second.name.toLowerCase());
@@ -55,6 +57,10 @@ class FarmerRemoteSource {
   }
 }
 
-List<Map<String, dynamic>> _maps(dynamic data) => data is Iterable
-    ? data.whereType<Map>().map((Map value) => Map<String, dynamic>.from(value)).toList()
-    : <Map<String, dynamic>>[];
+List<Map<String, dynamic>> _maps(dynamic data) =>
+    data is Iterable
+        ? data
+            .whereType<Map>()
+            .map((Map value) => Map<String, dynamic>.from(value))
+            .toList()
+        : <Map<String, dynamic>>[];

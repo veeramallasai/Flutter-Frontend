@@ -1,14 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
 class CategoriesScreen extends StatefulWidget {
-  const CategoriesScreen({
-    super.key,
-    this.initialShoppingMode = 'home',
-  });
+  const CategoriesScreen({super.key, this.initialShoppingMode = 'home'});
 
   final String initialShoppingMode;
 
@@ -25,10 +22,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       title: 'Vegetables',
       subtitle: 'Fresh from trusted farms',
       description:
-      'Daily essentials, leafy greens, roots and fresh vegetables.',
+          'Daily essentials, leafy greens, roots and fresh vegetables.',
       image: 'assets/images/categories/vegetables.png',
       fallbackIcon: Icons.eco_rounded,
-      backgroundColor: Color(0xFFE8F6ED),
+      backgroundColor: Color(0xFFE8F5E9),
       accentColor: Color(0xFF168447),
     ),
     _CategoryData(
@@ -36,7 +33,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       title: 'Fruits',
       subtitle: 'Naturally fresh & sweet',
       description:
-      'Seasonal and everyday fruits picked for freshness and quality.',
+          'Seasonal and everyday fruits picked for freshness and quality.',
       image: 'assets/images/categories/fruits.png',
       fallbackIcon: Icons.shopping_basket_rounded,
       backgroundColor: Color(0xFFFFF3E5),
@@ -47,7 +44,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       title: 'Dairy',
       subtitle: 'Pure farm goodness',
       description:
-      'Fresh milk and essential dairy products for your daily needs.',
+          'Fresh milk and essential dairy products for your daily needs.',
       image: 'assets/images/categories/dairy.png',
       fallbackIcon: Icons.local_drink_rounded,
       backgroundColor: Color(0xFFEAF4FF),
@@ -57,8 +54,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       id: 'seasonal',
       title: 'Seasonal',
       subtitle: 'Best of the harvest',
-      description:
-      'Limited harvest products available at their seasonal best.',
+      description: 'Limited harvest products available at their seasonal best.',
       image: 'assets/images/categories/seasonal.png',
       fallbackIcon: Icons.wb_sunny_rounded,
       backgroundColor: Color(0xFFFFF6DD),
@@ -70,28 +66,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void initState() {
     super.initState();
 
-    _shoppingMode =
-    widget.initialShoppingMode == 'shop' ? 'shop' : 'home';
+    _shoppingMode = widget.initialShoppingMode == 'shop' ? 'shop' : 'home';
 
     _loadSavedMode();
   }
 
   Future<void> _loadSavedMode() async {
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
+      final User? user = BackendAuth.instance.currentUser;
 
       if (user == null) {
         return;
       }
 
       final DocumentSnapshot<Map<String, dynamic>> snapshot =
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
 
       final String value =
-      (snapshot.data()?['shoppingMode'] ?? _shoppingMode).toString();
+          (snapshot.data()?['shoppingMode'] ?? _shoppingMode).toString();
 
       if (!mounted) {
         return;
@@ -109,16 +104,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _saveMode(String mode) async {
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
+      final User? user = BackendAuth.instance.currentUser;
 
       if (user == null) {
         return;
       }
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
         <String, dynamic>{
           'shoppingMode': mode,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -130,14 +122,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
-  void _go(
-      String route, {
-        Object? arguments,
-      }) {
-    Navigator.of(context).pushNamed(
-      route,
-      arguments: arguments,
-    );
+  void _go(String route, {Object? arguments}) {
+    Navigator.of(context).pushNamed(route, arguments: arguments);
   }
 
   void _openCategory(_CategoryData category) {
@@ -160,12 +146,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return SafeArea(
           child: Container(
             margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              14,
-              20,
-              22,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
@@ -274,23 +255,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         120,
                       ),
                       sliver: SliverList(
-                        delegate: SliverChildListDelegate(
-                          <Widget>[
-                            _buildModeSelector(),
-                            const SizedBox(height: 16),
-                            _buildSearchBar(),
-                            const SizedBox(height: 18),
-                            _buildHeroBanner(desktop),
-                            const SizedBox(height: 30),
-                            _buildHeading(),
-                            const SizedBox(height: 17),
-                            _buildCategoryGrid(desktop),
-                            const SizedBox(height: 30),
-                            _buildDeliveryBanner(),
-                            const SizedBox(height: 22),
-                            const _TrustStrip(),
-                          ],
-                        ),
+                        delegate: SliverChildListDelegate(<Widget>[
+                          _buildModeSelector(),
+                          const SizedBox(height: 16),
+                          _buildSearchBar(),
+                          const SizedBox(height: 18),
+                          _buildHeroBanner(desktop),
+                          const SizedBox(height: 30),
+                          _buildHeading(),
+                          const SizedBox(height: 17),
+                          _buildCategoryGrid(desktop),
+                          const SizedBox(height: 30),
+                          _buildDeliveryBanner(),
+                          const SizedBox(height: 22),
+                          const _TrustStrip(),
+                        ]),
                       ),
                     ),
                   ],
@@ -382,9 +361,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 Navigator.of(context).pushReplacementNamed('/home');
               }
             },
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-            ),
+            icon: const Icon(Icons.arrow_back_rounded),
           ),
           const SizedBox(width: 4),
           Container(
@@ -394,10 +371,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: <Color>[
-                  AppColors.primary,
-                  Color(0xFF20A95F),
-                ],
+                colors: <Color>[AppColors.primary, Color(0xFF2E7D32)],
               ),
               borderRadius: BorderRadius.circular(14),
             ),
@@ -437,18 +411,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             onPressed: () {
               _go('/search');
             },
-            icon: const Icon(
-              Icons.search_rounded,
-            ),
+            icon: const Icon(Icons.search_rounded),
           ),
           IconButton(
             tooltip: 'Cart',
             onPressed: () {
               _go('/cart');
             },
-            icon: const Icon(
-              Icons.shopping_bag_outlined,
-            ),
+            icon: const Icon(Icons.shopping_bag_outlined),
           ),
         ],
       ),
@@ -467,15 +437,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           onTap: _showModeSelector,
           borderRadius: BorderRadius.circular(15),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: AppColors.border,
-              ),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -484,13 +449,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F6ED),
+                    color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    homeMode
-                        ? Icons.home_rounded
-                        : Icons.storefront_rounded,
+                    homeMode ? Icons.home_rounded : Icons.storefront_rounded,
                     size: 19,
                     color: AppColors.primary,
                   ),
@@ -542,21 +505,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         borderRadius: BorderRadius.circular(18),
         child: Container(
           height: 58,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: AppColors.border,
-            ),
+            border: Border.all(color: AppColors.border),
           ),
           child: const Row(
             children: <Widget>[
-              Icon(
-                Icons.search_rounded,
-                color: AppColors.primary,
-              ),
+              Icon(Icons.search_rounded, color: AppColors.primary),
               SizedBox(width: 11),
               Expanded(
                 child: Text(
@@ -584,27 +540,24 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     final bool home = _shoppingMode == 'home';
 
     return Container(
-      constraints: BoxConstraints(
-        minHeight: desktop ? 230 : 210,
-      ),
-      padding: EdgeInsets.all(
-        desktop ? 30 : 22,
-      ),
+      constraints: BoxConstraints(minHeight: desktop ? 230 : 210),
+      padding: EdgeInsets.all(desktop ? 30 : 22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: home
-              ? const <Color>[
-            Color(0xFF043D22),
-            Color(0xFF0D7B40),
-            Color(0xFF20A95F),
-          ]
-              : const <Color>[
-            Color(0xFF15382C),
-            Color(0xFF285F45),
-            Color(0xFF3C9565),
-          ],
+          colors:
+              home
+                  ? const <Color>[
+                    Color(0xFF1B5E20),
+                    Color(0xFF0D7B40),
+                    Color(0xFF2E7D32),
+                  ]
+                  : const <Color>[
+                    Color(0xFF15382C),
+                    Color(0xFF285F45),
+                    Color(0xFF3C9565),
+                  ],
         ),
         borderRadius: BorderRadius.circular(29),
         boxShadow: const <BoxShadow>[
@@ -633,19 +586,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             right: desktop ? 45 : 8,
             bottom: 0,
             child: Icon(
-              home
-                  ? Icons.eco_rounded
-                  : Icons.inventory_2_rounded,
+              home ? Icons.eco_rounded : Icons.inventory_2_rounded,
               size: desktop ? 155 : 105,
-              color: Colors.white.withValues(
-                alpha: 0.14,
-              ),
+              color: Colors.white.withValues(alpha: 0.14),
             ),
           ),
           ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: desktop ? 650 : 300,
-            ),
+            constraints: BoxConstraints(maxWidth: desktop ? 650 : 300),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -655,15 +602,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(
-                      alpha: 0.14,
-                    ),
+                    color: Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Text(
-                    home
-                        ? 'FRESH COLLECTIONS'
-                        : 'WHOLESALE COLLECTIONS',
+                    home ? 'FRESH COLLECTIONS' : 'WHOLESALE COLLECTIONS',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 9,
@@ -735,12 +678,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF7EF),
+            color: const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(30),
           ),
           child: const Text(
@@ -768,10 +708,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         mainAxisSpacing: 14,
         childAspectRatio: desktop ? 0.88 : 0.76,
       ),
-      itemBuilder: (
-          BuildContext context,
-          int index,
-          ) {
+      itemBuilder: (BuildContext context, int index) {
         final _CategoryData category = _categories[index];
 
         return _PremiumCategoryCard(
@@ -798,15 +735,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.border,
-            ),
+            border: Border.all(color: AppColors.border),
           ),
           child: const Row(
             children: <Widget>[
               CircleAvatar(
                 radius: 27,
-                backgroundColor: Color(0xFFE8F6ED),
+                backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(
                   Icons.local_shipping_rounded,
                   color: AppColors.primary,
@@ -874,9 +809,7 @@ class _PremiumCategoryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: AppColors.border,
-            ),
+            border: Border.all(color: AppColors.border),
             boxShadow: const <BoxShadow>[
               BoxShadow(
                 color: Color(0x08000000),
@@ -898,9 +831,7 @@ class _PremiumCategoryCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: category.backgroundColor,
                       border: Border.all(
-                        color: category.accentColor.withValues(
-                          alpha: 0.18,
-                        ),
+                        color: category.accentColor.withValues(alpha: 0.18),
                         width: 2,
                       ),
                     ),
@@ -910,10 +841,10 @@ class _PremiumCategoryCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         alignment: Alignment.center,
                         errorBuilder: (
-                            BuildContext context,
-                            Object error,
-                            StackTrace? stackTrace,
-                            ) {
+                          BuildContext context,
+                          Object error,
+                          StackTrace? stackTrace,
+                        ) {
                           return Center(
                             child: Icon(
                               category.fallbackIcon,
@@ -966,9 +897,7 @@ class _PremiumCategoryCard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      shoppingMode == 'home'
-                          ? 'Retail packs'
-                          : 'Bulk packs',
+                      shoppingMode == 'home' ? 'Retail packs' : 'Bulk packs',
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 9.5,
@@ -1017,9 +946,7 @@ class _ModeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected
-          ? const Color(0xFFEAF7EF)
-          : const Color(0xFFF8FAF9),
+      color: selected ? const Color(0xFFE8F5E9) : const Color(0xFFF9FAF9),
       borderRadius: BorderRadius.circular(19),
       child: InkWell(
         onTap: onTap,
@@ -1029,9 +956,7 @@ class _ModeOption extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(19),
             border: Border.all(
-              color: selected
-                  ? const Color(0xFFB7DFC7)
-                  : AppColors.border,
+              color: selected ? const Color(0xFFB7DFC7) : AppColors.border,
             ),
           ),
           child: Row(
@@ -1040,16 +965,12 @@ class _ModeOption extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.primary
-                      : Colors.white,
+                  color: selected ? AppColors.primary : Colors.white,
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Icon(
                   icon,
-                  color: selected
-                      ? Colors.white
-                      : AppColors.primary,
+                  color: selected ? Colors.white : AppColors.primary,
                 ),
               ),
               const SizedBox(width: 13),
@@ -1082,9 +1003,7 @@ class _ModeOption extends StatelessWidget {
                 selected
                     ? Icons.check_circle_rounded
                     : Icons.radio_button_unchecked_rounded,
-                color: selected
-                    ? AppColors.primary
-                    : AppColors.border,
+                color: selected ? AppColors.primary : AppColors.border,
               ),
             ],
           ),
@@ -1100,21 +1019,15 @@ class _TrustStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 18,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(24),
       ),
       child: const Row(
         children: <Widget>[
           Expanded(
-            child: _TrustItem(
-              icon: Icons.eco_outlined,
-              label: 'Farm Fresh',
-            ),
+            child: _TrustItem(icon: Icons.eco_outlined, label: 'Farm Fresh'),
           ),
           _DividerLine(),
           Expanded(
@@ -1137,10 +1050,7 @@ class _TrustStrip extends StatelessWidget {
 }
 
 class _TrustItem extends StatelessWidget {
-  const _TrustItem({
-    required this.icon,
-    required this.label,
-  });
+  const _TrustItem({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -1149,11 +1059,7 @@ class _TrustItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Icon(
-          icon,
-          color: AppColors.primary,
-          size: 25,
-        ),
+        Icon(icon, color: AppColors.primary, size: 25),
         const SizedBox(height: 7),
         Text(
           label,
@@ -1177,9 +1083,7 @@ class _DividerLine extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      margin: const EdgeInsets.symmetric(
-        horizontal: 7,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 7),
       color: const Color(0xFFCDE4D5),
     );
   }

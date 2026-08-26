@@ -6,7 +6,7 @@ import '../core/services/connectivity_service.dart';
 
 class ConnectivityProvider extends ChangeNotifier {
   ConnectivityProvider({ConnectivityService? service})
-      : _service = service ?? ConnectivityService();
+    : _service = service ?? ConnectivityService();
 
   final ConnectivityService _service;
   StreamSubscription<bool>? _subscription;

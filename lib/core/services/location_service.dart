@@ -25,24 +25,24 @@ class LocationAddress {
   final String postalCode;
 
   String get formatted => <String>[
-        if (street.isNotEmpty) street,
-        if (locality.isNotEmpty) locality,
-        if (district.isNotEmpty && district != locality) district,
-        if (state.isNotEmpty) state,
-        if (postalCode.isNotEmpty) postalCode,
-      ].join(', ');
+    if (street.isNotEmpty) street,
+    if (locality.isNotEmpty) locality,
+    if (district.isNotEmpty && district != locality) district,
+    if (state.isNotEmpty) state,
+    if (postalCode.isNotEmpty) postalCode,
+  ].join(', ');
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'latitude': latitude,
-        'longitude': longitude,
-        'name': name,
-        'street': street,
-        'locality': locality,
-        'district': district,
-        'state': state,
-        'country': country,
-        'postalCode': postalCode,
-      };
+    'latitude': latitude,
+    'longitude': longitude,
+    'name': name,
+    'street': street,
+    'locality': locality,
+    'district': district,
+    'state': state,
+    'country': country,
+    'postalCode': postalCode,
+  };
 }
 
 class LocationService {
@@ -89,8 +89,10 @@ class LocationService {
     required double latitude,
     required double longitude,
   }) async {
-    final List<Placemark> places =
-        await placemarkFromCoordinates(latitude, longitude);
+    final List<Placemark> places = await placemarkFromCoordinates(
+      latitude,
+      longitude,
+    );
     final Placemark? place = places.isEmpty ? null : places.first;
     return LocationAddress(
       latitude: latitude,

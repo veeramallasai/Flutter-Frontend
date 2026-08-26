@@ -2,7 +2,7 @@ import '../../core/network/api_client.dart';
 
 class DeviceRepository {
   DeviceRepository({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 

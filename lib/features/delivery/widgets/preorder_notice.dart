@@ -23,7 +23,12 @@ class PreorderNotice extends StatelessWidget {
           Expanded(
             child: Text(
               'Pre-order dates depend on harvest readiness. We’ll notify you if weather changes the expected delivery date.',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 9, height: 1.45, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 9,
+                height: 1.45,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

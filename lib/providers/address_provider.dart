@@ -7,7 +7,7 @@ import '../data/repositories/address_repository.dart';
 
 class AddressProvider extends ChangeNotifier {
   AddressProvider({AddressRepository? repository})
-      : _repository = repository ?? AddressRepository();
+    : _repository = repository ?? AddressRepository();
 
   final AddressRepository _repository;
   List<AddressModel> _addresses = <AddressModel>[];
@@ -18,7 +18,8 @@ class AddressProvider extends ChangeNotifier {
   bool _disposed = false;
   int _loadGeneration = 0;
 
-  List<AddressModel> get addresses => List<AddressModel>.unmodifiable(_addresses);
+  List<AddressModel> get addresses =>
+      List<AddressModel>.unmodifiable(_addresses);
   bool get isLoading => _isLoading;
   bool get isUpdating => _isUpdating;
   String? get errorMessage => _errorMessage;
@@ -64,16 +65,12 @@ class AddressProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteAddress(String addressId) => _run(
-        () => _repository.deleteAddress(addressId),
-      );
+  Future<bool> deleteAddress(String addressId) =>
+      _run(() => _repository.deleteAddress(addressId));
 
-  Future<bool> setDefault(String addressId) => _run(
-        () async {
-          await _repository.setDefault(addressId);
-        },
-        preferredId: addressId,
-      );
+  Future<bool> setDefault(String addressId) => _run(() async {
+    await _repository.setDefault(addressId);
+  }, preferredId: addressId);
 
   Future<bool> _run(
     Future<void> Function() action, {
@@ -115,12 +112,13 @@ class AddressProvider extends ChangeNotifier {
       _selectedAddressId = '';
       return;
     }
-    _selectedAddressId = _addresses
-        .firstWhere(
-          (AddressModel address) => address.isDefault,
-          orElse: () => _addresses.first,
-        )
-        .id;
+    _selectedAddressId =
+        _addresses
+            .firstWhere(
+              (AddressModel address) => address.isDefault,
+              orElse: () => _addresses.first,
+            )
+            .id;
   }
 
   void _notify() {

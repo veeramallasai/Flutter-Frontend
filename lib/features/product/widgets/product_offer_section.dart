@@ -37,7 +37,8 @@ class ProductOfferSection extends StatelessWidget {
           _OfferTile(
             icon: Icons.local_offer_rounded,
             title: '${product.discountPercent}% product discount',
-            subtitle: 'You save ₹${product.savings.toStringAsFixed(2)} on this unit.',
+            subtitle:
+                'You save ₹${product.savings.toStringAsFixed(2)} on this unit.',
           ),
         if (product.discountPercent > 0 && couponCode.trim().isNotEmpty)
           const SizedBox(height: 9),
@@ -45,9 +46,10 @@ class ProductOfferSection extends StatelessWidget {
           _OfferTile(
             icon: Icons.confirmation_number_rounded,
             title: 'Use code ${couponCode.trim().toUpperCase()}',
-            subtitle: couponText.trim().isEmpty
-                ? 'Apply this coupon during checkout.'
-                : couponText.trim(),
+            subtitle:
+                couponText.trim().isEmpty
+                    ? 'Apply this coupon during checkout.'
+                    : couponText.trim(),
           ),
       ],
     );
@@ -55,7 +57,11 @@ class ProductOfferSection extends StatelessWidget {
 }
 
 class _OfferTile extends StatelessWidget {
-  const _OfferTile({required this.icon, required this.title, required this.subtitle});
+  const _OfferTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   final IconData icon;
   final String title;
@@ -67,7 +73,7 @@ class _OfferTile extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(

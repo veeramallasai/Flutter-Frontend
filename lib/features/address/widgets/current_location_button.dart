@@ -21,13 +21,14 @@ class CurrentLocationButton extends StatelessWidget {
         side: const BorderSide(color: AppColors.primary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
       ),
-      icon: isLoading
-          ? const SizedBox(
-        width: 17,
-        height: 17,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      )
-          : const Icon(Icons.my_location_rounded),
+      icon:
+          isLoading
+              ? const SizedBox(
+                width: 17,
+                height: 17,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+              : const Icon(Icons.my_location_rounded),
       label: Text(isLoading ? 'GETTING LOCATION...' : 'USE CURRENT LOCATION'),
     );
   }

@@ -1,8 +1,8 @@
 package com.farmtohome.api.config;
 
-import com.farmtohome.api.auth.FirebaseTokenFilter;
 import java.util.Arrays;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.farmtohome.api.auth.FirebaseTokenFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -33,6 +35,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/api/v1/auth/email-otp/request", "/api/v1/auth/email-otp/verify-reset").permitAll()
             .requestMatchers("/api/**").authenticated()
             .anyRequest().denyAll())
         .exceptionHandling(exceptions -> exceptions
@@ -65,14 +68,19 @@ public class SecurityConfig {
 
   @Bean
   CorsConfigurationSource corsConfigurationSource(
-      @Value("${app.cors-origins}") String origins) {
+      @Value("${app.cors-origins:https://*.railway.app}") String origins) {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(Arrays.stream(origins.split(","))
+    List<String> patterns = Arrays.stream(origins.split(","))
         .map(String::trim)
         .filter(value -> !value.isBlank())
-        .toList());
+        .toList();
+    if (patterns.isEmpty() || patterns.contains("*")) {
+      configuration.addAllowedOriginPattern("*");
+    } else {
+      configuration.setAllowedOriginPatterns(patterns);
+    }
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin"));
     configuration.setExposedHeaders(List.of("Location"));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(3600L);

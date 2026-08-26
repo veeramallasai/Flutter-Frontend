@@ -8,7 +8,8 @@ class DeliveryUtils {
   static String normalizeMethod(String value) {
     final String normalized = value.trim().toLowerCase().replaceAll(' ', '_');
     if (normalized == 'scheduled') return 'scheduled';
-    if (normalized == 'preorder' || normalized == 'pre_order') return 'preorder';
+    if (normalized == 'preorder' || normalized == 'pre_order')
+      return 'preorder';
     return 'quick';
   }
 
@@ -24,8 +25,12 @@ class DeliveryUtils {
   }
 
   static double fee({required double subtotal, required String method}) {
-    if (subtotal >= freeDeliveryThreshold || normalizeMethod(method) == 'preorder') return 0;
-    return normalizeMethod(method) == 'scheduled' ? scheduledDeliveryFee : quickDeliveryFee;
+    if (subtotal >= freeDeliveryThreshold ||
+        normalizeMethod(method) == 'preorder')
+      return 0;
+    return normalizeMethod(method) == 'scheduled'
+        ? scheduledDeliveryFee
+        : quickDeliveryFee;
   }
 
   static double amountForFreeDelivery(double subtotal) {
@@ -46,7 +51,11 @@ class DeliveryUtils {
     }
   }
 
-  static bool isSlotAvailable({required DateTime date, required int startHour, DateTime? now}) {
+  static bool isSlotAvailable({
+    required DateTime date,
+    required int startHour,
+    DateTime? now,
+  }) {
     final DateTime current = now ?? DateTime.now();
     final DateTime slot = DateTime(date.year, date.month, date.day, startHour);
     return slot.isAfter(current.add(const Duration(minutes: 30)));

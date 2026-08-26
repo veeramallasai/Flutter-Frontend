@@ -8,7 +8,9 @@ class OrderRemoteSource {
   final ApiClient _client;
 
   Stream<List<OrderModel>> watchUserOrders(String userId, {int limit = 50}) =>
-      Stream<List<OrderModel>>.fromFuture(getUserOrders(userId, limit: limit));
+      Stream<List<OrderModel>>.fromFuture(
+        getUserOrders(userId, limit: limit),
+      ).asBroadcastStream();
 
   Future<List<OrderModel>> getUserOrders(
     String userId, {
@@ -32,7 +34,7 @@ class OrderRemoteSource {
   }
 
   Stream<OrderModel?> watchOrder(String orderId) =>
-      Stream<OrderModel?>.fromFuture(getOrder(orderId));
+      Stream<OrderModel?>.fromFuture(getOrder(orderId)).asBroadcastStream();
 
   Future<OrderModel?> getOrder(String orderId) async {
     final String id = orderId.trim();

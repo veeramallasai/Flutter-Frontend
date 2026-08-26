@@ -26,7 +26,11 @@ class NetworkImageWidget extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         fit: fit,
-        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? progress) {
+        loadingBuilder: (
+          BuildContext context,
+          Widget child,
+          ImageChunkEvent? progress,
+        ) {
           if (progress == null) return child;
           final int? total = progress.expectedTotalBytes;
           return ColoredBox(
@@ -34,21 +38,28 @@ class NetworkImageWidget extends StatelessWidget {
             child: Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                value: total == null ? null : progress.cumulativeBytesLoaded / total,
+                value:
+                    total == null
+                        ? null
+                        : progress.cumulativeBytesLoaded / total,
               ),
             ),
           );
         },
-        errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => _fallback(),
+        errorBuilder:
+            (BuildContext context, Object error, StackTrace? stackTrace) =>
+                _fallback(),
       ),
     );
   }
 
   Widget _fallback() => ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: ColoredBox(
-          color: const Color(0xFFF1F8F4),
-          child: Center(child: Icon(fallbackIcon, color: AppColors.primary, size: 42)),
-        ),
-      );
+    borderRadius: BorderRadius.circular(borderRadius),
+    child: ColoredBox(
+      color: const Color(0xFFF1F8F4),
+      child: Center(
+        child: Icon(fallbackIcon, color: AppColors.primary, size: 42),
+      ),
+    ),
+  );
 }

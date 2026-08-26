@@ -96,39 +96,40 @@ class PayNowBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: isProcessing
-                      ? const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.4,
-                        ),
-                      ),
-                      SizedBox(width: 9),
-                      Text(
-                        'PROCESSING...',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  )
-                      : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        isCashOnDelivery ? 'PLACE ORDER' : 'PAY NOW',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      const Icon(Icons.arrow_forward_rounded, size: 19),
-                    ],
-                  ),
+                  child:
+                      isProcessing
+                          ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.4,
+                                ),
+                              ),
+                              SizedBox(width: 9),
+                              Text(
+                                'PROCESSING...',
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          )
+                          : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                isCashOnDelivery ? 'PLACE ORDER' : 'PAY NOW',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              const Icon(Icons.arrow_forward_rounded, size: 19),
+                            ],
+                          ),
                 ),
               ),
             ],

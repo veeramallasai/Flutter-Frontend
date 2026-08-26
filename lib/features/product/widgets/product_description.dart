@@ -4,10 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/product_model.dart';
 
 class ProductDescription extends StatefulWidget {
-  const ProductDescription({
-    super.key,
-    required this.product,
-  });
+  const ProductDescription({super.key, required this.product});
 
   final ProductModel product;
 
@@ -20,9 +17,10 @@ class _ProductDescriptionState extends State<ProductDescription> {
 
   @override
   Widget build(BuildContext context) {
-    final String description = widget.product.description.trim().isEmpty
-        ? 'Fresh and carefully selected for Farm To Home customers.'
-        : widget.product.description.trim();
+    final String description =
+        widget.product.description.trim().isEmpty
+            ? 'Fresh and carefully selected for Farm To Home customers.'
+            : widget.product.description.trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

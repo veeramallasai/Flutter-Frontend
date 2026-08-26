@@ -12,7 +12,8 @@ enum DeliveryMethod {
   bool get requiresSlot => this == DeliveryMethod.scheduled;
 
   static DeliveryMethod fromValue(String? value) {
-    final String normalized = value?.trim().toLowerCase().replaceAll(' ', '_') ?? '';
+    final String normalized =
+        value?.trim().toLowerCase().replaceAll(' ', '_') ?? '';
     if (normalized == 'pre_order') return DeliveryMethod.preorder;
     return DeliveryMethod.values.firstWhere(
       (DeliveryMethod item) => item.value == normalized,

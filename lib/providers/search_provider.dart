@@ -5,7 +5,7 @@ import '../data/repositories/product_repository.dart';
 
 class SearchProvider extends ChangeNotifier {
   SearchProvider({ProductRepository? repository})
-      : _repository = repository ?? ProductRepository();
+    : _repository = repository ?? ProductRepository();
 
   final ProductRepository _repository;
   List<ProductModel> _results = <ProductModel>[];

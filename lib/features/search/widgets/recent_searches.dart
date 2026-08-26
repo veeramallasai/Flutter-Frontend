@@ -22,7 +22,16 @@ class RecentSearches extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            const Expanded(child: Text('Recent searches', style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w900))),
+            const Expanded(
+              child: Text(
+                'Recent searches',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
             TextButton(onPressed: onClear, child: const Text('CLEAR')),
           ],
         ),
@@ -30,11 +39,13 @@ class RecentSearches extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: queries
-              .map((String query) => ActionChip(
-                    avatar: const Icon(Icons.history_rounded, size: 16),
-                    label: Text(query),
-                    onPressed: () => onSelected(query),
-                  ))
+              .map(
+                (String query) => ActionChip(
+                  avatar: const Icon(Icons.history_rounded, size: 16),
+                  label: Text(query),
+                  onPressed: () => onSelected(query),
+                ),
+              )
               .toList(growable: false),
         ),
       ],

@@ -22,7 +22,7 @@ class CartSavingsCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: <Color>[Color(0xFFE4F6EB), Color(0xFFF4FBF7)],
+          colors: <Color>[Color(0xFFE8F5E9), Color(0xFFF4FBF7)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),

@@ -53,9 +53,11 @@ class _DeliveryCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEAF7EF) : Colors.white,
+          color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
         ),
         child: Row(
           children: <Widget>[
@@ -68,13 +70,34 @@ class _DeliveryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w900)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   const SizedBox(height: 3),
-                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 8.5, fontWeight: FontWeight.w600)),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Text(trailing, style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w900)),
+            Text(
+              trailing,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
       ),

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -79,7 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _HomeBanner(
           badge: 'WHOLESALE FRESH',
           title: 'Fresh stock for your business',
-          subtitle: 'Buy vegetables, fruits and dairy in bulk with special shop-owner pricing.',
+          subtitle:
+              'Buy vegetables, fruits and dairy in bulk with special shop-owner pricing.',
           button: 'SHOP BULK',
           icon: Icons.storefront_rounded,
           startColor: Color(0xFF063B24),
@@ -100,7 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _HomeBanner(
           badge: 'PRE-ORDER STOCK',
           title: 'Reserve tomorrow\'s supply today',
-          subtitle: 'Plan bulk orders in advance and select a convenient delivery date.',
+          subtitle:
+              'Plan bulk orders in advance and select a convenient delivery date.',
           button: 'PRE-ORDER',
           icon: Icons.calendar_month_rounded,
           startColor: Color(0xFF60450F),
@@ -114,17 +116,19 @@ class _HomeScreenState extends State<HomeScreen> {
       _HomeBanner(
         badge: 'FARM FRESH',
         title: 'Fresh from farms to your home',
-        subtitle: 'Handpicked vegetables, fruits and dairy delivered fresh every day.',
+        subtitle:
+            'Handpicked vegetables, fruits and dairy delivered fresh every day.',
         button: 'SHOP FRESH',
         icon: Icons.eco_rounded,
-        startColor: Color(0xFF043D22),
-        endColor: Color(0xFF17A45B),
+        startColor: Color(0xFF1B5E20),
+        endColor: Color(0xFF2E7D32),
         route: '/categories',
       ),
       _HomeBanner(
         badge: 'DELIVERY YOUR WAY',
         title: 'Freshness that fits your schedule',
-        subtitle: 'Choose quick delivery, schedule a slot or pre-order for another day.',
+        subtitle:
+            'Choose quick delivery, schedule a slot or pre-order for another day.',
         button: 'CHOOSE DELIVERY',
         icon: Icons.local_shipping_rounded,
         startColor: Color(0xFF103D37),
@@ -134,7 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _HomeBanner(
         badge: 'SEASON SPECIAL',
         title: 'Limited harvest. Freshest picks.',
-        subtitle: 'Discover seasonal products and reserve limited farm harvests early.',
+        subtitle:
+            'Discover seasonal products and reserve limited farm harvests early.',
         button: 'EXPLORE NOW',
         icon: Icons.energy_savings_leaf_rounded,
         startColor: Color(0xFF67470E),
@@ -153,9 +158,13 @@ class _HomeScreenState extends State<HomeScreen> {
         )
         .take(12)
         .toList(growable: false);
-    final List<ProductModel> values = backendProducts.isNotEmpty
-        ? backendProducts
-        : LocalProductCatalog.featured(shoppingMode: _shoppingMode, limit: 12);
+    final List<ProductModel> values =
+        backendProducts.isNotEmpty
+            ? backendProducts
+            : LocalProductCatalog.featured(
+              shoppingMode: _shoppingMode,
+              limit: 12,
+            );
     return values.map(_ProductItem.fromModel).toList(growable: false);
   }
 
@@ -164,8 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     _cartProvider = CartProvider()..listenToCart();
-    _productProvider = ProductProvider()
-      ..listenToProducts(shoppingMode: _shoppingMode, limit: 200);
+    _productProvider =
+        ProductProvider()
+          ..listenToProducts(shoppingMode: _shoppingMode, limit: 200);
     _loadShoppingMode();
     _startBannerAutoSlide();
   }
@@ -199,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadShoppingMode() async {
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
+      final User? user = BackendAuth.instance.currentUser;
 
       if (user == null) {
         return;
@@ -211,8 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
               .doc(user.uid)
               .get();
 
-      final String mode = (document.data()?['shoppingMode'] ?? 'home')
-          .toString();
+      final String mode =
+          (document.data()?['shoppingMode'] ?? 'home').toString();
 
       if (!mounted) {
         return;
@@ -231,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _saveShoppingMode(String mode) async {
     try {
-      final User? user = FirebaseAuth.instance.currentUser;
+      final User? user = BackendAuth.instance.currentUser;
 
       if (user == null) {
         return;
@@ -250,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String get _userName {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = BackendAuth.instance.currentUser;
 
     final String name = user?.displayName?.trim() ?? '';
 
@@ -297,9 +307,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     setState(() => _addingProducts.remove(product.id));
-    final String message = success
-        ? '${product.name} added to cart'
-        : (_cartProvider.errorMessage ?? 'Unable to add product to cart.');
+    final String message =
+        success
+            ? '${product.name} added to cart'
+            : (_cartProvider.errorMessage ?? 'Unable to add product to cart.');
     PremiumToast.show(context, message, error: !success);
   }
 
@@ -494,7 +505,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             onViewAll: () => _go('/categories'),
                             header: _buildSectionHeader(
                               title: 'Shop by category',
-                              subtitle: 'Fresh essentials, directly from trusted farms',
+                              subtitle:
+                                  'Fresh essentials, directly from trusted farms',
                               action: 'View all',
                               onTap: () => _go('/categories'),
                             ),
@@ -506,21 +518,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 30),
                           ProductSection(
-                            title: _shoppingMode == 'home'
-                                ? 'Fresh picks for you'
-                                : 'Wholesale favourites',
-                            subtitle: _shoppingMode == 'home'
-                                ? 'Fresh products for your everyday needs'
-                                : 'Popular bulk products for your business',
+                            title:
+                                _shoppingMode == 'home'
+                                    ? 'Fresh picks for you'
+                                    : 'Wholesale favourites',
+                            subtitle:
+                                _shoppingMode == 'home'
+                                    ? 'Fresh products for your everyday needs'
+                                    : 'Popular bulk products for your business',
                             products: _buildProducts(desktop: desktop),
                             onViewAll: () => _go('/categories'),
                             header: _buildSectionHeader(
-                              title: _shoppingMode == 'home'
-                                  ? 'Fresh picks for you'
-                                  : 'Wholesale favourites',
-                              subtitle: _shoppingMode == 'home'
-                                  ? 'Fresh products for your everyday needs'
-                                  : 'Popular bulk products for your business',
+                              title:
+                                  _shoppingMode == 'home'
+                                      ? 'Fresh picks for you'
+                                      : 'Wholesale favourites',
+                              subtitle:
+                                  _shoppingMode == 'home'
+                                      ? 'Fresh products for your everyday needs'
+                                      : 'Popular bulk products for your business',
                               action: 'View all',
                               onTap: () => _go('/categories'),
                             ),
@@ -554,8 +570,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: ListenableBuilder(
         listenable: _cartProvider,
-        builder: (BuildContext context, Widget? child) =>
-            PremiumBottomNavigation(
+        builder:
+            (BuildContext context, Widget? child) => PremiumBottomNavigation(
               cartCount: _cartProvider.itemCount,
               selectedIndex: 0,
               onSelected: (int index) {
@@ -604,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: <Color>[Color(0xFF08733D), Color(0xFF19A75E)],
+                colors: <Color>[Color(0xFF2E7D32), Color(0xFF2E7D32)],
               ),
               borderRadius: BorderRadius.circular(15),
             ),
@@ -689,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 3),
           Material(
-            color: const Color(0xFFE9F7EF),
+            color: const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(15),
             child: InkWell(
               borderRadius: BorderRadius.circular(15),
@@ -742,7 +758,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F6ED),
+                    color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -998,34 +1014,37 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildProducts({required bool desktop}) {
     return ListenableBuilder(
       listenable: _productProvider,
-      builder: (BuildContext context, Widget? child) => ListenableBuilder(
-        listenable: _cartProvider,
-        builder: (BuildContext context, Widget? child) => SizedBox(
-          height: desktop ? 355 : 326,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _products.length,
-            separatorBuilder: (BuildContext context, int index) =>
-                const SizedBox(width: 14),
-            itemBuilder: (BuildContext context, int index) {
-              final _ProductItem product = _products[index];
-              final int quantity = _quantityFor(product);
-              return SizedBox(
-                width: desktop ? 228 : 190,
-                child: _ProductCard(
-                  product: product,
-                  quantity: quantity,
-                  onTap: () => _openProduct(product),
-                  onAdd: () => _addToCart(product),
-                  onDecrease: () => _changeQuantity(product, -1),
-                  onIncrease: () => _changeQuantity(product, 1),
-                  adding: _addingProducts.contains(product.id),
+      builder:
+          (BuildContext context, Widget? child) => ListenableBuilder(
+            listenable: _cartProvider,
+            builder:
+                (BuildContext context, Widget? child) => SizedBox(
+                  height: desktop ? 355 : 326,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _products.length,
+                    separatorBuilder:
+                        (BuildContext context, int index) =>
+                            const SizedBox(width: 14),
+                    itemBuilder: (BuildContext context, int index) {
+                      final _ProductItem product = _products[index];
+                      final int quantity = _quantityFor(product);
+                      return SizedBox(
+                        width: desktop ? 228 : 190,
+                        child: _ProductCard(
+                          product: product,
+                          quantity: quantity,
+                          onTap: () => _openProduct(product),
+                          onAdd: () => _addToCart(product),
+                          onDecrease: () => _changeQuantity(product, -1),
+                          onIncrease: () => _changeQuantity(product, 1),
+                          adding: _addingProducts.contains(product.id),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              );
-            },
           ),
-        ),
-      ),
     );
   }
 
@@ -1033,7 +1052,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(24),
       ),
       child: const Row(
@@ -1079,7 +1098,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: <Widget>[
               CircleAvatar(
                 radius: 26,
-                backgroundColor: Color(0xFFE8F6ED),
+                backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(
                   Icons.local_shipping_rounded,
                   color: AppColors.primary,
@@ -1335,23 +1354,22 @@ class _RoundCategoryCard extends StatelessWidget {
                 ),
                 child: ClipOval(
                   child: Container(
-                    color: const Color(0xFFF1F8F4),
+                    color: const Color(0xFFE8F5E9),
                     child: Image.asset(
                       category.image,
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
-                      errorBuilder:
-                          (
-                            BuildContext context,
-                            Object error,
-                            StackTrace? stackTrace,
-                          ) {
-                            return Icon(
-                              category.fallbackIcon,
-                              color: AppColors.primary,
-                              size: 39,
-                            );
-                          },
+                      errorBuilder: (
+                        BuildContext context,
+                        Object error,
+                        StackTrace? stackTrace,
+                      ) {
+                        return Icon(
+                          category.fallbackIcon,
+                          color: AppColors.primary,
+                          size: 39,
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -1437,7 +1455,7 @@ class _ProductCard extends StatelessWidget {
                     Positioned.fill(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F8F4),
+                          color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(17),
                         ),
                         child: PremiumProductImage(path: product.image),
@@ -1627,7 +1645,7 @@ class _ServiceCard extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppColors.primary, size: 19),
@@ -1722,7 +1740,7 @@ class _ModeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFFEAF7EF) : const Color(0xFFF8FAF9),
+      color: selected ? const Color(0xFFE8F5E9) : const Color(0xFFF9FAF9),
       borderRadius: BorderRadius.circular(19),
       child: InkWell(
         borderRadius: BorderRadius.circular(19),

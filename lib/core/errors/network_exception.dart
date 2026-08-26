@@ -33,9 +33,10 @@ class NetworkException extends AppException {
         message = 'Too many requests. Please wait and try again.';
         break;
       default:
-        message = statusCode >= 500
-            ? 'The server is temporarily unavailable.'
-            : 'The request could not be completed.';
+        message =
+            statusCode >= 500
+                ? 'The server is temporarily unavailable.'
+                : 'The request could not be completed.';
     }
     if (details is Map) {
       final String backendMessage = details['message']?.toString().trim() ?? '';

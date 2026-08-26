@@ -21,7 +21,7 @@ class CardOption extends StatelessWidget {
     return Opacity(
       opacity: enabled ? 1 : 0.55,
       child: Material(
-        color: selected ? const Color(0xFFF2FAF5) : Colors.white,
+        color: selected ? const Color(0xFFE8F5E9) : Colors.white,
         borderRadius: BorderRadius.circular(21),
         child: InkWell(
           onTap: enabled ? onTap : null,
@@ -43,9 +43,8 @@ class CardOption extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primary
-                        : const Color(0xFFEAF7EF),
+                    color:
+                        selected ? AppColors.primary : const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Icon(

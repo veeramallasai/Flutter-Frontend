@@ -21,10 +21,10 @@ class AppConfig {
   static bool get showDebugBanner => !isProduction;
 
   static Map<String, String> get diagnostics => <String, String>{
-        'app': name,
-        'version': version,
-        'build': buildNumber,
-        'environment': environment,
-        'apiBaseUrl': apiBaseUrl,
-      };
+    'app': name,
+    'version': version,
+    'build': buildNumber,
+    'environment': environment,
+    'apiBaseUrl': apiBaseUrl,
+  };
 }

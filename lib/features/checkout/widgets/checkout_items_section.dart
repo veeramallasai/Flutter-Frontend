@@ -6,9 +6,6 @@ class CheckoutItemsSection extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        container: true,
-        label: 'Checkout item',
-        child: child,
-      );
+  Widget build(BuildContext context) =>
+      Semantics(container: true, label: 'Checkout item', child: child);
 }

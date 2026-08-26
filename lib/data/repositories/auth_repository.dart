@@ -1,14 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import 'user_repository.dart';
 
 class AuthRepository {
-  AuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepository({BackendAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? BackendAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
-  final FirebaseAuth _auth;
+  final BackendAuth _auth;
   final FirebaseFirestore _firestore;
 
   User? get currentUser => _auth.currentUser;
@@ -43,25 +43,24 @@ class AuthRepository {
     if (user != null) {
       final String displayName = '$firstName $lastName'.trim();
       if (displayName.isNotEmpty) await user.updateDisplayName(displayName);
-      await _firestore.collection('users').doc(user.uid).set(
-        <String, dynamic>{
-          'uid': user.uid,
-          'firstName': firstName.trim(),
-          'lastName': lastName.trim(),
-          'email': user.email ?? email.trim().toLowerCase(),
-          'emailVerified': user.emailVerified,
-          'phoneNumber': phoneNumber.trim(),
-          'shoppingMode': 'home',
-          'isActive': true,
-          'isProfileComplete': firstName.trim().isNotEmpty,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'lastLoginAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      if (!user.emailVerified) await user.sendEmailVerification();
-      await UserRepository(auth: _auth, firestore: _firestore).syncCurrentUser();
+      await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
+        'uid': user.uid,
+        'firstName': firstName.trim(),
+        'lastName': lastName.trim(),
+        'email': user.email ?? email.trim().toLowerCase(),
+        'emailVerified': user.emailVerified,
+        'phoneNumber': phoneNumber.trim(),
+        'shoppingMode': 'home',
+        'isActive': true,
+        'isProfileComplete': firstName.trim().isNotEmpty,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastLoginAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await UserRepository(
+        auth: _auth,
+        firestore: _firestore,
+      ).syncCurrentUser();
     }
     return result;
   }
@@ -82,18 +81,15 @@ class AuthRepository {
 
   Future<void> _recordLogin(User? user) async {
     if (user == null) return;
-    await _firestore.collection('users').doc(user.uid).set(
-      <String, dynamic>{
-        'uid': user.uid,
-        'email': user.email ?? '',
-        'emailVerified': user.emailVerified,
-        'phoneNumber': user.phoneNumber ?? '',
-        'photoUrl': user.photoURL ?? '',
-        'isActive': true,
-        'lastLoginAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+    await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
+      'uid': user.uid,
+      'email': user.email ?? '',
+      'emailVerified': user.emailVerified,
+      'phoneNumber': user.phoneNumber ?? '',
+      'photoUrl': user.photoURL ?? '',
+      'isActive': true,
+      'lastLoginAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 }

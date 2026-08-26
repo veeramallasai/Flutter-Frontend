@@ -25,7 +25,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Bad state: ', '')),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -39,9 +41,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       appBar: AppBar(title: const Text('Add Address')),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          AddressForm(onSubmit: _save, isSaving: _isSaving),
-        ],
+        children: <Widget>[AddressForm(onSubmit: _save, isSaving: _isSaving)],
       ),
     );
   }

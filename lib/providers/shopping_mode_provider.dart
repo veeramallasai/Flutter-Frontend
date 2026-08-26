@@ -4,7 +4,7 @@ import '../data/repositories/user_repository.dart';
 
 class ShoppingModeProvider extends ChangeNotifier {
   ShoppingModeProvider({UserRepository? repository})
-      : _repository = repository ?? UserRepository();
+    : _repository = repository ?? UserRepository();
 
   final UserRepository _repository;
   String _mode = 'home';

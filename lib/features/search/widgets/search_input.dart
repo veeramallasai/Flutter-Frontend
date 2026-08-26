@@ -22,39 +22,60 @@ class PremiumSearchInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: hasFilters ? AppColors.primary : AppColors.border),
-          boxShadow: const <BoxShadow>[BoxShadow(color: Color(0x0A000000), blurRadius: 18, offset: Offset(0, 7))],
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: hasFilters ? AppColors.primary : AppColors.border,
+      ),
+      boxShadow: const <BoxShadow>[
+        BoxShadow(
+          color: Color(0x0A000000),
+          blurRadius: 18,
+          offset: Offset(0, 7),
         ),
-        child: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.search,
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
-          decoration: InputDecoration(
-            hintText: 'Search vegetables, fruits and dairy',
-            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
+      ],
+    ),
+    child: TextField(
+      controller: controller,
+      autofocus: true,
+      textInputAction: TextInputAction.search,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        hintText: 'Search vegetables, fruits and dairy',
+        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (controller.text.isNotEmpty)
+              IconButton(
+                onPressed: onClear,
+                icon: const Icon(Icons.close_rounded),
+              ),
+            Stack(
+              clipBehavior: Clip.none,
               children: <Widget>[
-                if (controller.text.isNotEmpty)
-                  IconButton(onPressed: onClear, icon: const Icon(Icons.close_rounded)),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: <Widget>[
-                    IconButton(onPressed: onFilterTap, icon: const Icon(Icons.tune_rounded)),
-                    if (hasFilters)
-                      const Positioned(right: 7, top: 7, child: CircleAvatar(radius: 4, backgroundColor: Color(0xFFF4B400))),
-                  ],
+                IconButton(
+                  onPressed: onFilterTap,
+                  icon: const Icon(Icons.tune_rounded),
                 ),
+                if (hasFilters)
+                  const Positioned(
+                    right: 7,
+                    top: 7,
+                    child: CircleAvatar(
+                      radius: 4,
+                      backgroundColor: Color(0xFFFFB300),
+                    ),
+                  ),
               ],
             ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 18),
-          ),
+          ],
         ),
-      );
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+      ),
+    ),
+  );
 }

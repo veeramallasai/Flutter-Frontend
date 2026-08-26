@@ -58,35 +58,39 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     final bool success = await _provider.applyCoupon(coupon, discount);
-    if (!success) _showMessage(_provider.errorMessage ?? 'Unable to apply coupon.');
+    if (!success)
+      _showMessage(_provider.errorMessage ?? 'Unable to apply coupon.');
   }
 
   Future<void> _removeCoupon() async {
     final bool success = await _provider.applyCoupon('', 0);
-    if (!success) _showMessage(_provider.errorMessage ?? 'Unable to remove coupon.');
+    if (!success)
+      _showMessage(_provider.errorMessage ?? 'Unable to remove coupon.');
   }
 
   Future<void> _clearCart() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Clear cart?'),
-        content: const Text('All products will be removed from your cart.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('CANCEL'),
+      builder:
+          (BuildContext context) => AlertDialog(
+            title: const Text('Clear cart?'),
+            content: const Text('All products will be removed from your cart.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('CANCEL'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('CLEAR'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('CLEAR'),
-          ),
-        ],
-      ),
     );
     if (confirmed != true) return;
     final bool success = await _provider.clearCart();
-    if (!success) _showMessage(_provider.errorMessage ?? 'Unable to clear cart.');
+    if (!success)
+      _showMessage(_provider.errorMessage ?? 'Unable to clear cart.');
   }
 
   void _openDelivery(CartModel cart) {
@@ -128,114 +132,126 @@ class _CartScreenState extends State<CartScreen> {
                 Text('Fresh Cart'),
                 Text(
                   'Quality checked • Secure checkout',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 8.5, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
-          body: _provider.isLoading && cart == null
-              ? const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          )
-              : _provider.hasError && cart == null
-              ? _CartError(
-            message: _provider.errorMessage ?? 'Unable to load cart.',
-            onRetry: _provider.listenToCart,
-          )
-              : empty
-              ? _EmptyCart(
-            onShopNow: () => Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.home,
-                  (Route<dynamic> route) => false,
-            ),
-          )
-              : RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async {
-              _provider.listenToCart();
-            },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-              children: <Widget>[
-                _CartHero(
-                  total: activeCart.total,
-                  itemCount: activeCart.itemCount,
-                  shoppingMode: activeCart.shoppingMode,
-                ),
-                const SizedBox(height: 15),
-                CartHeader(
-                  itemCount: activeCart.itemCount,
-                  shoppingMode: activeCart.shoppingMode,
-                  onClear: _provider.isUpdating ? null : _clearCart,
-                ),
-                const SizedBox(height: 14),
-                CartModeWarning(
-                  hasMixedModes: activeCart.items
-                      .map((CartItemModel item) => item.shoppingMode)
-                      .toSet()
-                      .length >
-                      1,
-                  shoppingMode: activeCart.shoppingMode,
-                ),
-                if (activeCart.items
-                    .map((CartItemModel item) => item.shoppingMode)
-                    .toSet()
-                    .length >
-                    1)
-                  const SizedBox(height: 12),
-                ...activeCart.items.map(
-                      (CartItemModel item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 11),
-                    child: CartItemCard(
-                      item: item,
-                      enabled: !_provider.isUpdating,
-                      onDecrease: () => _provider.updateQuantity(
-                        item.id,
-                        item.quantity - 1,
-                      ),
-                      onIncrease: () => _provider.updateQuantity(
-                        item.id,
-                        item.quantity + 1,
-                      ),
-                      onRemove: () => _provider.removeItem(item.id),
-                    ),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                CartSavingsCard(
-                  productSavings: activeCart.productSavings,
-                  couponSavings: activeCart.couponDiscount,
-                ),
-                if (activeCart.productSavings +
-                    activeCart.couponDiscount >
-                    0)
-                  const SizedBox(height: 13),
-                CartCouponSection(
-                  currentCode: activeCart.couponCode,
-                  discount: activeCart.couponDiscount,
-                  isLoading: _provider.isUpdating,
-                  onApply: _applyCoupon,
-                  onRemove: _removeCoupon,
-                ),
-                const SizedBox(height: 13),
-                CartPriceSummary(
-                  subtotal: activeCart.subtotal +
-                      activeCart.productSavings,
-                  productSavings: activeCart.productSavings,
-                  couponDiscount: activeCart.couponDiscount,
-                  total: activeCart.total,
-                ),
               ],
             ),
           ),
-          bottomNavigationBar: empty
-              ? null
-              : ProceedCheckoutBar(
-            total: activeCart.total,
-            itemCount: activeCart.itemCount,
-            isLoading: _provider.isUpdating,
-            onProceed: () => _openDelivery(activeCart),
-          ),
+          body:
+              _provider.isLoading && cart == null
+                  ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                  : _provider.hasError && cart == null
+                  ? _CartError(
+                    message: _provider.errorMessage ?? 'Unable to load cart.',
+                    onRetry: _provider.listenToCart,
+                  )
+                  : empty
+                  ? _EmptyCart(
+                    onShopNow:
+                        () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.home,
+                          (Route<dynamic> route) => false,
+                        ),
+                  )
+                  : RefreshIndicator(
+                    color: AppColors.primary,
+                    onRefresh: () async {
+                      _provider.listenToCart();
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+                      children: <Widget>[
+                        _CartHero(
+                          total: activeCart.total,
+                          itemCount: activeCart.itemCount,
+                          shoppingMode: activeCart.shoppingMode,
+                        ),
+                        const SizedBox(height: 15),
+                        CartHeader(
+                          itemCount: activeCart.itemCount,
+                          shoppingMode: activeCart.shoppingMode,
+                          onClear: _provider.isUpdating ? null : _clearCart,
+                        ),
+                        const SizedBox(height: 14),
+                        CartModeWarning(
+                          hasMixedModes:
+                              activeCart.items
+                                  .map(
+                                    (CartItemModel item) => item.shoppingMode,
+                                  )
+                                  .toSet()
+                                  .length >
+                              1,
+                          shoppingMode: activeCart.shoppingMode,
+                        ),
+                        if (activeCart.items
+                                .map((CartItemModel item) => item.shoppingMode)
+                                .toSet()
+                                .length >
+                            1)
+                          const SizedBox(height: 12),
+                        ...activeCart.items.map(
+                          (CartItemModel item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 11),
+                            child: CartItemCard(
+                              item: item,
+                              enabled: !_provider.isUpdating,
+                              onDecrease:
+                                  () => _provider.updateQuantity(
+                                    item.id,
+                                    item.quantity - 1,
+                                  ),
+                              onIncrease:
+                                  () => _provider.updateQuantity(
+                                    item.id,
+                                    item.quantity + 1,
+                                  ),
+                              onRemove: () => _provider.removeItem(item.id),
+                            ),
+                          ),
+                        ),
+                        CartSavingsCard(
+                          productSavings: activeCart.productSavings,
+                          couponSavings: activeCart.couponDiscount,
+                        ),
+                        if (activeCart.productSavings +
+                                activeCart.couponDiscount >
+                            0)
+                          const SizedBox(height: 13),
+                        CartCouponSection(
+                          currentCode: activeCart.couponCode,
+                          discount: activeCart.couponDiscount,
+                          isLoading: _provider.isUpdating,
+                          onApply: _applyCoupon,
+                          onRemove: _removeCoupon,
+                        ),
+                        const SizedBox(height: 13),
+                        CartPriceSummary(
+                          subtotal:
+                              activeCart.subtotal + activeCart.productSavings,
+                          productSavings: activeCart.productSavings,
+                          couponDiscount: activeCart.couponDiscount,
+                          total: activeCart.total,
+                        ),
+                      ],
+                    ),
+                  ),
+          bottomNavigationBar:
+              empty
+                  ? null
+                  : ProceedCheckoutBar(
+                    total: activeCart.total,
+                    itemCount: activeCart.itemCount,
+                    isLoading: _provider.isUpdating,
+                    onProceed: () => _openDelivery(activeCart),
+                  ),
         );
       },
     );
@@ -255,7 +271,11 @@ class _EmptyCart extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(Icons.shopping_basket_outlined, color: AppColors.primary, size: 68),
+            const Icon(
+              Icons.shopping_basket_outlined,
+              color: AppColors.primary,
+              size: 68,
+            ),
             const SizedBox(height: 14),
             const Text(
               'Your cart is empty',
@@ -285,7 +305,11 @@ class _EmptyCart extends StatelessWidget {
 }
 
 class _CartHero extends StatelessWidget {
-  const _CartHero({required this.total, required this.itemCount, required this.shoppingMode});
+  const _CartHero({
+    required this.total,
+    required this.itemCount,
+    required this.shoppingMode,
+  });
 
   final double total;
   final int itemCount;
@@ -302,11 +326,19 @@ class _CartHero extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFF04361F), Color(0xFF0B7A3E), Color(0xFF24A75E)],
+          colors: <Color>[
+            Color(0xFF1B5E20),
+            Color(0xFF2E7D32),
+            Color(0xFF2E7D32),
+          ],
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: const <BoxShadow>[
-          BoxShadow(color: Color(0x260B7A3E), blurRadius: 24, offset: Offset(0, 11)),
+          BoxShadow(
+            color: Color(0x260B7A3E),
+            blurRadius: 24,
+            offset: Offset(0, 11),
+          ),
         ],
       ),
       child: Column(
@@ -316,8 +348,15 @@ class _CartHero extends StatelessWidget {
               Container(
                 width: 50,
                 height: 50,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(16)),
-                child: const Icon(Icons.shopping_basket_rounded, color: Colors.white, size: 27),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.shopping_basket_rounded,
+                  color: Colors.white,
+                  size: 27,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -326,17 +365,31 @@ class _CartHero extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       '$itemCount farm-fresh item${itemCount == 1 ? '' : 's'}',
-                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      shoppingMode == 'shop' ? 'Bulk pricing is active for this cart' : 'Packed fresh for your home',
-                      style: const TextStyle(color: Color(0xFFD4F1E1), fontSize: 9.5, fontWeight: FontWeight.w600),
+                      shoppingMode == 'shop'
+                          ? 'Bulk pricing is active for this cart'
+                          : 'Packed fresh for your home',
+                      style: const TextStyle(
+                        color: Color(0xFFD4F1E1),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.verified_rounded, color: Color(0xFFFFD66B), size: 24),
+              const Icon(
+                Icons.verified_rounded,
+                color: Color(0xFFFFB300),
+                size: 24,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -346,18 +399,32 @@ class _CartHero extends StatelessWidget {
               value: progress,
               minHeight: 7,
               backgroundColor: Colors.white.withValues(alpha: 0.18),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD66B)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFFFB300),
+              ),
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: <Widget>[
-              Icon(remaining <= 0 ? Icons.celebration_rounded : Icons.local_shipping_rounded, color: Colors.white, size: 15),
+              Icon(
+                remaining <= 0
+                    ? Icons.celebration_rounded
+                    : Icons.local_shipping_rounded,
+                color: Colors.white,
+                size: 15,
+              ),
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  remaining <= 0 ? 'You unlocked FREE quick delivery' : 'Add ₹${remaining.toStringAsFixed(0)} more for FREE quick delivery',
-                  style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800),
+                  remaining <= 0
+                      ? 'You unlocked FREE quick delivery'
+                      : 'Add ₹${remaining.toStringAsFixed(0)} more for FREE quick delivery',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -382,7 +449,11 @@ class _CartError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 52),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.error,
+              size: 52,
+            ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 14),

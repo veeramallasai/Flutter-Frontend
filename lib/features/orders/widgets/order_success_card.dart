@@ -36,7 +36,7 @@ class OrderSuccessCard extends StatelessWidget {
             width: 76,
             height: 76,
             decoration: const BoxDecoration(
-              color: Color(0xFFE7F7ED),
+              color: Color(0xFFE8F5E9),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -76,10 +76,7 @@ class OrderSuccessCard extends StatelessWidget {
             ),
             child: Column(
               children: <Widget>[
-                _SuccessDetailRow(
-                  label: 'Order ID',
-                  value: order.shortOrderId,
-                ),
+                _SuccessDetailRow(label: 'Order ID', value: order.shortOrderId),
                 const SizedBox(height: 11),
                 _SuccessDetailRow(
                   label: 'Amount',
@@ -92,10 +89,7 @@ class OrderSuccessCard extends StatelessWidget {
                 ),
                 if (_deliveryText.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 11),
-                  _SuccessDetailRow(
-                    label: 'Delivery',
-                    value: _deliveryText,
-                  ),
+                  _SuccessDetailRow(label: 'Delivery', value: _deliveryText),
                 ],
               ],
             ),
@@ -140,10 +134,7 @@ class OrderSuccessCard extends StatelessWidget {
 }
 
 class _SuccessDetailRow extends StatelessWidget {
-  const _SuccessDetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _SuccessDetailRow({required this.label, required this.value});
 
   final String label;
   final String value;

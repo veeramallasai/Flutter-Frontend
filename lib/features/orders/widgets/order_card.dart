@@ -79,7 +79,7 @@ class OrderCard extends StatelessWidget {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF7EF),
+            color: const Color(0xFFE8F5E9),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(
@@ -117,10 +117,7 @@ class OrderCard extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 7,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
             color: statusStyle.background,
             borderRadius: BorderRadius.circular(30),
@@ -128,11 +125,7 @@ class OrderCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(
-                statusStyle.icon,
-                color: statusStyle.foreground,
-                size: 13,
-              ),
+              Icon(statusStyle.icon, color: statusStyle.foreground, size: 13),
               const SizedBox(width: 5),
               Text(
                 order.statusLabel.toUpperCase(),
@@ -156,7 +149,7 @@ class OrderCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7FAF8),
+          color: const Color(0xFFF9FAF9),
           borderRadius: BorderRadius.circular(15),
         ),
         child: Row(
@@ -170,7 +163,7 @@ class OrderCard extends StatelessWidget {
             Expanded(
               child: Text(
                 '${order.calculatedItemCount} '
-                    '${order.calculatedItemCount == 1 ? 'item' : 'items'}',
+                '${order.calculatedItemCount == 1 ? 'item' : 'items'}',
                 style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 11,
@@ -183,8 +176,9 @@ class OrderCard extends StatelessWidget {
       );
     }
 
-    final List<OrderItemModel> visibleItems =
-    order.items.take(3).toList(growable: false);
+    final List<OrderItemModel> visibleItems = order.items
+        .take(3)
+        .toList(growable: false);
     final int remainingCount = order.items.length - visibleItems.length;
 
     return Row(
@@ -222,9 +216,9 @@ class OrderCard extends StatelessWidget {
               Text(
                 remainingCount > 0
                     ? '+$remainingCount more • '
-                    '${order.calculatedItemCount} items'
+                        '${order.calculatedItemCount} items'
                     : '${order.calculatedItemCount} '
-                    '${order.calculatedItemCount == 1 ? 'item' : 'items'}',
+                        '${order.calculatedItemCount == 1 ? 'item' : 'items'}',
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 9.5,
@@ -235,10 +229,7 @@ class OrderCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const Icon(
-          Icons.chevron_right_rounded,
-          color: AppColors.textSecondary,
-        ),
+        const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
       ],
     );
   }
@@ -287,11 +278,7 @@ class OrderCard extends StatelessWidget {
     return const ColoredBox(
       color: Color(0xFFF2F8F4),
       child: Center(
-        child: Icon(
-          Icons.eco_rounded,
-          color: AppColors.primary,
-          size: 25,
-        ),
+        child: Icon(Icons.eco_rounded, color: AppColors.primary, size: 25),
       ),
     );
   }
@@ -306,11 +293,7 @@ class OrderCard extends StatelessWidget {
             value: order.deliveryMethodLabel,
           ),
         ),
-        Container(
-          width: 1,
-          height: 35,
-          color: AppColors.border,
-        ),
+        Container(width: 1, height: 35, color: AppColors.border),
         Expanded(
           child: _smallDetail(
             icon: Icons.payments_outlined,
@@ -428,29 +411,30 @@ class OrderCard extends StatelessWidget {
     required VoidCallback? onPressed,
     bool filled = false,
   }) {
-    final Widget labelWidget = isProcessing
-        ? SizedBox(
-      width: 17,
-      height: 17,
-      child: CircularProgressIndicator(
-        strokeWidth: 2.5,
-        color: filled ? Colors.white : AppColors.primary,
-      ),
-    )
-        : Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Icon(icon, size: 16),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    );
+    final Widget labelWidget =
+        isProcessing
+            ? SizedBox(
+              width: 17,
+              height: 17,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: filled ? Colors.white : AppColors.primary,
+              ),
+            )
+            : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(icon, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            );
 
     if (filled) {
       return SizedBox(
@@ -502,8 +486,8 @@ _OrderStatusStyle _statusStyle(String status) {
   switch (status) {
     case 'delivered':
       return const _OrderStatusStyle(
-        foreground: Color(0xFF08783E),
-        background: Color(0xFFE5F7ED),
+        foreground: Color(0xFF2E7D32),
+        background: Color(0xFFE8F5E9),
         icon: Icons.check_circle_rounded,
       );
     case 'cancelled':
@@ -529,15 +513,15 @@ _OrderStatusStyle _statusStyle(String status) {
       );
     case 'confirmed':
       return const _OrderStatusStyle(
-        foreground: Color(0xFF08783E),
-        background: Color(0xFFE5F7ED),
+        foreground: Color(0xFF2E7D32),
+        background: Color(0xFFE8F5E9),
         icon: Icons.verified_rounded,
       );
     case 'placed':
     default:
       return const _OrderStatusStyle(
-        foreground: Color(0xFF08783E),
-        background: Color(0xFFE5F7ED),
+        foreground: Color(0xFF2E7D32),
+        background: Color(0xFFE8F5E9),
         icon: Icons.schedule_rounded,
       );
   }
@@ -575,11 +559,12 @@ String _formatDateTime(DateTime? date) {
     'Dec',
   ];
 
-  final int hour = date.hour == 0
-      ? 12
-      : date.hour > 12
-      ? date.hour - 12
-      : date.hour;
+  final int hour =
+      date.hour == 0
+          ? 12
+          : date.hour > 12
+          ? date.hour - 12
+          : date.hour;
   final String minute = date.minute.toString().padLeft(2, '0');
   final String period = date.hour >= 12 ? 'PM' : 'AM';
 

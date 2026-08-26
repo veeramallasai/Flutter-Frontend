@@ -23,7 +23,8 @@ class ScheduledDeliveryScreen extends StatefulWidget {
   final int itemCount;
 
   @override
-  State<ScheduledDeliveryScreen> createState() => _ScheduledDeliveryScreenState();
+  State<ScheduledDeliveryScreen> createState() =>
+      _ScheduledDeliveryScreenState();
 }
 
 class _ScheduledDeliveryScreenState extends State<ScheduledDeliveryScreen> {
@@ -84,7 +85,11 @@ class _ScheduledDeliveryScreenState extends State<ScheduledDeliveryScreen> {
           const SizedBox(height: 20),
           const Text(
             'Select Time Slot',
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 10),
           DeliveryTimeSelector(
@@ -100,7 +105,13 @@ class _ScheduledDeliveryScreenState extends State<ScheduledDeliveryScreen> {
           padding: const EdgeInsets.all(16),
           child: FilledButton.icon(
             onPressed: _continue,
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF073D24), minimumSize: const Size.fromHeight(56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1B5E20),
+              minimumSize: const Size.fromHeight(56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
             icon: const Icon(Icons.calendar_month_rounded),
             label: Text('RESERVE SLOT • ₹${_fee.toStringAsFixed(0)}'),
           ),
@@ -114,20 +125,62 @@ class _ScheduledHero extends StatelessWidget {
   const _ScheduledHero();
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: <Color>[Color(0xFF241743), Color(0xFF594194), Color(0xFF7D64BA)]),
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: const <BoxShadow>[BoxShadow(color: Color(0x28594194), blurRadius: 25, offset: Offset(0, 12))],
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: <Color>[
+          Color(0xFF241743),
+          Color(0xFF594194),
+          Color(0xFF7D64BA),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(26),
+      boxShadow: const <BoxShadow>[
+        BoxShadow(
+          color: Color(0x28594194),
+          blurRadius: 25,
+          offset: Offset(0, 12),
         ),
-        child: const Row(children: <Widget>[
-          CircleAvatar(radius: 31, backgroundColor: Color(0x24FFFFFF), child: Icon(Icons.calendar_month_rounded, color: Colors.white, size: 34)),
-          SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            Text('Delivery on your time', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-            SizedBox(height: 5),
-            Text('Reserve a convenient 2-hour window with predictable arrival.', style: TextStyle(color: Color(0xFFE5DCFF), fontSize: 10, height: 1.45, fontWeight: FontWeight.w600)),
-          ])),
-        ]),
-      );
+      ],
+    ),
+    child: const Row(
+      children: <Widget>[
+        CircleAvatar(
+          radius: 31,
+          backgroundColor: Color(0x24FFFFFF),
+          child: Icon(
+            Icons.calendar_month_rounded,
+            color: Colors.white,
+            size: 34,
+          ),
+        ),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Delivery on your time',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Reserve a convenient 2-hour window with predictable arrival.',
+                style: TextStyle(
+                  color: Color(0xFFE5DCFF),
+                  fontSize: 10,
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }

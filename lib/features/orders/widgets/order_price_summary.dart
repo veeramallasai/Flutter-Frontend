@@ -51,9 +51,10 @@ class OrderPriceSummary extends StatelessWidget {
           if (order.couponDiscount > 0) ...<Widget>[
             const SizedBox(height: 11),
             _PriceRow(
-              label: order.couponCode.trim().isEmpty
-                  ? 'Coupon discount'
-                  : 'Coupon (${order.couponCode})',
+              label:
+                  order.couponCode.trim().isEmpty
+                      ? 'Coupon discount'
+                      : 'Coupon (${order.couponCode})',
               amount: -order.couponDiscount,
               highlight: true,
             ),
@@ -79,7 +80,7 @@ class OrderPriceSummary extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF7EF),
+                color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -128,11 +129,12 @@ class _PriceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDiscount = amount < 0;
-    final Color color = highlight
-        ? AppColors.primary
-        : isTotal
-        ? AppColors.textPrimary
-        : AppColors.textSecondary;
+    final Color color =
+        highlight
+            ? AppColors.primary
+            : isTotal
+            ? AppColors.textPrimary
+            : AppColors.textSecondary;
 
     final String value;
     if (freeWhenZero && amount == 0) {
@@ -159,9 +161,10 @@ class _PriceRow extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: (highlight || (freeWhenZero && amount == 0))
-                ? AppColors.primary
-                : AppColors.textPrimary,
+            color:
+                (highlight || (freeWhenZero && amount == 0))
+                    ? AppColors.primary
+                    : AppColors.textPrimary,
             fontSize: isTotal ? 15 : 12,
             fontWeight: isTotal ? FontWeight.w900 : FontWeight.w800,
           ),

@@ -4,7 +4,7 @@ import '../network/network_info.dart';
 
 class ConnectivityService {
   ConnectivityService({NetworkInfo? networkInfo})
-      : _networkInfo = networkInfo ?? NetworkInfo();
+    : _networkInfo = networkInfo ?? NetworkInfo();
 
   final NetworkInfo _networkInfo;
   final StreamController<bool> _controller = StreamController<bool>.broadcast();

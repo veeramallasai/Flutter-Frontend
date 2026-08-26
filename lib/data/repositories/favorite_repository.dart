@@ -3,7 +3,7 @@ import '../models/product_model.dart';
 
 class FavoriteRepository {
   FavoriteRepository({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
@@ -11,9 +11,9 @@ class FavoriteRepository {
     final dynamic data = (await _apiClient.get('/api/v1/favorites')).data;
     if (data is! Iterable) return <ProductModel>[];
     return List<ProductModel>.unmodifiable(
-      data
-          .whereType<Map>()
-          .map((Map value) => ProductModel.fromMap(Map<String, dynamic>.from(value))),
+      data.whereType<Map>().map(
+        (Map value) => ProductModel.fromMap(Map<String, dynamic>.from(value)),
+      ),
     );
   }
 

@@ -22,8 +22,21 @@ class OrderConstants {
   ];
 
   static const Set<String> activeStatuses = <String>{
-    placed, confirmed, processing, packed, shipped, outForDelivery,
+    placed,
+    confirmed,
+    processing,
+    packed,
+    shipped,
+    outForDelivery,
   };
-  static const Set<String> completedStatuses = <String>{delivered, cancelled, failed};
-  static const Set<String> cancellableStatuses = <String>{placed, confirmed, processing};
+  static const Set<String> completedStatuses = <String>{
+    delivered,
+    cancelled,
+    failed,
+  };
+  static const Set<String> cancellableStatuses = <String>{
+    placed,
+    confirmed,
+    processing,
+  };
 }

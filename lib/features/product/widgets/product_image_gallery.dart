@@ -46,28 +46,36 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
             children: <Widget>[
               if (images.isEmpty)
                 const Center(
-                  child: Icon(Icons.eco_rounded, color: AppColors.primary, size: 80),
+                  child: Icon(
+                    Icons.eco_rounded,
+                    color: AppColors.primary,
+                    size: 80,
+                  ),
                 )
               else
                 PageView.builder(
                   controller: _controller,
                   itemCount: images.length,
-                  onPageChanged: (int index) =>
-                      setState(() => _currentIndex = index),
-                  itemBuilder: (_, int index) => Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Hero(
-                      tag: 'product-${widget.product.id}-$index',
-                      child: _ProductImage(path: images[index]),
-                    ),
-                  ),
+                  onPageChanged:
+                      (int index) => setState(() => _currentIndex = index),
+                  itemBuilder:
+                      (_, int index) => Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Hero(
+                          tag: 'product-${widget.product.id}-$index',
+                          child: _ProductImage(path: images[index]),
+                        ),
+                      ),
                 ),
               if (widget.product.discountPercent > 0)
                 Positioned(
                   left: 14,
                   top: 14,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(30),
@@ -123,7 +131,11 @@ class _ProductImage extends StatelessWidget {
 
   Widget _error(BuildContext context, Object error, StackTrace? stackTrace) {
     return const Center(
-      child: Icon(Icons.image_not_supported_outlined, color: AppColors.textSecondary, size: 55),
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        color: AppColors.textSecondary,
+        size: 55,
+      ),
     );
   }
 }

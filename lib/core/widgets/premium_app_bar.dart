@@ -23,26 +23,41 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) => AppBar(
-        toolbarHeight: preferredSize.height,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        shadowColor: const Color(0x12000000),
-        leading: showBack
+    toolbarHeight: preferredSize.height,
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
+    elevation: 0,
+    shadowColor: const Color(0x12000000),
+    leading:
+        showBack
             ? IconButton(
-                onPressed: onBack ?? () => Navigator.maybePop(context),
-                icon: const Icon(Icons.arrow_back_rounded),
-              )
+              onPressed: onBack ?? () => Navigator.maybePop(context),
+              icon: const Icon(Icons.arrow_back_rounded),
+            )
             : null,
-        automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w900)),
-            if (subtitle != null)
-              Text(subtitle!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10.5, fontWeight: FontWeight.w600)),
-          ],
+    automaticallyImplyLeading: false,
+    title: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-        actions: actions,
-      );
+        if (subtitle != null)
+          Text(
+            subtitle!,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
+    ),
+    actions: actions,
+  );
 }

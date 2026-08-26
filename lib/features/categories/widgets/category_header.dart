@@ -114,21 +114,23 @@ class CategoryHeader extends StatelessWidget {
                   const SizedBox(width: 18),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(22),
-                    child: imageUrl.startsWith('assets/')
-                        ? Image.asset(
-                            imageUrl,
-                            width: 92,
-                            height: 92,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.network(
-                            imageUrl,
-                            width: 92,
-                            height: 92,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                const SizedBox(width: 92, height: 92),
-                          ),
+                    child:
+                        imageUrl.startsWith('assets/')
+                            ? Image.asset(
+                              imageUrl,
+                              width: 92,
+                              height: 92,
+                              fit: BoxFit.cover,
+                            )
+                            : Image.network(
+                              imageUrl,
+                              width: 92,
+                              height: 92,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) =>
+                                      const SizedBox(width: 92, height: 92),
+                            ),
                   ),
                 ],
               ],

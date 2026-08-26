@@ -37,10 +37,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           animation: _ordersProvider,
           builder: (BuildContext context, Widget? child) {
             return Column(
-              children: <Widget>[
-                _buildHeader(),
-                Expanded(child: _buildBody()),
-              ],
+              children: <Widget>[_buildHeader(), Expanded(child: _buildBody())],
             );
           },
         ),
@@ -73,7 +70,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             width: 43,
             height: 43,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(13),
             ),
             child: const Icon(
@@ -108,22 +105,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
           IconButton(
             tooltip: 'Refresh orders',
-            onPressed: _ordersProvider.isRefreshing
-                ? null
-                : () => _ordersProvider.refresh(),
-            icon: _ordersProvider.isRefreshing
-                ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 2.5,
-              ),
-            )
-                : const Icon(
-              Icons.refresh_rounded,
-              color: AppColors.primary,
-            ),
+            onPressed:
+                _ordersProvider.isRefreshing
+                    ? null
+                    : () => _ordersProvider.refresh(),
+            icon:
+                _ordersProvider.isRefreshing
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                    : const Icon(
+                      Icons.refresh_rounded,
+                      color: AppColors.primary,
+                    ),
           ),
         ],
       ),
@@ -169,10 +168,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
             ),
           if (!_ordersProvider.hasFilteredOrders)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _buildEmptyState(),
-            )
+            SliverFillRemaining(hasScrollBody: false, child: _buildEmptyState())
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
@@ -181,25 +177,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (BuildContext context, int index) {
                   final OrderModel order =
-                  _ordersProvider.filteredOrders[index];
+                      _ordersProvider.filteredOrders[index];
 
                   return OrderCard(
                     order: order,
                     isProcessing: _ordersProvider.isProcessing(order.id),
                     onTap: () => _openOrderDetails(order),
-                    onTrack: order.canTrack
-                        ? () => _showComingNext(
-                      'Order tracking for #${order.shortOrderId}',
-                    )
-                        : null,
-                    onCancel: order.canCancel
-                        ? () => _confirmCancellation(order)
-                        : null,
-                    onReorder: order.canReorder
-                        ? () => _showComingNext(
-                      'Reorder for #${order.shortOrderId}',
-                    )
-                        : null,
+                    onTrack:
+                        order.canTrack
+                            ? () => _showComingNext(
+                              'Order tracking for #${order.shortOrderId}',
+                            )
+                            : null,
+                    onCancel:
+                        order.canCancel
+                            ? () => _confirmCancellation(order)
+                            : null,
+                    onReorder:
+                        order.canReorder
+                            ? () => _showComingNext(
+                              'Reorder for #${order.shortOrderId}',
+                            )
+                            : null,
                   );
                 },
               ),
@@ -217,10 +216,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[
-            Color(0xFF043D22),
-            Color(0xFF17A45B),
-          ],
+          colors: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: const <BoxShadow>[
@@ -283,7 +279,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           label,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Color(0xFFDDF4E7),
+            color: Color(0xFFE8F5E9),
             fontSize: 9,
             fontWeight: FontWeight.w700,
           ),
@@ -293,11 +289,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _summaryDivider() {
-    return Container(
-      width: 1,
-      height: 55,
-      color: const Color(0x35FFFFFF),
-    );
+    return Container(width: 1, height: 55, color: const Color(0x35FFFFFF));
   }
 
   Widget _buildFilters() {
@@ -311,34 +303,35 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: filters.map((_OrderFilter filter) {
-          final bool selected =
-              _ordersProvider.selectedFilter == filter.value;
+        children: filters
+            .map((_OrderFilter filter) {
+              final bool selected =
+                  _ordersProvider.selectedFilter == filter.value;
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 9),
-            child: ChoiceChip(
-              selected: selected,
-              showCheckmark: false,
-              onSelected: (_) =>
-                  _ordersProvider.selectFilter(filter.value),
-              label: Text(filter.label),
-              labelStyle: TextStyle(
-                color: selected ? Colors.white : AppColors.textPrimary,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-              backgroundColor: Colors.white,
-              selectedColor: AppColors.primary,
-              side: BorderSide(
-                color: selected ? AppColors.primary : AppColors.border,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-          );
-        }).toList(growable: false),
+              return Padding(
+                padding: const EdgeInsets.only(right: 9),
+                child: ChoiceChip(
+                  selected: selected,
+                  showCheckmark: false,
+                  onSelected: (_) => _ordersProvider.selectFilter(filter.value),
+                  label: Text(filter.label),
+                  labelStyle: TextStyle(
+                    color: selected ? Colors.white : AppColors.textPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  backgroundColor: Colors.white,
+                  selectedColor: AppColors.primary,
+                  side: BorderSide(
+                    color: selected ? AppColors.primary : AppColors.border,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -445,7 +438,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               width: 100,
               height: 100,
               decoration: const BoxDecoration(
-                color: Color(0xFFEAF7EF),
+                color: Color(0xFFE8F5E9),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -549,7 +542,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   decoration: InputDecoration(
                     hintText: 'Reason for cancellation (optional)',
                     filled: true,
-                    fillColor: const Color(0xFFF7FAF8),
+                    fillColor: const Color(0xFFF9FAF9),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: const BorderSide(color: AppColors.border),
@@ -561,16 +554,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   children: <Widget>[
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () =>
-                            Navigator.of(sheetContext).pop(false),
+                        onPressed: () => Navigator.of(sheetContext).pop(false),
                         child: const Text('KEEP ORDER'),
                       ),
                     ),
                     const SizedBox(width: 11),
                     Expanded(
                       child: FilledButton(
-                        onPressed: () =>
-                            Navigator.of(sheetContext).pop(true),
+                        onPressed: () => Navigator.of(sheetContext).pop(true),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.error,
                         ),
@@ -613,10 +604,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Future<void> _openOrderDetails(OrderModel order) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => OrderDetailsScreen(
-          orderId: order.id,
-          initialOrder: order,
-        ),
+        builder:
+            (_) => OrderDetailsScreen(orderId: order.id, initialOrder: order),
       ),
     );
   }
@@ -649,10 +638,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 }
 
 class _OrderFilter {
-  const _OrderFilter({
-    required this.value,
-    required this.label,
-  });
+  const _OrderFilter({required this.value, required this.label});
 
   final String value;
   final String label;

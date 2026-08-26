@@ -36,23 +36,29 @@ class PremiumTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextFormField(
-        controller: controller,
-        enabled: enabled,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        obscureText: obscureText,
-        maxLines: obscureText ? 1 : maxLines,
-        validator: validator,
-        onChanged: onChanged,
-        onFieldSubmitted: onSubmitted,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, color: AppColors.primary),
-          suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(17), borderSide: const BorderSide(color: AppColors.border)),
-        ),
-      );
+    controller: controller,
+    enabled: enabled,
+    keyboardType: keyboardType,
+    textInputAction: textInputAction,
+    obscureText: obscureText,
+    maxLines: obscureText ? 1 : maxLines,
+    validator: validator,
+    onChanged: onChanged,
+    onFieldSubmitted: onSubmitted,
+    decoration: InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon:
+          prefixIcon == null
+              ? null
+              : Icon(prefixIcon, color: AppColors.primary),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+    ),
+  );
 }

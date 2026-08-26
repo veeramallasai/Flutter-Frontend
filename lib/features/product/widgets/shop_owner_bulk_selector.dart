@@ -36,7 +36,7 @@ class ShopOwnerBulkSelector extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5FAF7),
+        color: const Color(0xFFF9FAF9),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFD6EBDD)),
       ),
@@ -45,7 +45,11 @@ class ShopOwnerBulkSelector extends StatelessWidget {
         children: <Widget>[
           const Row(
             children: <Widget>[
-              Icon(Icons.storefront_rounded, color: AppColors.primary, size: 20),
+              Icon(
+                Icons.storefront_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               SizedBox(width: 7),
               Text(
                 'Shop Owner Bulk Order',
@@ -70,27 +74,30 @@ class ShopOwnerBulkSelector extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: availableSizes.map((int size) {
-              final bool selected = size == selectedPackSize;
-              return ChoiceChip(
-                label: Text('$size $unit'),
-                selected: selected,
-                onSelected: (_) => onPackSizeChanged(size),
-                showCheckmark: false,
-                selectedColor: const Color(0xFFE4F6EB),
-                backgroundColor: Colors.white,
-                side: BorderSide(
-                  color: selected ? AppColors.primary : AppColors.border,
-                ),
-                labelStyle: TextStyle(
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                ),
-              );
-            }).toList(growable: false),
+            children: availableSizes
+                .map((int size) {
+                  final bool selected = size == selectedPackSize;
+                  return ChoiceChip(
+                    label: Text('$size $unit'),
+                    selected: selected,
+                    onSelected: (_) => onPackSizeChanged(size),
+                    showCheckmark: false,
+                    selectedColor: const Color(0xFFE8F5E9),
+                    backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: selected ? AppColors.primary : AppColors.border,
+                    ),
+                    labelStyle: TextStyle(
+                      color:
+                          selected
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  );
+                })
+                .toList(growable: false),
           ),
           const SizedBox(height: 14),
           Row(

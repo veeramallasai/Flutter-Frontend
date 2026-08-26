@@ -85,19 +85,23 @@ class AddToCartBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                icon: isLoading
-                    ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-                    : const Icon(Icons.shopping_bag_rounded, size: 18),
+                icon:
+                    isLoading
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(Icons.shopping_bag_rounded, size: 18),
                 label: Text(
                   isLoading ? 'ADDING' : 'ADD',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ],

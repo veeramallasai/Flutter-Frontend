@@ -41,51 +41,28 @@ class OrderItemModel {
   bool get isHomeOrder => !isShopOrder;
 
   factory OrderItemModel.fromMap(Map<String, dynamic> map) {
-    final double unitPrice = _toDouble(
-      map['unitPrice'] ?? map['price'],
-    );
+    final double unitPrice = _toDouble(map['unitPrice'] ?? map['price']);
 
-    double mrp = _toDouble(
-      map['mrp'],
-      fallback: unitPrice,
-    );
+    double mrp = _toDouble(map['mrp'], fallback: unitPrice);
 
     if (mrp < unitPrice) {
       mrp = unitPrice;
     }
 
     return OrderItemModel(
-      cartItemId: _text(
-        map['cartItemId'] ?? map['documentId'],
-      ),
+      cartItemId: _text(map['cartItemId'] ?? map['documentId']),
       productId: _text(map['productId']),
       name: ProductUtils.localizedName(
-        _text(
-          map['name'] ?? map['productName'],
-          fallback: 'Fresh Product',
-        ),
+        _text(map['name'] ?? map['productName'], fallback: 'Fresh Product'),
       ),
       category: _text(map['category']),
-      imageUrl: _text(
-        map['imageUrl'] ?? map['image'],
-      ),
-      shoppingMode: _normalizeShoppingMode(
-        map['shoppingMode'],
-      ),
-      unit: _text(
-        map['unit'],
-        fallback: '1 unit',
-      ),
+      imageUrl: _text(map['imageUrl'] ?? map['image']),
+      shoppingMode: _normalizeShoppingMode(map['shoppingMode']),
+      unit: _text(map['unit'], fallback: '1 unit'),
       unitPrice: unitPrice,
       mrp: mrp,
-      quantity: _positiveInt(
-        map['quantity'],
-        fallback: 1,
-      ),
-      inStock: _toBool(
-        map['inStock'],
-        fallback: true,
-      ),
+      quantity: _positiveInt(map['quantity'], fallback: 1),
+      inStock: _toBool(map['inStock'], fallback: true),
     );
   }
 
@@ -125,9 +102,10 @@ class OrderItemModel {
       name: ProductUtils.localizedName(name ?? this.name),
       category: category ?? this.category,
       imageUrl: imageUrl ?? this.imageUrl,
-      shoppingMode: shoppingMode == null
-          ? this.shoppingMode
-          : _normalizeShoppingMode(shoppingMode),
+      shoppingMode:
+          shoppingMode == null
+              ? this.shoppingMode
+              : _normalizeShoppingMode(shoppingMode),
       unit: unit ?? this.unit,
       unitPrice: unitPrice ?? this.unitPrice,
       mrp: mrp ?? this.mrp,
@@ -202,10 +180,11 @@ double _toDouble(dynamic value, {double fallback = 0}) {
     return value.toDouble();
   }
 
-  final String cleaned = value
-      ?.toString()
-      .replaceAll(',', '')
-      .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
+  final String cleaned =
+      value
+          ?.toString()
+          .replaceAll(',', '')
+          .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
       '';
 
   return double.tryParse(cleaned) ?? fallback;

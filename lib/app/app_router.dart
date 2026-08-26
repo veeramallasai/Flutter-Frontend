@@ -17,6 +17,7 @@ import '../features/delivery/delivery_method_screen.dart';
 import '../features/delivery/preorder_delivery_screen.dart';
 import '../features/delivery/quick_delivery_screen.dart';
 import '../features/delivery/scheduled_delivery_screen.dart';
+import '../features/delivery_partner/delivery_partner_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/orders/order_confirmation_screen.dart';
 import '../features/orders/order_details_screen.dart';
@@ -82,13 +83,15 @@ class AppRouter {
       case AppRoutes.home:
         return _page(const HomeScreen(), settings);
 
+      case AppRoutes.deliveryPartner:
+        return _page(const DeliveryPartnerScreen(), settings);
+
       case AppRoutes.categories:
         final Map<String, dynamic> args = _getArguments(settings);
 
         return _page(
           CategoriesScreen(
-            initialShoppingMode:
-            (args['shoppingMode'] ?? 'home').toString(),
+            initialShoppingMode: (args['shoppingMode'] ?? 'home').toString(),
           ),
           settings,
         );
@@ -102,8 +105,7 @@ class AppRouter {
           CategoryProductsScreen(
             category: category,
             title: title,
-            initialShoppingMode:
-            (args['shoppingMode'] ?? 'home').toString(),
+            initialShoppingMode: (args['shoppingMode'] ?? 'home').toString(),
           ),
           settings,
         );
@@ -114,8 +116,7 @@ class AppRouter {
         return _page(
           ProductDetailsScreen(
             productId: (args['productId'] ?? '').toString(),
-            initialShoppingMode:
-            (args['shoppingMode'] ?? 'home').toString(),
+            initialShoppingMode: (args['shoppingMode'] ?? 'home').toString(),
           ),
           settings,
         );
@@ -155,8 +156,7 @@ class AppRouter {
 
         return _page(
           DeliveryMethodScreen(
-            initialShoppingMode:
-            (args['shoppingMode'] ?? 'home').toString(),
+            initialShoppingMode: (args['shoppingMode'] ?? 'home').toString(),
             subtotal: _toDouble(args['subtotal']),
             savings: _toDouble(args['savings']),
             total: _toDouble(args['total']),
@@ -213,7 +213,7 @@ class AppRouter {
             deliveryMethod: (args['deliveryMethod'] ?? 'quick').toString(),
             deliveryDate: args['deliveryDate']?.toString(),
             deliverySlot:
-            (args['deliverySlot'] ?? 'Earliest available').toString(),
+                (args['deliverySlot'] ?? 'Earliest available').toString(),
             subtotal: _toDouble(args['subtotal']),
             savings: _toDouble(args['savings']),
             total: _toDouble(args['total']),
@@ -248,7 +248,7 @@ class AppRouter {
             deliveryMethod: (args['deliveryMethod'] ?? 'quick').toString(),
             deliveryDate: args['deliveryDate']?.toString(),
             deliverySlot:
-            (args['deliverySlot'] ?? 'Earliest available').toString(),
+                (args['deliverySlot'] ?? 'Earliest available').toString(),
             addressId: (args['addressId'] ?? '').toString(),
             address: _toStringDynamicMap(args['address']),
             subtotal: _toDouble(args['subtotal']),
@@ -268,7 +268,7 @@ class AppRouter {
             deliveryMethod: (args['deliveryMethod'] ?? 'quick').toString(),
             deliveryDate: args['deliveryDate']?.toString(),
             deliverySlot:
-            (args['deliverySlot'] ?? 'Earliest available').toString(),
+                (args['deliverySlot'] ?? 'Earliest available').toString(),
             addressId: (args['addressId'] ?? '').toString(),
             address: _toStringDynamicMap(args['address']),
             subtotal: _toDouble(args['subtotal']),
@@ -302,10 +302,7 @@ class AppRouter {
       case AppRoutes.orderConfirmation:
         final Map<String, dynamic> args = _getArguments(settings);
 
-        return _page(
-          OrderConfirmationScreen(arguments: args),
-          settings,
-        );
+        return _page(OrderConfirmationScreen(arguments: args), settings);
 
       default:
         return _page(
@@ -322,7 +319,7 @@ class AppRouter {
 
     if (value is Map) {
       return value.map(
-            (dynamic key, dynamic item) =>
+        (dynamic key, dynamic item) =>
             MapEntry<String, dynamic>(key.toString(), item),
       );
     }
@@ -335,7 +332,7 @@ class AppRouter {
 
     if (value is Map) {
       return value.map(
-            (dynamic key, dynamic item) =>
+        (dynamic key, dynamic item) =>
             MapEntry<String, dynamic>(key.toString(), item),
       );
     }
@@ -344,9 +341,9 @@ class AppRouter {
   }
 
   static MaterialPageRoute<dynamic> _page(
-      Widget screen,
-      RouteSettings settings,
-      ) {
+    Widget screen,
+    RouteSettings settings,
+  ) {
     return MaterialPageRoute<dynamic>(
       settings: settings,
       builder: (BuildContext context) => screen,
@@ -429,11 +426,11 @@ class _RouteNotFoundScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: () => Navigator.of(context)
-                            .pushNamedAndRemoveUntil(
-                          AppRoutes.home,
-                          (Route<dynamic> route) => false,
-                        ),
+                        onPressed:
+                            () => Navigator.of(context).pushNamedAndRemoveUntil(
+                              AppRoutes.home,
+                              (Route<dynamic> route) => false,
+                            ),
                         icon: const Icon(Icons.home_rounded),
                         label: const Text('BACK TO HOME'),
                         style: FilledButton.styleFrom(

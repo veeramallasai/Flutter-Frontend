@@ -34,7 +34,9 @@ class ProductReviews extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<ProductReview> visibleReviews = reviews.take(3).toList(growable: false);
+    final List<ProductReview> visibleReviews = reviews
+        .take(3)
+        .toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +113,9 @@ class ProductReviews extends StatelessWidget {
             ),
           ),
         ] else
-          ...visibleReviews.map((ProductReview review) => _ReviewTile(review: review)),
+          ...visibleReviews.map(
+            (ProductReview review) => _ReviewTile(review: review),
+          ),
       ],
     );
   }
@@ -140,7 +144,7 @@ class _ReviewTile extends StatelessWidget {
             children: <Widget>[
               CircleAvatar(
                 radius: 17,
-                backgroundColor: const Color(0xFFEAF7EF),
+                backgroundColor: const Color(0xFFE8F5E9),
                 child: Text(
                   review.customerName.trim().isEmpty
                       ? 'C'
@@ -196,7 +200,11 @@ class _ReviewTile extends StatelessWidget {
             const SizedBox(height: 7),
             const Row(
               children: <Widget>[
-                Icon(Icons.verified_rounded, color: AppColors.primary, size: 14),
+                Icon(
+                  Icons.verified_rounded,
+                  color: AppColors.primary,
+                  size: 14,
+                ),
                 SizedBox(width: 4),
                 Text(
                   'Verified purchase',
@@ -227,8 +235,10 @@ class _RatingStars extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: List<Widget>.generate(5, (int index) {
         return Icon(
-          index < rating.round() ? Icons.star_rounded : Icons.star_border_rounded,
-          color: const Color(0xFFF4B400),
+          index < rating.round()
+              ? Icons.star_rounded
+              : Icons.star_border_rounded,
+          color: const Color(0xFFFFB300),
           size: size,
         );
       }),

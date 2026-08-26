@@ -211,6 +211,140 @@ public class EmailOtpService {
         "verified", user.emailVerified());
   }
 
+  @Transactional
+  public Map<String, Object> sendForEmail(String rawEmail) {
+    String email = rawEmail == null ? "" : rawEmail.trim().toLowerCase();
+    if (email.isEmpty() || !email.contains("@")) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Enter a valid email address.");
+    }
+
+    Integer recent = jdbc.queryForObject("""
+        SELECT count(*)
+        FROM email_verification_otps
+        WHERE email = ?
+          AND purpose = ?
+          AND created_at >= now() - interval '1 hour'
+        """, Integer.class, email, PURPOSE);
+
+    if (recent != null && recent >= MAX_SENDS_PER_HOUR) {
+      throw new ApiException(
+          HttpStatus.TOO_MANY_REQUESTS,
+          "Too many OTP requests. Please try again later.");
+    }
+
+    String otp = String.format("%06d", random.nextInt(1_000_000));
+    String hash = encoder.encode(otp);
+    Instant now = Instant.now();
+    Instant expires = now.plus(OTP_TTL_MINUTES, ChronoUnit.MINUTES);
+
+    Integer resendCount = jdbc.queryForObject("""
+        SELECT COALESCE(max(resend_count), 0)
+        FROM email_verification_otps
+        WHERE email = ? AND purpose = ?
+        """, Integer.class, email, PURPOSE);
+
+    jdbc.update("""
+        DELETE FROM email_verification_otps
+        WHERE email = ?
+          AND purpose = ?
+          AND verified_at IS NULL
+        """, email, PURPOSE);
+
+    jdbc.update("""
+        INSERT INTO email_verification_otps(
+          firebase_uid, email, otp_hash, purpose, expires_at,
+          attempts, resend_count, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)
+        """,
+        "anon_" + email,
+        email,
+        hash,
+        PURPOSE,
+        Timestamp.from(expires),
+        (resendCount == null ? 0 : resendCount) + 1,
+        Timestamp.from(now),
+        Timestamp.from(now));
+
+    sendMail(email, otp);
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("email", mask(email));
+    result.put("alreadyVerified", false);
+    result.put("expiresInSeconds", OTP_TTL_MINUTES * 60);
+    return result;
+  }
+
+  @Transactional
+  public Map<String, Object> verifyForEmail(String rawEmail, String rawOtp) {
+    String email = rawEmail == null ? "" : rawEmail.trim().toLowerCase();
+    String otp = rawOtp == null ? "" : rawOtp.trim();
+    if (!otp.matches("\\d{6}")) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Enter a valid 6-digit OTP.");
+    }
+
+    List<OtpRow> rows = jdbc.query("""
+        SELECT id, otp_hash, expires_at, attempts
+        FROM email_verification_otps
+        WHERE email = ?
+          AND purpose = ?
+          AND verified_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 1
+        """,
+        (rs, row) -> new OtpRow(
+            rs.getLong("id"),
+            rs.getString("otp_hash"),
+            rs.getTimestamp("expires_at").toInstant(),
+            rs.getInt("attempts")),
+        email, PURPOSE);
+
+    if (rows.isEmpty()) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          "No active email OTP found. Request a new OTP.");
+    }
+
+    OtpRow row = rows.get(0);
+
+    if (row.expiresAt().isBefore(Instant.now())) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          "Email OTP expired. Request a new OTP.");
+    }
+
+    if (row.attempts() >= MAX_VERIFY_ATTEMPTS) {
+      throw new ApiException(
+          HttpStatus.TOO_MANY_REQUESTS,
+          "Too many incorrect attempts. Request a new OTP.");
+    }
+
+    if (!encoder.matches(otp, row.otpHash())) {
+      jdbc.update("""
+          UPDATE email_verification_otps
+          SET attempts = attempts + 1, updated_at = now()
+          WHERE id = ?
+          """, row.id());
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Incorrect email OTP.");
+    }
+
+    jdbc.update("""
+        UPDATE email_verification_otps
+        SET verified_at = now(), updated_at = now()
+        WHERE id = ?
+        """, row.id());
+
+    jdbc.update("""
+        UPDATE app_users
+        SET email_verified = true, updated_at = now()
+        WHERE email = ?
+        """, email);
+
+    return Map.of(
+        "email", mask(email),
+        "verified", true,
+        "alreadyVerified", false);
+  }
+
   private UserEmail requireUser(String uid) {
     List<UserEmail> users = jdbc.query("""
         SELECT email, email_verified

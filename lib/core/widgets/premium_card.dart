@@ -19,23 +19,23 @@ class PremiumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        child: InkWell(
-          onTap: onTap,
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(22),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: highlighted ? AppColors.primary : const Color(0xFFE3EBE7),
-                width: highlighted ? 1.5 : 1,
-              ),
-              boxShadow: highlighted ? AppShadows.elevated : AppShadows.soft,
-            ),
-            child: child,
+          border: Border.all(
+            color: highlighted ? AppColors.primary : const Color(0xFFE3EBE7),
+            width: highlighted ? 1.5 : 1,
           ),
+          boxShadow: highlighted ? AppShadows.elevated : AppShadows.soft,
         ),
-      );
+        child: child,
+      ),
+    ),
+  );
 }

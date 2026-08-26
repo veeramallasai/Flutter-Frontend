@@ -6,18 +6,13 @@ import '../../data/repositories/order_repository.dart';
 import 'widgets/order_status_tracker.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
-  const OrderTrackingScreen({
-    super.key,
-    this.orderId = '',
-    this.initialOrder,
-  });
+  const OrderTrackingScreen({super.key, this.orderId = '', this.initialOrder});
 
   final String orderId;
   final OrderModel? initialOrder;
 
   @override
-  State<OrderTrackingScreen> createState() =>
-      _OrderTrackingScreenState();
+  State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
 }
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
@@ -75,9 +70,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       }
 
       final String argumentOrderId =
-      (arguments['orderId'] ?? arguments['id'] ?? '')
-          .toString()
-          .trim();
+          (arguments['orderId'] ?? arguments['id'] ?? '').toString().trim();
 
       if (argumentOrderId.isNotEmpty) {
         _orderId = argumentOrderId;
@@ -94,40 +87,41 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           children: <Widget>[
             _buildHeader(),
             Expanded(
-              child: _orderStream == null
-                  ? _buildWithoutStream()
-                  : StreamBuilder<OrderModel?>(
-                stream: _orderStream,
-                initialData: _initialOrder,
-                builder: (
-                    BuildContext context,
-                    AsyncSnapshot<OrderModel?> snapshot,
-                    ) {
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting &&
-                      snapshot.data == null) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
+              child:
+                  _orderStream == null
+                      ? _buildWithoutStream()
+                      : StreamBuilder<OrderModel?>(
+                        stream: _orderStream,
+                        initialData: _initialOrder,
+                        builder: (
+                          BuildContext context,
+                          AsyncSnapshot<OrderModel?> snapshot,
+                        ) {
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              snapshot.data == null) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return _buildErrorState(
+                              _friendlyError(snapshot.error),
+                            );
+                          }
+
+                          final OrderModel? order = snapshot.data;
+
+                          if (order == null) {
+                            return _buildErrorState('Order not found.');
+                          }
+
+                          return _buildContent(order);
+                        },
                       ),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return _buildErrorState(
-                      _friendlyError(snapshot.error),
-                    );
-                  }
-
-                  final OrderModel? order = snapshot.data;
-
-                  if (order == null) {
-                    return _buildErrorState('Order not found.');
-                  }
-
-                  return _buildContent(order);
-                },
-              ),
             ),
           ],
         ),
@@ -160,7 +154,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             width: 43,
             height: 43,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(13),
             ),
             child: const Icon(
@@ -231,38 +225,35 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               const SizedBox(height: 18),
               desktop
                   ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: _buildTimelineCard(order),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    flex: 4,
-                    child: Column(
-                      children: <Widget>[
-                        _buildDeliveryCard(order),
-                        const SizedBox(height: 16),
-                        _buildAddressCard(order),
-                        const SizedBox(height: 16),
-                        _buildHelpCard(),
-                      ],
-                    ),
-                  ),
-                ],
-              )
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(flex: 6, child: _buildTimelineCard(order)),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          children: <Widget>[
+                            _buildDeliveryCard(order),
+                            const SizedBox(height: 16),
+                            _buildAddressCard(order),
+                            const SizedBox(height: 16),
+                            _buildHelpCard(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
                   : Column(
-                children: <Widget>[
-                  _buildTimelineCard(order),
-                  const SizedBox(height: 16),
-                  _buildDeliveryCard(order),
-                  const SizedBox(height: 16),
-                  _buildAddressCard(order),
-                  const SizedBox(height: 16),
-                  _buildHelpCard(),
-                ],
-              ),
+                    children: <Widget>[
+                      _buildTimelineCard(order),
+                      const SizedBox(height: 16),
+                      _buildDeliveryCard(order),
+                      const SizedBox(height: 16),
+                      _buildAddressCard(order),
+                      const SizedBox(height: 16),
+                      _buildHelpCard(),
+                    ],
+                  ),
             ],
           ),
         ),
@@ -278,10 +269,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[
-            Color(0xFF043D22),
-            Color(0xFF17A45B),
-          ],
+          colors: <Color>[Color(0xFF1B5E20), Color(0xFF2E7D32)],
         ),
         borderRadius: BorderRadius.circular(26),
         boxShadow: const <BoxShadow>[
@@ -324,7 +312,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 Text(
                   _statusMessage(order.status),
                   style: const TextStyle(
-                    color: Color(0xFFDDF4E7),
+                    color: Color(0xFFE8F5E9),
                     fontSize: 10.5,
                     height: 1.4,
                     fontWeight: FontWeight.w600,
@@ -422,11 +410,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
       child: const Row(
         children: <Widget>[
-          Icon(
-            Icons.support_agent_rounded,
-            color: Color(0xFFB87900),
-            size: 27,
-          ),
+          Icon(Icons.support_agent_rounded, color: Color(0xFFB87900), size: 27),
           SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -486,7 +470,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
+                  color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 21),
@@ -635,16 +619,17 @@ String _statusMessage(String status) {
 }
 
 String _formatAddress(Map<String, dynamic> address) {
-  final List<String> parts = <String>[
-    _text(address['houseNumber'] ?? address['houseNo']),
-    _text(address['building'] ?? address['apartment']),
-    _text(address['street'] ?? address['addressLine1']),
-    _text(address['landmark']),
-    _text(address['area'] ?? address['addressLine2']),
-    _text(address['city']),
-    _text(address['state']),
-    _text(address['pincode'] ?? address['postalCode']),
-  ].where((String value) => value.isNotEmpty).toList();
+  final List<String> parts =
+      <String>[
+        _text(address['houseNumber'] ?? address['houseNo']),
+        _text(address['building'] ?? address['apartment']),
+        _text(address['street'] ?? address['addressLine1']),
+        _text(address['landmark']),
+        _text(address['area'] ?? address['addressLine2']),
+        _text(address['city']),
+        _text(address['state']),
+        _text(address['pincode'] ?? address['postalCode']),
+      ].where((String value) => value.isNotEmpty).toList();
 
   if (parts.isNotEmpty) {
     return parts.join(', ');

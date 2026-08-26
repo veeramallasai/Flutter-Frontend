@@ -6,9 +6,6 @@ class LoginForm extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        container: true,
-        label: 'Secure login form',
-        child: child,
-      );
+  Widget build(BuildContext context) =>
+      Semantics(container: true, label: 'Secure login form', child: child);
 }

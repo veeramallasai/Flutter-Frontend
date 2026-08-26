@@ -1,17 +1,15 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import '../models/payment_model.dart';
 import '../remote/payment_remote_source.dart';
 
 class PaymentRepository {
-  PaymentRepository({
-    PaymentRemoteSource? remoteSource,
-    FirebaseAuth? auth,
-  })  : _remoteSource = remoteSource ?? PaymentRemoteSource(),
-        _auth = auth ?? FirebaseAuth.instance;
+  PaymentRepository({PaymentRemoteSource? remoteSource, BackendAuth? auth})
+    : _remoteSource = remoteSource ?? PaymentRemoteSource(),
+      _auth = auth ?? BackendAuth.instance;
 
   final PaymentRemoteSource _remoteSource;
-  final FirebaseAuth _auth;
+  final BackendAuth _auth;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -40,17 +38,17 @@ class PaymentRepository {
 
   Future<PaymentModel?> getPaymentForOrder(String orderId) async {
     final String userId = _requireUserId();
-    final PaymentModel? payment =
-    await _remoteSource.getPaymentForOrder(orderId);
+    final PaymentModel? payment = await _remoteSource.getPaymentForOrder(
+      orderId,
+    );
     if (payment != null) _verifyOwnership(payment, userId);
     return payment;
   }
 
   Future<String> createPayment(PaymentModel payment) {
     final String userId = _requireUserId();
-    final PaymentModel userPayment = payment.userId == userId
-        ? payment
-        : payment.copyWith(userId: userId);
+    final PaymentModel userPayment =
+        payment.userId == userId ? payment : payment.copyWith(userId: userId);
     return _remoteSource.createPayment(userPayment);
   }
 

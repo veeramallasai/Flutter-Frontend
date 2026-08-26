@@ -28,13 +28,19 @@ class FarmerDetailsSection extends StatelessWidget {
         children: <Widget>[
           CircleAvatar(
             radius: 31,
-            backgroundColor: const Color(0xFFEAF7EF),
-            backgroundImage: farmer.imageUrl.startsWith('http')
-                ? NetworkImage(farmer.imageUrl)
-                : null,
-            child: farmer.imageUrl.isEmpty
-                ? const Icon(Icons.agriculture_rounded, color: AppColors.primary, size: 31)
-                : null,
+            backgroundColor: const Color(0xFFE8F5E9),
+            backgroundImage:
+                farmer.imageUrl.startsWith('http')
+                    ? NetworkImage(farmer.imageUrl)
+                    : null,
+            child:
+                farmer.imageUrl.isEmpty
+                    ? const Icon(
+                      Icons.agriculture_rounded,
+                      color: AppColors.primary,
+                      size: 31,
+                    )
+                    : null,
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -57,7 +63,11 @@ class FarmerDetailsSection extends StatelessWidget {
                     ),
                     if (farmer.isVerified) ...<Widget>[
                       const SizedBox(width: 5),
-                      const Icon(Icons.verified_rounded, color: AppColors.primary, size: 17),
+                      const Icon(
+                        Icons.verified_rounded,
+                        color: AppColors.primary,
+                        size: 17,
+                      ),
                     ],
                   ],
                 ),
@@ -93,7 +103,11 @@ class FarmerDetailsSection extends StatelessWidget {
             IconButton(
               tooltip: 'View farmer',
               onPressed: onViewProfile,
-              icon: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 18),
+              icon: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
             ),
         ],
       ),

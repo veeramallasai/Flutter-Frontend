@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
   FirestoreService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -24,9 +24,8 @@ class FirestoreService {
 
   Future<QuerySnapshot<Map<String, dynamic>>> getCollection(
     String path, {
-    Query<Map<String, dynamic>> Function(
-      Query<Map<String, dynamic>> query,
-    )? build,
+    Query<Map<String, dynamic>> Function(Query<Map<String, dynamic>> query)?
+    build,
   }) {
     Query<Map<String, dynamic>> query = collection(path);
     if (build != null) query = build(query);
@@ -35,9 +34,8 @@ class FirestoreService {
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchCollection(
     String path, {
-    Query<Map<String, dynamic>> Function(
-      Query<Map<String, dynamic>> query,
-    )? build,
+    Query<Map<String, dynamic>> Function(Query<Map<String, dynamic>> query)?
+    build,
   }) {
     Query<Map<String, dynamic>> query = collection(path);
     if (build != null) query = build(query);
@@ -48,10 +46,9 @@ class FirestoreService {
     String path,
     Map<String, dynamic> data, {
     bool merge = false,
-  }) => document(path).set(
-        Map<String, dynamic>.from(data),
-        SetOptions(merge: merge),
-      );
+  }) => document(
+    path,
+  ).set(Map<String, dynamic>.from(data), SetOptions(merge: merge));
 
   Future<void> updateDocument(String path, Map<String, dynamic> data) =>
       document(path).update(Map<String, dynamic>.from(data));

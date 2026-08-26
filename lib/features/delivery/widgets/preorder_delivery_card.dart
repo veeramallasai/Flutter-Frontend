@@ -20,9 +20,11 @@ class PreorderDeliveryCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEAF7EF) : Colors.white,
+          color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
         ),
         child: const Row(
           children: <Widget>[
@@ -35,13 +37,34 @@ class PreorderDeliveryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text('Pre-order Harvest', style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w900)),
+                  Text(
+                    'Pre-order Harvest',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                   SizedBox(height: 3),
-                  Text('Reserve directly from an upcoming harvest', style: TextStyle(color: AppColors.textSecondary, fontSize: 8.5, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Reserve directly from an upcoming harvest',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Text('BEST VALUE', style: TextStyle(color: AppColors.primary, fontSize: 8, fontWeight: FontWeight.w900)),
+            Text(
+              'BEST VALUE',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ],
         ),
       ),

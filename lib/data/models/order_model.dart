@@ -30,10 +30,11 @@ class OrderModel {
     this.deliveryDate,
     this.createdAt,
     this.updatedAt,
-  })  : items = List<OrderItemModel>.unmodifiable(items),
-        address = Map<String, dynamic>.unmodifiable(address),
-        statusHistory =
-        List<OrderStatusHistoryEntry>.unmodifiable(statusHistory);
+  }) : items = List<OrderItemModel>.unmodifiable(items),
+       address = Map<String, dynamic>.unmodifiable(address),
+       statusHistory = List<OrderStatusHistoryEntry>.unmodifiable(
+         statusHistory,
+       );
 
   final String id;
   final String orderNumber;
@@ -74,18 +75,15 @@ class OrderModel {
 
   bool get isCashOnDelivery => paymentMethod == 'cash_on_delivery';
 
-  bool get isPaid =>
-      paymentStatus == 'paid' || paymentStatus == 'paid_test';
+  bool get isPaid => paymentStatus == 'paid' || paymentStatus == 'paid_test';
 
   bool get isPlaced => status == 'placed';
 
   bool get isConfirmed => status == 'confirmed';
 
-  bool get isProcessing =>
-      status == 'processing' || status == 'packed';
+  bool get isProcessing => status == 'processing' || status == 'packed';
 
-  bool get isShipped =>
-      status == 'shipped' || status == 'out_for_delivery';
+  bool get isShipped => status == 'shipped' || status == 'out_for_delivery';
 
   bool get isDelivered => status == 'delivered';
 
@@ -96,9 +94,7 @@ class OrderModel {
   bool get canTrack => !isCancelled && !isFailed;
 
   bool get canCancel =>
-      status == 'placed' ||
-          status == 'confirmed' ||
-          status == 'processing';
+      status == 'placed' || status == 'confirmed' || status == 'processing';
 
   bool get canReorder => isDelivered || isCancelled;
 
@@ -109,7 +105,7 @@ class OrderModel {
 
     return items.fold<int>(
       0,
-          (int total, OrderItemModel item) => total + item.quantity,
+      (int total, OrderItemModel item) => total + item.quantity,
     );
   }
 
@@ -120,7 +116,7 @@ class OrderModel {
 
     return items.fold<double>(
       0,
-          (double total, OrderItemModel item) => total + item.lineTotal,
+      (double total, OrderItemModel item) => total + item.lineTotal,
     );
   }
 
@@ -193,8 +189,8 @@ class OrderModel {
   }
 
   factory OrderModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> document,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
     return OrderModel.fromMap(
       document.data() ?? <String, dynamic>{},
       documentId: document.id,
@@ -202,29 +198,25 @@ class OrderModel {
   }
 
   factory OrderModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
-    final List<OrderItemModel> items = _mapList(map['items'])
-        .map(OrderItemModel.fromMap)
-        .toList(growable: false);
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
+    final List<OrderItemModel> items = _mapList(
+      map['items'],
+    ).map(OrderItemModel.fromMap).toList(growable: false);
 
-    final List<OrderStatusHistoryEntry> history =
-    _mapList(map['statusHistory'])
-        .map(OrderStatusHistoryEntry.fromMap)
-        .toList(growable: false);
+    final List<OrderStatusHistoryEntry> history = _mapList(
+      map['statusHistory'],
+    ).map(OrderStatusHistoryEntry.fromMap).toList(growable: false);
 
     final int storedItemCount = _toInt(map['itemCount']);
     final int calculatedCount = items.fold<int>(
       0,
-          (int total, OrderItemModel item) => total + item.quantity,
+      (int total, OrderItemModel item) => total + item.quantity,
     );
 
     final double subtotal = _toDouble(map['subtotal']);
-    double mrpTotal = _toDouble(
-      map['mrpTotal'],
-      fallback: subtotal,
-    );
+    double mrpTotal = _toDouble(map['mrpTotal'], fallback: subtotal);
 
     if (mrpTotal < subtotal) {
       mrpTotal = subtotal;
@@ -232,59 +224,38 @@ class OrderModel {
 
     return OrderModel(
       id: _text(
-        documentId.isNotEmpty
-            ? documentId
-            : map['id'] ?? map['orderId'],
+        documentId.isNotEmpty ? documentId : map['id'] ?? map['orderId'],
       ),
       orderNumber: _text(map['orderNumber']),
       userId: _text(map['userId']),
       shoppingMode: _normalizeShoppingMode(map['shoppingMode']),
-      status: _text(
-        map['status'],
-        fallback: 'placed',
-      ).toLowerCase(),
-      paymentStatus: _text(
-        map['paymentStatus'],
-        fallback: 'pending',
-      ).toLowerCase(),
-      paymentMethod: _text(
-        map['paymentMethod'],
-        fallback: 'cash_on_delivery',
-      ).toLowerCase(),
+      status: _text(map['status'], fallback: 'placed').toLowerCase(),
+      paymentStatus:
+          _text(map['paymentStatus'], fallback: 'pending').toLowerCase(),
+      paymentMethod:
+          _text(
+            map['paymentMethod'],
+            fallback: 'cash_on_delivery',
+          ).toLowerCase(),
       paymentId: _text(map['paymentId']),
       transactionId: _text(map['transactionId']),
       items: items,
-      itemCount:
-      storedItemCount > 0 ? storedItemCount : calculatedCount,
+      itemCount: storedItemCount > 0 ? storedItemCount : calculatedCount,
       subtotal: subtotal,
       mrpTotal: mrpTotal,
       productSavings: _nonNegative(
-        _toDouble(
-          map['productSavings'],
-          fallback: mrpTotal - subtotal,
-        ),
+        _toDouble(map['productSavings'], fallback: mrpTotal - subtotal),
       ),
       couponCode: _text(map['couponCode']),
-      couponDiscount: _nonNegative(
-        _toDouble(map['couponDiscount']),
-      ),
-      deliveryFee: _nonNegative(
-        _toDouble(map['deliveryFee']),
-      ),
-      totalAmount: _nonNegative(
-        _toDouble(map['totalAmount']),
-      ),
+      couponDiscount: _nonNegative(_toDouble(map['couponDiscount'])),
+      deliveryFee: _nonNegative(_toDouble(map['deliveryFee'])),
+      totalAmount: _nonNegative(_toDouble(map['totalAmount'])),
       addressId: _text(map['addressId']),
       address: _mapValue(map['address']),
-      deliveryMethod: _text(
-        map['deliveryMethod'],
-        fallback: 'quick',
-      ).toLowerCase(),
+      deliveryMethod:
+          _text(map['deliveryMethod'], fallback: 'quick').toLowerCase(),
       deliveryDate: _nullableText(map['deliveryDate']),
-      deliverySlot: _text(
-        map['deliverySlot'],
-        fallback: 'Earliest available',
-      ),
+      deliverySlot: _text(map['deliverySlot'], fallback: 'Earliest available'),
       createdAt: _toDateTime(map['createdAt']),
       updatedAt: _toDateTime(map['updatedAt']),
       statusHistory: history,
@@ -319,10 +290,8 @@ class OrderModel {
       'deliveryMethod': deliveryMethod,
       'deliveryDate': deliveryDate,
       'deliverySlot': deliverySlot,
-      if (createdAt != null)
-        'createdAt': Timestamp.fromDate(createdAt!),
-      if (updatedAt != null)
-        'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
       'statusHistory': statusHistory
           .map((OrderStatusHistoryEntry entry) => entry.toMap())
           .toList(growable: false),
@@ -411,22 +380,14 @@ class OrderModel {
 }
 
 class OrderStatusHistoryEntry {
-  const OrderStatusHistoryEntry({
-    required this.status,
-    required this.time,
-  });
+  const OrderStatusHistoryEntry({required this.status, required this.time});
 
   final String status;
   final DateTime? time;
 
-  factory OrderStatusHistoryEntry.fromMap(
-      Map<String, dynamic> map,
-      ) {
+  factory OrderStatusHistoryEntry.fromMap(Map<String, dynamic> map) {
     return OrderStatusHistoryEntry(
-      status: _text(
-        map['status'],
-        fallback: 'placed',
-      ).toLowerCase(),
+      status: _text(map['status'], fallback: 'placed').toLowerCase(),
       time: _toDateTime(map['time']),
     );
   }
@@ -483,10 +444,11 @@ double _toDouble(dynamic value, {double fallback = 0}) {
     return value.toDouble();
   }
 
-  final String cleaned = value
-      ?.toString()
-      .replaceAll(',', '')
-      .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
+  final String cleaned =
+      value
+          ?.toString()
+          .replaceAll(',', '')
+          .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
       '';
 
   return double.tryParse(cleaned) ?? fallback;
@@ -540,7 +502,7 @@ String _label(String value, {required String fallback}) {
       .where((String word) => word.isNotEmpty)
       .map(
         (String word) =>
-    '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-  )
+            '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+      )
       .join(' ');
 }

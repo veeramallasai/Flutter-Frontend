@@ -16,14 +16,34 @@ class PremiumBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: onSelected,
-        destinations: <NavigationDestination>[
-          const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-          const NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view_rounded), label: 'Categories'),
-          NavigationDestination(icon: CartBadgeIcon(count: cartCount), selectedIcon: CartBadgeIcon(count: cartCount), label: 'Cart'),
-          const NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded), label: 'Orders'),
-          const NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
-        ],
-      );
+    selectedIndex: selectedIndex,
+    onDestinationSelected: onSelected,
+    destinations: <NavigationDestination>[
+      const NavigationDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home_rounded),
+        label: 'Home',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.grid_view_outlined),
+        selectedIcon: Icon(Icons.grid_view_rounded),
+        label: 'Categories',
+      ),
+      NavigationDestination(
+        icon: CartBadgeIcon(count: cartCount),
+        selectedIcon: CartBadgeIcon(count: cartCount),
+        label: 'Cart',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.receipt_long_outlined),
+        selectedIcon: Icon(Icons.receipt_long_rounded),
+        label: 'Orders',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.person_outline_rounded),
+        selectedIcon: Icon(Icons.person_rounded),
+        label: 'Profile',
+      ),
+    ],
+  );
 }

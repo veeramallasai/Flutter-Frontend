@@ -1,12 +1,11 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../features/auth/login_screen.dart';
 import '../features/home/home_screen.dart';
 import '../data/repositories/user_repository.dart';
-import '../core/services/notification_service.dart';
 
 class SessionGate extends StatefulWidget {
   const SessionGate({super.key});
@@ -29,23 +28,16 @@ class _SessionGateState extends State<SessionGate> {
 
   Future<void> _syncAccount(User user) async {
     await UserRepository().syncCurrentUser();
-    unawaited(NotificationService().registerCurrentDevice());
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (
-          BuildContext context,
-          AsyncSnapshot<User?> snapshot,
-          ) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
+      stream: BackendAuth.instance.authStateChanges(),
+      builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 

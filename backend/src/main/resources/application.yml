@@ -6,7 +6,7 @@ spring:
   application:
     name: farm-to-home-api
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/farm_to_home}
+    url: ${DB_URL}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:}
     hikari:
@@ -51,7 +51,7 @@ management:
 
 app:
   firebase-project-id: ${FIREBASE_PROJECT_ID:farm-to-home-8c520}
-  cors-origins: "${CORS_ORIGINS:http://localhost:*,http://127.0.0.1:*}"
+  cors-origins: "${CORS_ORIGINS:https://*.railway.app}"
   mail-from: ${MAIL_FROM:noreply@farmtohome.com}
 
 logging:

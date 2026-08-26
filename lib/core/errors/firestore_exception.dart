@@ -33,7 +33,11 @@ class FirestoreException extends AppException {
       code: code,
       message: message,
       details: details,
-      isRetryable: <String>{'unavailable', 'deadline-exceeded', 'aborted'}.contains(code),
+      isRetryable: <String>{
+        'unavailable',
+        'deadline-exceeded',
+        'aborted',
+      }.contains(code),
     );
   }
 }

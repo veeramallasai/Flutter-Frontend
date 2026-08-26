@@ -86,7 +86,7 @@ class _RelatedProductCard extends StatelessWidget {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5FAF7),
+                      color: const Color(0xFFF9FAF9),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Padding(
@@ -136,7 +136,7 @@ class _RelatedProductCard extends StatelessWidget {
                           onPressed: product.inStock ? onAddTap : null,
                           padding: EdgeInsets.zero,
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFE4F6EB),
+                            backgroundColor: const Color(0xFFE8F5E9),
                           ),
                           icon: const Icon(
                             Icons.add_rounded,

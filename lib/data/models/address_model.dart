@@ -45,9 +45,9 @@ class AddressModel {
   ].where((String value) => value.trim().isNotEmpty).join(', ');
 
   factory AddressModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     return AddressModel(
       id: _text(documentId.isNotEmpty ? documentId : map['id']),
       userId: _text(map['userId']),
@@ -130,8 +130,11 @@ String _text(dynamic value, {String fallback = ''}) {
   final String text = value?.toString().trim() ?? '';
   return text.isEmpty ? fallback : text;
 }
+
 double _toDouble(dynamic value) =>
-    value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '') ?? 0;
+    value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '') ?? 0;
 bool _toBool(dynamic value) =>
     value == true || value == 1 || value?.toString().toLowerCase() == 'true';
 DateTime? _toDateTime(dynamic value) {

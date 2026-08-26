@@ -7,9 +7,11 @@ class AppLogger {
     if (kDebugMode) debugPrint('[$tag] $message');
   }
 
-  static void info(String message, {String tag = 'INFO'}) => debug(message, tag: tag);
+  static void info(String message, {String tag = 'INFO'}) =>
+      debug(message, tag: tag);
 
-  static void warning(String message, {String tag = 'WARNING'}) => debug(message, tag: tag);
+  static void warning(String message, {String tag = 'WARNING'}) =>
+      debug(message, tag: tag);
 
   static void error(
     String message, {

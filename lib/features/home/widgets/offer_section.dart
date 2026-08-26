@@ -8,11 +8,11 @@ class OfferSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(23),
-          child: child,
-        ),
-      );
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(23),
+      child: child,
+    ),
+  );
 }

@@ -38,19 +38,43 @@ class ShoppingModeSelector extends StatelessWidget {
                 Container(
                   width: 34,
                   height: 34,
-                  decoration: BoxDecoration(color: const Color(0xFFE8F6ED), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(home ? Icons.home_rounded : Icons.storefront_rounded, size: 19, color: AppColors.primary),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    home ? Icons.home_rounded : Icons.storefront_rounded,
+                    size: 19,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text('Shopping for', style: TextStyle(color: AppColors.textSecondary, fontSize: 9.5, fontWeight: FontWeight.w700)),
-                    Text(home ? 'Home' : 'Shop Owners', style: const TextStyle(color: AppColors.textPrimary, fontSize: 12.5, fontWeight: FontWeight.w900)),
+                    const Text(
+                      'Shopping for',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      home ? 'Home' : 'Shop Owners',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(width: 10),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.textSecondary,
+                ),
               ],
             ),
           ),

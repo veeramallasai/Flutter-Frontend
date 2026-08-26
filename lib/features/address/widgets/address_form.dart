@@ -105,7 +105,9 @@ class _AddressFormState extends State<AddressForm> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
+          SnackBar(
+            content: Text(error.toString().replaceFirst('Bad state: ', '')),
+          ),
         );
       }
     } finally {
@@ -145,7 +147,10 @@ class _AddressFormState extends State<AddressForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          CurrentLocationButton(onPressed: _useCurrentLocation, isLoading: _isLocating),
+          CurrentLocationButton(
+            onPressed: _useCurrentLocation,
+            isLoading: _isLocating,
+          ),
           const SizedBox(height: 16),
           _field(_name, 'Full name', Icons.person_outline_rounded),
           _field(
@@ -153,16 +158,24 @@ class _AddressFormState extends State<AddressForm> {
             'Phone number',
             Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            validator: (String? value) =>
-            (value?.replaceAll(RegExp(r'\D'), '').length ?? 0) < 10
-                ? 'Enter a valid phone number'
-                : null,
+            validator:
+                (String? value) =>
+                    (value?.replaceAll(RegExp(r'\D'), '').length ?? 0) < 10
+                        ? 'Enter a valid phone number'
+                        : null,
           ),
           _field(_line1, 'House / Flat / Street', Icons.home_outlined),
-          _field(_line2, 'Area / Colony (optional)', Icons.location_city_outlined, required: false),
+          _field(
+            _line2,
+            'Area / Colony (optional)',
+            Icons.location_city_outlined,
+            required: false,
+          ),
           Row(
             children: <Widget>[
-              Expanded(child: _field(_city, 'City', Icons.location_city_rounded)),
+              Expanded(
+                child: _field(_city, 'City', Icons.location_city_rounded),
+              ),
               const SizedBox(width: 10),
               Expanded(child: _field(_state, 'State', Icons.map_outlined)),
             ],
@@ -172,22 +185,38 @@ class _AddressFormState extends State<AddressForm> {
             'PIN code',
             Icons.markunread_mailbox_outlined,
             keyboardType: TextInputType.number,
-            validator: (String? value) =>
-            (value?.trim().length ?? 0) != 6 ? 'Enter 6-digit PIN' : null,
+            validator:
+                (String? value) =>
+                    (value?.trim().length ?? 0) != 6
+                        ? 'Enter 6-digit PIN'
+                        : null,
           ),
-          _field(_landmark, 'Landmark (optional)', Icons.flag_outlined, required: false),
+          _field(
+            _landmark,
+            'Landmark (optional)',
+            Icons.flag_outlined,
+            required: false,
+          ),
           const SizedBox(height: 5),
-          const Text('Address type', style: TextStyle(color: AppColors.textPrimary, fontSize: 11, fontWeight: FontWeight.w900)),
+          const Text(
+            'Address type',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 7),
           Wrap(
             spacing: 8,
-            children: <String>['Home', 'Work', 'Other'].map((String value) {
-              return ChoiceChip(
-                label: Text(value),
-                selected: _type == value,
-                onSelected: (_) => setState(() => _type = value),
-              );
-            }).toList(),
+            children:
+                <String>['Home', 'Work', 'Other'].map((String value) {
+                  return ChoiceChip(
+                    label: Text(value),
+                    selected: _type == value,
+                    onSelected: (_) => setState(() => _type = value),
+                  );
+                }).toList(),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -211,21 +240,23 @@ class _AddressFormState extends State<AddressForm> {
   }
 
   Widget _field(
-      TextEditingController controller,
-      String label,
-      IconData icon, {
-        TextInputType? keyboardType,
-        String? Function(String?)? validator,
-        bool required = true,
-      }) {
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    bool required = true,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 11),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
-        validator: validator ??
+        validator:
+            validator ??
             (required
-                ? (String? value) => value?.trim().isEmpty == true ? '$label is required' : null
+                ? (String? value) =>
+                    value?.trim().isEmpty == true ? '$label is required' : null
                 : null),
         decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon)),
       ),

@@ -39,31 +39,32 @@ class ProductUnitSelector extends StatelessWidget {
         Wrap(
           spacing: 9,
           runSpacing: 9,
-          children: availableUnits.map((String unit) {
-            final bool selected = unit == selectedUnit;
-            return ChoiceChip(
-              label: Text(unit),
-              selected: selected,
-              onSelected: (_) => onChanged(unit),
-              showCheckmark: false,
-              backgroundColor: Colors.white,
-              selectedColor: const Color(0xFFE4F6EB),
-              side: BorderSide(
-                color: selected ? AppColors.primary : AppColors.border,
-                width: selected ? 1.4 : 1,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              labelStyle: TextStyle(
-                color: selected
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-            );
-          }).toList(growable: false),
+          children: availableUnits
+              .map((String unit) {
+                final bool selected = unit == selectedUnit;
+                return ChoiceChip(
+                  label: Text(unit),
+                  selected: selected,
+                  onSelected: (_) => onChanged(unit),
+                  showCheckmark: false,
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFFE8F5E9),
+                  side: BorderSide(
+                    color: selected ? AppColors.primary : AppColors.border,
+                    width: selected ? 1.4 : 1,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  labelStyle: TextStyle(
+                    color:
+                        selected ? AppColors.primary : AppColors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                );
+              })
+              .toList(growable: false),
         ),
       ],
     );

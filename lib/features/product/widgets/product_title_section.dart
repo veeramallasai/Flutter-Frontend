@@ -4,10 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/product_model.dart';
 
 class ProductTitleSection extends StatelessWidget {
-  const ProductTitleSection({
-    super.key,
-    required this.product,
-  });
+  const ProductTitleSection({super.key, required this.product});
 
   final ProductModel product;
 
@@ -42,12 +39,16 @@ class ProductTitleSection extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF7EF),
+                color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: <Widget>[
-                  const Icon(Icons.star_rounded, color: Color(0xFFF4B400), size: 15),
+                  const Icon(
+                    Icons.star_rounded,
+                    color: Color(0xFFFFB300),
+                    size: 15,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     product.rating.toStringAsFixed(1),

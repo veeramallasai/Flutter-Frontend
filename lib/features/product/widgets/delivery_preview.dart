@@ -15,11 +15,12 @@ class DeliveryPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool shop = shoppingMode.toLowerCase() == 'shop';
-    final String message = deliveryText?.trim().isNotEmpty == true
-        ? deliveryText!.trim()
-        : shop
-        ? 'Bulk delivery slot shown during checkout'
-        : 'Fresh delivery available today';
+    final String message =
+        deliveryText?.trim().isNotEmpty == true
+            ? deliveryText!.trim()
+            : shop
+            ? 'Bulk delivery slot shown during checkout'
+            : 'Fresh delivery available today';
 
     return Container(
       width: double.infinity,
@@ -34,9 +35,14 @@ class DeliveryPreview extends StatelessWidget {
           Container(
             width: 42,
             height: 42,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
             child: Icon(
-              shop ? Icons.local_shipping_rounded : Icons.delivery_dining_rounded,
+              shop
+                  ? Icons.local_shipping_rounded
+                  : Icons.delivery_dining_rounded,
               color: AppColors.primary,
             ),
           ),

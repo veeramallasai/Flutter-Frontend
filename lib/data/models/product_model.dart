@@ -24,9 +24,9 @@ class ProductModel {
     required List<String> benefits,
     this.createdAt,
     this.updatedAt,
-  })  : images = List<String>.unmodifiable(images),
-        nutritionInfo = Map<String, String>.unmodifiable(nutritionInfo),
-        benefits = List<String>.unmodifiable(benefits);
+  }) : images = List<String>.unmodifiable(images),
+       nutritionInfo = Map<String, String>.unmodifiable(nutritionInfo),
+       benefits = List<String>.unmodifiable(benefits);
 
   final String id;
   final String name;
@@ -55,16 +55,17 @@ class ProductModel {
   int get discountPercent =>
       mrp > price && mrp > 0 ? (((mrp - price) / mrp) * 100).round() : 0;
   List<String> get allImages {
-    final List<String> values = <String>[
-      imageUrl,
-      ...images,
-    ].where((String value) => value.trim().isNotEmpty).toSet().toList();
+    final List<String> values =
+        <String>[
+          imageUrl,
+          ...images,
+        ].where((String value) => value.trim().isNotEmpty).toSet().toList();
     return List<String>.unmodifiable(values);
   }
 
   factory ProductModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> document,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
     return ProductModel.fromMap(
       document.data() ?? <String, dynamic>{},
       documentId: document.id,
@@ -72,9 +73,9 @@ class ProductModel {
   }
 
   factory ProductModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     final double price = _toDouble(map['price'] ?? map['unitPrice']);
     double mrp = _toDouble(map['mrp'], fallback: price);
     if (mrp < price) mrp = price;
@@ -89,7 +90,7 @@ class ProductModel {
       imageUrl: _text(map['imageUrl'] ?? map['image']),
       images: _stringList(map['images'] ?? map['imageUrls']),
       shoppingMode:
-      _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
+          _text(map['shoppingMode']).toLowerCase() == 'shop' ? 'shop' : 'home',
       unit: _text(map['unit'], fallback: '1 unit'),
       price: price,
       mrp: mrp,
@@ -185,10 +186,11 @@ String _text(dynamic value, {String fallback = ''}) {
 
 double _toDouble(dynamic value, {double fallback = 0}) {
   if (value is num) return value.toDouble();
-  final String cleaned = value
-      ?.toString()
-      .replaceAll(',', '')
-      .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
+  final String cleaned =
+      value
+          ?.toString()
+          .replaceAll(',', '')
+          .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
       '';
   return double.tryParse(cleaned) ?? fallback;
 }
@@ -218,7 +220,7 @@ List<String> _stringList(dynamic value) {
 Map<String, String> _stringMap(dynamic value) {
   if (value is! Map) return <String, String>{};
   return value.map(
-        (dynamic key, dynamic item) =>
+    (dynamic key, dynamic item) =>
         MapEntry<String, String>(_text(key), _text(item)),
   )..removeWhere((String key, String item) => key.isEmpty || item.isEmpty);
 }

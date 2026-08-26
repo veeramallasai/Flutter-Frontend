@@ -37,4 +37,20 @@ public class EmailOtpController {
   ApiResponse<Map<String, Object>> status(Principal principal) {
     return ApiResponse.ok(service.status(principal.getName()));
   }
+
+  @PostMapping("/request")
+  ApiResponse<Map<String, Object>> request(
+      @Valid @RequestBody EmailOtpDtos.RequestOtpRequest request) {
+    return ApiResponse.ok(
+        service.sendForEmail(request.email()),
+        "Email OTP sent.");
+  }
+
+  @PostMapping("/verify-reset")
+  ApiResponse<Map<String, Object>> verifyReset(
+      @Valid @RequestBody EmailOtpDtos.VerifyResetRequest request) {
+    return ApiResponse.ok(
+        service.verifyForEmail(request.email(), request.otp()),
+        "Email verified successfully.");
+  }
 }

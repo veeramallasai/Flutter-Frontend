@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 /// Keeps the larger edge-to-edge photography and quantity control from
 /// crowding or overflowing on phone, tablet, and desktop widths.
 SliverGridDelegate premiumCategoryProductGrid(double width) {
-  final int columns = width >= 1250
-      ? 5
-      : width >= 950
+  final int columns =
+      width >= 1250
+          ? 5
+          : width >= 950
           ? 4
           : width >= 650
-              ? 3
-              : 2;
+          ? 3
+          : 2;
 
   return SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: columns,

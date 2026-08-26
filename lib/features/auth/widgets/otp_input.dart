@@ -7,8 +7,8 @@ class OtpInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        textField: true,
-        label: 'Six digit one time password',
-        child: child,
-      );
+    textField: true,
+    label: 'Six digit one time password',
+    child: child,
+  );
 }

@@ -26,8 +26,8 @@ class FarmerModel {
   final String speciality;
 
   factory FarmerModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> document,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
     return FarmerModel.fromMap(
       document.data() ?? <String, dynamic>{},
       documentId: document.id,
@@ -35,9 +35,9 @@ class FarmerModel {
   }
 
   factory FarmerModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     return FarmerModel(
       id: _text(documentId.isNotEmpty ? documentId : map['id']),
       name: _text(map['name'] ?? map['farmerName'], fallback: 'Local Farmer'),

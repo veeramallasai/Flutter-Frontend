@@ -21,8 +21,11 @@ class DeliveryDateSelector extends StatelessWidget {
     final DateTime today = DateTime.now();
     final List<DateTime> dates = List<DateTime>.generate(
       numberOfDays,
-          (int index) => DateTime(today.year, today.month, today.day)
-          .add(Duration(days: startAfterDays + index)),
+      (int index) => DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).add(Duration(days: startAfterDays + index)),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +66,10 @@ class DeliveryDateSelector extends StatelessWidget {
                       Text(
                         _weekdays[date.weekday - 1],
                         style: TextStyle(
-                          color: selected ? Colors.white70 : AppColors.textSecondary,
+                          color:
+                              selected
+                                  ? Colors.white70
+                                  : AppColors.textSecondary,
                           fontSize: 8,
                           fontWeight: FontWeight.w700,
                         ),
@@ -72,7 +78,8 @@ class DeliveryDateSelector extends StatelessWidget {
                       Text(
                         '${date.day}',
                         style: TextStyle(
-                          color: selected ? Colors.white : AppColors.textPrimary,
+                          color:
+                              selected ? Colors.white : AppColors.textPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
                         ),
@@ -80,7 +87,10 @@ class DeliveryDateSelector extends StatelessWidget {
                       Text(
                         _months[date.month - 1],
                         style: TextStyle(
-                          color: selected ? Colors.white70 : AppColors.textSecondary,
+                          color:
+                              selected
+                                  ? Colors.white70
+                                  : AppColors.textSecondary,
                           fontSize: 8,
                           fontWeight: FontWeight.w600,
                         ),
@@ -98,7 +108,30 @@ class DeliveryDateSelector extends StatelessWidget {
 }
 
 bool _sameDay(DateTime first, DateTime second) =>
-    first.year == second.year && first.month == second.month && first.day == second.day;
+    first.year == second.year &&
+    first.month == second.month &&
+    first.day == second.day;
 
-const List<String> _weekdays = <String>['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const List<String> _months = <String>['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const List<String> _weekdays = <String>[
+  'MON',
+  'TUE',
+  'WED',
+  'THU',
+  'FRI',
+  'SAT',
+  'SUN',
+];
+const List<String> _months = <String>[
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
+];

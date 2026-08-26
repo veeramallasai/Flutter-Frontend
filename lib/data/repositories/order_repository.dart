@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import '../../core/network/api_client.dart';
 import '../models/order_model.dart';
@@ -7,14 +7,14 @@ import '../remote/order_remote_source.dart';
 class OrderRepository {
   OrderRepository({
     OrderRemoteSource? remoteSource,
-    FirebaseAuth? auth,
+    BackendAuth? auth,
     ApiClient? client,
   }) : _remoteSource = remoteSource ?? OrderRemoteSource(),
-       _auth = auth ?? FirebaseAuth.instance,
+       _auth = auth ?? BackendAuth.instance,
        _client = client ?? ApiClient();
 
   final OrderRemoteSource _remoteSource;
-  final FirebaseAuth _auth;
+  final BackendAuth _auth;
   final ApiClient _client;
 
   String? get currentUserId => _auth.currentUser?.uid;
@@ -77,9 +77,8 @@ class OrderRepository {
 
   Future<String> createOrder(OrderModel order) {
     final String userId = _requireUserId();
-    final OrderModel userOrder = order.userId == userId
-        ? order
-        : order.copyWith(userId: userId);
+    final OrderModel userOrder =
+        order.userId == userId ? order : order.copyWith(userId: userId);
 
     return _remoteSource.createOrder(userOrder);
   }

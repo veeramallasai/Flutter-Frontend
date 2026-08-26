@@ -9,7 +9,7 @@ class CartRemoteSource {
   final ApiClient _client;
 
   Stream<CartModel> watchCart(String userId) =>
-      Stream<CartModel>.fromFuture(getCart(userId));
+      Stream<CartModel>.fromFuture(getCart(userId)).asBroadcastStream();
 
   Future<CartModel> getCart(String userId) async {
     final ApiResponse<dynamic> response = await _client.get('/api/v1/cart');

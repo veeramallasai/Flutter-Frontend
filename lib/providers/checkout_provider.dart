@@ -5,7 +5,7 @@ import '../data/repositories/checkout_repository.dart';
 
 class CheckoutProvider extends ChangeNotifier {
   CheckoutProvider({CheckoutRepository? repository})
-      : _repository = repository ?? CheckoutRepository();
+    : _repository = repository ?? CheckoutRepository();
 
   final CheckoutRepository _repository;
   CartModel? _cart;
@@ -27,10 +27,10 @@ class CheckoutProvider extends ChangeNotifier {
     return value == null
         ? <String, double>{}
         : _repository.priceBreakdown(
-            cart: value,
-            deliveryMethod: _deliveryMethod,
-            couponDiscount: _couponDiscount,
-          );
+          cart: value,
+          deliveryMethod: _deliveryMethod,
+          couponDiscount: _couponDiscount,
+        );
   }
 
   void initialize(CartModel cart, {String deliveryMethod = 'quick'}) {

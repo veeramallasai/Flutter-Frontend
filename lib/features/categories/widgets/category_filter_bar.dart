@@ -20,29 +20,35 @@ class CategoryFilterBar extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Row(
-        children: filters.map((String filter) {
-          final bool active = filter.toLowerCase() == selected.toLowerCase();
-          return Padding(
-            padding: const EdgeInsets.only(right: 9),
-            child: ChoiceChip(
-              label: Text(_label(filter)),
-              selected: active,
-              showCheckmark: false,
-              onSelected: (_) => onSelected(filter),
-              backgroundColor: Colors.white,
-              selectedColor: AppColors.primary,
-              side: BorderSide(
-                color: active ? AppColors.primary : AppColors.border,
-              ),
-              labelStyle: TextStyle(
-                color: active ? Colors.white : AppColors.textPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          );
-        }).toList(growable: false),
+        children: filters
+            .map((String filter) {
+              final bool active =
+                  filter.toLowerCase() == selected.toLowerCase();
+              return Padding(
+                padding: const EdgeInsets.only(right: 9),
+                child: ChoiceChip(
+                  label: Text(_label(filter)),
+                  selected: active,
+                  showCheckmark: false,
+                  onSelected: (_) => onSelected(filter),
+                  backgroundColor: Colors.white,
+                  selectedColor: AppColors.primary,
+                  side: BorderSide(
+                    color: active ? AppColors.primary : AppColors.border,
+                  ),
+                  labelStyle: TextStyle(
+                    color: active ? Colors.white : AppColors.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }

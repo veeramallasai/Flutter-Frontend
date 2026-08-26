@@ -28,10 +28,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _load() async {
     if (mounted) setState(() => _loading = true);
     try {
-      final List<dynamic> results = await Future.wait<dynamic>(<Future<dynamic>>[
-        _repository.getNotifications(),
-        _repository.getPreferences(),
-      ]);
+      final List<dynamic> results = await Future.wait<dynamic>(
+        <Future<dynamic>>[
+          _repository.getNotifications(),
+          _repository.getPreferences(),
+        ],
+      );
       final Map<String, bool> preferences = results[1] as Map<String, bool>;
       if (!mounted) return;
       setState(() {
@@ -41,7 +43,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     } catch (_) {
       if (mounted) {
-        PremiumToast.show(context, 'Unable to load notifications.', error: true);
+        PremiumToast.show(
+          context,
+          'Unable to load notifications.',
+          error: true,
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -74,9 +80,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (notification.isRead) return;
     setState(() {
       _notifications = _notifications
-          .map((NotificationModel value) => value.id == notification.id
-              ? value.copyWith(isRead: true)
-              : value)
+          .map(
+            (NotificationModel value) =>
+                value.id == notification.id
+                    ? value.copyWith(isRead: true)
+                    : value,
+          )
           .toList(growable: false);
     });
     try {
@@ -88,78 +97,79 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Notifications'),
-          actions: <Widget>[
-            if (_notifications.any((NotificationModel value) => !value.isRead))
-              TextButton(
-                onPressed: () async {
-                  try {
-                    await _repository.markAllAsRead();
-                    if (!mounted) return;
-                    setState(() {
-                      _notifications = _notifications
-                          .map((NotificationModel value) =>
-                              value.copyWith(isRead: true))
-                          .toList(growable: false);
-                    });
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    PremiumToast.show(
-                      context,
-                      'Could not update notifications.',
-                      error: true,
-                    );
-                  }
-                },
-                child: const Text('READ ALL'),
-              ),
-          ],
-        ),
-        body: RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
-            children: <Widget>[
-              _PreferencesCard(
-                orderUpdates: _orderUpdates,
-                offers: _offers,
-                onOrderChanged: (bool value) =>
-                    _savePreferences(orderUpdates: value),
-                onOffersChanged: (bool value) =>
-                    _savePreferences(offers: value),
-              ),
-              const SizedBox(height: 22),
-              const Text(
-                'RECENT UPDATES',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 9,
-                  letterSpacing: 1.1,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (_loading)
-                const Padding(
-                  padding: EdgeInsets.all(28),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_notifications.isEmpty)
-                const _EmptyNotifications()
-              else
-                ..._notifications.map(
-                  (NotificationModel notification) => _NotificationTile(
-                    notification: notification,
-                    onTap: () => _read(notification),
-                  ),
-                ),
-            ],
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      title: const Text('Notifications'),
+      actions: <Widget>[
+        if (_notifications.any((NotificationModel value) => !value.isRead))
+          TextButton(
+            onPressed: () async {
+              try {
+                await _repository.markAllAsRead();
+                if (!mounted) return;
+                setState(() {
+                  _notifications = _notifications
+                      .map(
+                        (NotificationModel value) =>
+                            value.copyWith(isRead: true),
+                      )
+                      .toList(growable: false);
+                });
+              } catch (_) {
+                if (!context.mounted) return;
+                PremiumToast.show(
+                  context,
+                  'Could not update notifications.',
+                  error: true,
+                );
+              }
+            },
+            child: const Text('READ ALL'),
           ),
-        ),
-      );
+      ],
+    ),
+    body: RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
+        children: <Widget>[
+          _PreferencesCard(
+            orderUpdates: _orderUpdates,
+            offers: _offers,
+            onOrderChanged:
+                (bool value) => _savePreferences(orderUpdates: value),
+            onOffersChanged: (bool value) => _savePreferences(offers: value),
+          ),
+          const SizedBox(height: 22),
+          const Text(
+            'RECENT UPDATES',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 9,
+              letterSpacing: 1.1,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(28),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_notifications.isEmpty)
+            const _EmptyNotifications()
+          else
+            ..._notifications.map(
+              (NotificationModel notification) => _NotificationTile(
+                notification: notification,
+                onTap: () => _read(notification),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _PreferencesCard extends StatelessWidget {
@@ -177,43 +187,43 @@ class _PreferencesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.border),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      children: <Widget>[
+        SwitchListTile(
+          value: orderUpdates,
+          onChanged: onOrderChanged,
+          secondary: const Icon(
+            Icons.local_shipping_rounded,
+            color: AppColors.primary,
+          ),
+          title: const Text(
+            'Order updates',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          subtitle: const Text('Packing, payment and delivery alerts'),
         ),
-        child: Column(
-          children: <Widget>[
-            SwitchListTile(
-              value: orderUpdates,
-              onChanged: onOrderChanged,
-              secondary: const Icon(
-                Icons.local_shipping_rounded,
-                color: AppColors.primary,
-              ),
-              title: const Text(
-                'Order updates',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              subtitle: const Text('Packing, payment and delivery alerts'),
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              value: offers,
-              onChanged: onOffersChanged,
-              secondary: const Icon(
-                Icons.local_offer_rounded,
-                color: AppColors.primary,
-              ),
-              title: const Text(
-                'Fresh deals',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              subtitle: const Text('Seasonal arrivals and member savings'),
-            ),
-          ],
+        const Divider(height: 1),
+        SwitchListTile(
+          value: offers,
+          onChanged: onOffersChanged,
+          secondary: const Icon(
+            Icons.local_offer_rounded,
+            color: AppColors.primary,
+          ),
+          title: const Text(
+            'Fresh deals',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          subtitle: const Text('Seasonal arrivals and member savings'),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _NotificationTile extends StatelessWidget {
@@ -228,7 +238,7 @@ class _NotificationTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: read ? Colors.white : const Color(0xFFEAF7EF),
+        color: read ? Colors.white : const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: read ? AppColors.border : const Color(0xFFBDE3CC),
@@ -259,7 +269,9 @@ class _NotificationTile extends StatelessWidget {
           style: const TextStyle(fontSize: 9, height: 1.4),
         ),
         trailing:
-            read ? null : const Icon(Icons.circle, color: AppColors.primary, size: 8),
+            read
+                ? null
+                : const Icon(Icons.circle, color: AppColors.primary, size: 8),
       ),
     );
   }
@@ -270,34 +282,31 @@ class _EmptyNotifications extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 42, horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.border),
+    padding: const EdgeInsets.symmetric(vertical: 42, horizontal: 20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: const Column(
+      children: <Widget>[
+        Icon(
+          Icons.notifications_none_rounded,
+          color: AppColors.primary,
+          size: 48,
         ),
-        child: const Column(
-          children: <Widget>[
-            Icon(
-              Icons.notifications_none_rounded,
-              color: AppColors.primary,
-              size: 48,
-            ),
-            SizedBox(height: 12),
-            Text(
-              'You are all caught up',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Order and offer updates will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 10,
-              ),
-            ),
-          ],
+        SizedBox(height: 12),
+        Text(
+          'You are all caught up',
+          style: TextStyle(fontWeight: FontWeight.w900),
         ),
-      );
+        SizedBox(height: 4),
+        Text(
+          'Order and offer updates will appear here.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+        ),
+      ],
+    ),
+  );
 }

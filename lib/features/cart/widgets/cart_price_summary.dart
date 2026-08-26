@@ -39,7 +39,11 @@ class CartPriceSummary extends StatelessWidget {
           const SizedBox(height: 13),
           _Row(label: 'Original MRP total', value: subtotal),
           if (productSavings > 0)
-            _Row(label: 'Product discount', value: -productSavings, green: true),
+            _Row(
+              label: 'Product discount',
+              value: -productSavings,
+              green: true,
+            ),
           if (couponDiscount > 0)
             _Row(label: 'Coupon discount', value: -couponDiscount, green: true),
           const Padding(

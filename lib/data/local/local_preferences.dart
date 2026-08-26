@@ -9,10 +9,10 @@ class LocalPreferences {
     PreferenceWriter? writer,
     PreferenceRemover? remover,
     PreferencesClearer? clearer,
-  })  : _reader = reader,
-        _writer = writer,
-        _remover = remover,
-        _clearer = clearer;
+  }) : _reader = reader,
+       _writer = writer,
+       _remover = remover,
+       _clearer = clearer;
 
   final PreferenceReader? _reader;
   final PreferenceWriter? _writer;
@@ -22,9 +22,8 @@ class LocalPreferences {
 
   Future<T?> get<T>(String key) async {
     final String safeKey = _key(key);
-    final Object? value = _reader == null
-        ? _memory[safeKey]
-        : await _reader(safeKey);
+    final Object? value =
+        _reader == null ? _memory[safeKey] : await _reader(safeKey);
     return value is T ? value : null;
   }
 

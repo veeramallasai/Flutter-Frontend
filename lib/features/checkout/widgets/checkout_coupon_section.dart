@@ -6,9 +6,6 @@ class CheckoutCouponSection extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        container: true,
-        label: 'Coupon and savings',
-        child: child,
-      );
+  Widget build(BuildContext context) =>
+      Semantics(container: true, label: 'Coupon and savings', child: child);
 }

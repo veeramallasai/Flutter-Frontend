@@ -7,13 +7,12 @@ import '../models/product_model.dart';
 class LocalProductCatalog {
   LocalProductCatalog._();
 
-  static final List<ProductModel> all = List<ProductModel>.unmodifiable(
-    <ProductModel>[
-      ..._buildCategory('vegetables', AssetPaths.vegetableImages),
-      ..._buildCategory('fruits', AssetPaths.fruitImages),
-      ..._buildCategory('dairy', AssetPaths.dairyImages),
-    ],
-  );
+  static final List<ProductModel> all =
+      List<ProductModel>.unmodifiable(<ProductModel>[
+        ..._buildCategory('vegetables', AssetPaths.vegetableImages),
+        ..._buildCategory('fruits', AssetPaths.fruitImages),
+        ..._buildCategory('dairy', AssetPaths.dairyImages),
+      ]);
 
   static const Set<String> _seasonalIds = <String>{
     'vegetables_corn',
@@ -107,34 +106,37 @@ class LocalProductCatalog {
     Map<String, String> images,
   ) {
     int index = 0;
-    return images.entries.map((MapEntry<String, String> entry) {
-      final int current = index++;
-      final double price = _priceFor(category, current);
-      final double mrp = (price * (1.12 + (current % 4) * 0.03)).roundToDouble();
-      final String englishName = _title(entry.key);
-      final String name = ProductUtils.localizedName(englishName);
-      return ProductModel(
-        id: '${category}_${entry.key}',
-        name: name,
-        description:
-            'Fresh $englishName, carefully quality-checked and packed for Farm To Home delivery.',
-        category: category,
-        imageUrl: entry.value,
-        images: <String>[entry.value],
-        shoppingMode: 'home',
-        unit: _unitFor(category, entry.key),
-        price: price,
-        mrp: mrp,
-        stockQuantity: 50 + (current % 8) * 10,
-        inStock: true,
-        isFresh: true,
-        rating: 4.2 + (current % 7) * 0.1,
-        reviewCount: 24 + current * 3,
-        farmerId: '',
-        nutritionInfo: _nutritionFor(category),
-        benefits: _benefitsFor(category),
-      );
-    }).toList(growable: false);
+    return images.entries
+        .map((MapEntry<String, String> entry) {
+          final int current = index++;
+          final double price = _priceFor(category, current);
+          final double mrp =
+              (price * (1.12 + (current % 4) * 0.03)).roundToDouble();
+          final String englishName = _title(entry.key);
+          final String name = ProductUtils.localizedName(englishName);
+          return ProductModel(
+            id: '${category}_${entry.key}',
+            name: name,
+            description:
+                'Fresh $englishName, carefully quality-checked and packed for Farm To Home delivery.',
+            category: category,
+            imageUrl: entry.value,
+            images: <String>[entry.value],
+            shoppingMode: 'home',
+            unit: _unitFor(category, entry.key),
+            price: price,
+            mrp: mrp,
+            stockQuantity: 50 + (current % 8) * 10,
+            inStock: true,
+            isFresh: true,
+            rating: 4.2 + (current % 7) * 0.1,
+            reviewCount: 24 + current * 3,
+            farmerId: '',
+            nutritionInfo: _nutritionFor(category),
+            benefits: _benefitsFor(category),
+          );
+        })
+        .toList(growable: false);
   }
 
   static ProductModel _forMode(ProductModel product, String mode) {
@@ -170,12 +172,25 @@ class LocalProductCatalog {
 
     if (category == 'vegetables') {
       const Set<String> bunches = <String>{
-        'amaranth', 'coriander', 'curry_leaves', 'dill_leaves', 'fenugreek',
-        'mint', 'spinach', 'spring_onion',
+        'amaranth',
+        'coriander',
+        'curry_leaves',
+        'dill_leaves',
+        'fenugreek',
+        'mint',
+        'spinach',
+        'spring_onion',
       };
       const Set<String> pieces = <String>{
-        'ash_gourd', 'bottle_gourd', 'cabbage', 'cauliflower', 'chow_chow',
-        'pumpkin', 'raw_banana', 'ridge_gourd', 'snake_gourd',
+        'ash_gourd',
+        'bottle_gourd',
+        'cabbage',
+        'cauliflower',
+        'chow_chow',
+        'pumpkin',
+        'raw_banana',
+        'ridge_gourd',
+        'snake_gourd',
       };
       if (bunches.contains(key)) return '1 fresh bunch';
       if (pieces.contains(key)) return '1 piece';
@@ -187,14 +202,35 @@ class LocalProductCatalog {
     }
 
     const Set<String> smallPacks = <String>{
-      'apricot', 'blackberry', 'blueberry', 'cranberry', 'dates', 'fig',
-      'gooseberry', 'jamun', 'longan', 'lychee', 'mulberry', 'raspberry',
+      'apricot',
+      'blackberry',
+      'blueberry',
+      'cranberry',
+      'dates',
+      'fig',
+      'gooseberry',
+      'jamun',
+      'longan',
+      'lychee',
+      'mulberry',
+      'raspberry',
       'strawberry',
     };
     const Set<String> singlePieces = <String>{
-      'avocado', 'coconut', 'custard_apple', 'dragon_fruit', 'jackfruit',
-      'mangosteen', 'muskmelon', 'papaya', 'pineapple', 'pomelo', 'soursop',
-      'tender_coconut', 'watermelon', 'wood_apple',
+      'avocado',
+      'coconut',
+      'custard_apple',
+      'dragon_fruit',
+      'jackfruit',
+      'mangosteen',
+      'muskmelon',
+      'papaya',
+      'pineapple',
+      'pomelo',
+      'soursop',
+      'tender_coconut',
+      'watermelon',
+      'wood_apple',
     };
     if (smallPacks.contains(key)) return '250 g';
     if (singlePieces.contains(key)) return '1 piece';

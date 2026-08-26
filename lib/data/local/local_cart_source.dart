@@ -32,7 +32,9 @@ class LocalCartSource {
   Future<void> addItem(String userId, CartItemModel item) async {
     final CartModel cart = getCart(userId, shoppingMode: item.shoppingMode);
     final List<CartItemModel> items = List<CartItemModel>.from(cart.items);
-    final int index = items.indexWhere((CartItemModel value) => value.id == item.id);
+    final int index = items.indexWhere(
+      (CartItemModel value) => value.id == item.id,
+    );
     if (index < 0) {
       items.add(item);
     } else {
@@ -40,7 +42,9 @@ class LocalCartSource {
         quantity: items[index].quantity + item.quantity,
       );
     }
-    await saveCart(cart.copyWith(items: items, shoppingMode: item.shoppingMode));
+    await saveCart(
+      cart.copyWith(items: items, shoppingMode: item.shoppingMode),
+    );
   }
 
   Future<void> updateQuantity(
@@ -51,8 +55,10 @@ class LocalCartSource {
     final CartModel cart = getCart(userId);
     final List<CartItemModel> items = cart.items
         .where((CartItemModel item) => item.id != itemId || quantity > 0)
-        .map((CartItemModel item) =>
-            item.id == itemId ? item.copyWith(quantity: quantity) : item)
+        .map(
+          (CartItemModel item) =>
+              item.id == itemId ? item.copyWith(quantity: quantity) : item,
+        )
         .toList(growable: false);
     await saveCart(cart.copyWith(items: items));
   }
@@ -62,11 +68,13 @@ class LocalCartSource {
 
   Future<void> clearCart(String userId) async {
     final CartModel cart = getCart(userId);
-    await saveCart(cart.copyWith(
-      items: <CartItemModel>[],
-      couponCode: '',
-      couponDiscount: 0,
-    ));
+    await saveCart(
+      cart.copyWith(
+        items: <CartItemModel>[],
+        couponCode: '',
+        couponDiscount: 0,
+      ),
+    );
   }
 
   String _userId(String value) {

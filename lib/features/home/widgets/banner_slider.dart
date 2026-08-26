@@ -18,10 +18,11 @@ class BannerSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: <Widget>[
-          child,
-          const SizedBox(height: 11),
-          indicator ?? Row(
+    children: <Widget>[
+      child,
+      const SizedBox(height: 11),
+      indicator ??
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List<Widget>.generate(itemCount, (int index) {
               final bool active = index == currentIndex;
@@ -37,6 +38,6 @@ class BannerSlider extends StatelessWidget {
               );
             }),
           ),
-        ],
-      );
+    ],
+  );
 }

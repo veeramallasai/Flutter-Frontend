@@ -3,7 +3,7 @@ import '../remote/delivery_remote_source.dart';
 
 class DeliveryRepository {
   DeliveryRepository({DeliveryRemoteSource? remoteSource})
-      : _remoteSource = remoteSource ?? DeliveryRemoteSource();
+    : _remoteSource = remoteSource ?? DeliveryRemoteSource();
 
   final DeliveryRemoteSource _remoteSource;
 

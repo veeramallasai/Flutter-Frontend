@@ -33,23 +33,32 @@ class LanguageSelector extends StatelessWidget {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 title: Text(
                   language.nativeName,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 subtitle: Text(
                   language.subtitle,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 8.5),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 8.5,
+                  ),
                 ),
                 secondary: Container(
                   width: 38,
                   height: 38,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF7EF),
+                    color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     language.nativeName.substring(0, 1),
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
@@ -61,7 +70,11 @@ class LanguageSelector extends StatelessWidget {
 }
 
 class _Language {
-  const _Language({required this.code, required this.nativeName, required this.subtitle});
+  const _Language({
+    required this.code,
+    required this.nativeName,
+    required this.subtitle,
+  });
   final String code;
   final String nativeName;
   final String subtitle;

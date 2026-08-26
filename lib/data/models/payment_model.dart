@@ -85,8 +85,8 @@ class PaymentModel {
   }
 
   factory PaymentModel.fromDocument(
-      DocumentSnapshot<Map<String, dynamic>> document,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
     return PaymentModel.fromMap(
       document.data() ?? <String, dynamic>{},
       documentId: document.id,
@@ -94,9 +94,9 @@ class PaymentModel {
   }
 
   factory PaymentModel.fromMap(
-      Map<String, dynamic> map, {
-        String documentId = '',
-      }) {
+    Map<String, dynamic> map, {
+    String documentId = '',
+  }) {
     final String resolvedId = _text(
       documentId.isNotEmpty ? documentId : map['id'] ?? map['paymentId'],
     );
@@ -196,10 +196,11 @@ String _text(dynamic value, {String fallback = ''}) {
 double _toDouble(dynamic value, {double fallback = 0}) {
   if (value is num) return value.toDouble();
 
-  final String cleaned = value
-      ?.toString()
-      .replaceAll(',', '')
-      .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
+  final String cleaned =
+      value
+          ?.toString()
+          .replaceAll(',', '')
+          .replaceAll(RegExp(r'[^0-9.\-]'), '') ??
       '';
   return double.tryParse(cleaned) ?? fallback;
 }
@@ -220,7 +221,7 @@ String _label(String value, {required String fallback}) {
       .where((String part) => part.isNotEmpty)
       .map(
         (String part) =>
-    '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
-  )
+            '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
+      )
       .join(' ');
 }

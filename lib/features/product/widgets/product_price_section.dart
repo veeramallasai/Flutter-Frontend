@@ -4,10 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/product_model.dart';
 
 class ProductPriceSection extends StatelessWidget {
-  const ProductPriceSection({
-    super.key,
-    required this.product,
-  });
+  const ProductPriceSection({super.key, required this.product});
 
   final ProductModel product;
 
@@ -17,7 +14,7 @@ class ProductPriceSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5FAF7),
+        color: const Color(0xFFF9FAF9),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFD6EBDD)),
       ),
@@ -83,9 +80,10 @@ class ProductPriceSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: product.inStock
-                  ? const Color(0xFFE4F6EB)
-                  : const Color(0xFFFFEEEE),
+              color:
+                  product.inStock
+                      ? const Color(0xFFE8F5E9)
+                      : const Color(0xFFFFEEEE),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

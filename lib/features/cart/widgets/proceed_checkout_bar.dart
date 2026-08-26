@@ -57,22 +57,23 @@ class ProceedCheckoutBar extends StatelessWidget {
               FilledButton.icon(
                 onPressed: enabled && !isLoading ? onProceed : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF073D24),
+                  backgroundColor: const Color(0xFF1B5E20),
                   minimumSize: const Size(190, 54),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(17),
                   ),
                 ),
-                icon: isLoading
-                    ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-                    : const Icon(Icons.arrow_forward_rounded, size: 18),
+                icon:
+                    isLoading
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : const Icon(Icons.arrow_forward_rounded, size: 18),
                 label: const Text(
                   'CHOOSE DELIVERY',
                   style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900),

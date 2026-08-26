@@ -40,8 +40,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      final List<Placemark> values =
-      await placemarkFromCoordinates(position.latitude, position.longitude);
+      final List<Placemark> values = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
       if (!mounted) return;
       setState(() {
         _position = position;
@@ -49,7 +51,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       });
     } catch (error) {
       if (mounted) {
-        setState(() => _error = error.toString().replaceFirst('Bad state: ', ''));
+        setState(
+          () => _error = error.toString().replaceFirst('Bad state: ', ''),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -86,36 +90,53 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: _isLoading
-              ? const CircularProgressIndicator(color: AppColors.primary)
-              : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 70),
-              const SizedBox(height: 16),
-              Text(
-                _error ?? (address.isEmpty ? 'Location detected' : address),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, height: 1.5, fontWeight: FontWeight.w700),
-              ),
-              if (_position != null) ...<Widget>[
-                const SizedBox(height: 8),
-                Text(
-                  '${_position!.latitude.toStringAsFixed(5)}, ${_position!.longitude.toStringAsFixed(5)}',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 9),
-                ),
-              ],
-              const SizedBox(height: 20),
-              if (_position != null)
-                FilledButton(onPressed: _confirm, child: const Text('CONFIRM LOCATION'))
-              else
-                OutlinedButton.icon(
-                  onPressed: _locate,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('TRY AGAIN'),
-                ),
-            ],
-          ),
+          child:
+              _isLoading
+                  ? const CircularProgressIndicator(color: AppColors.primary)
+                  : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Icon(
+                        Icons.location_on_rounded,
+                        color: AppColors.primary,
+                        size: 70,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _error ??
+                            (address.isEmpty ? 'Location detected' : address),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          height: 1.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (_position != null) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_position!.latitude.toStringAsFixed(5)}, ${_position!.longitude.toStringAsFixed(5)}',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      if (_position != null)
+                        FilledButton(
+                          onPressed: _confirm,
+                          child: const Text('CONFIRM LOCATION'),
+                        )
+                      else
+                        OutlinedButton.icon(
+                          onPressed: _locate,
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('TRY AGAIN'),
+                        ),
+                    ],
+                  ),
         ),
       ),
     );

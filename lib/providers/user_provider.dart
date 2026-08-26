@@ -7,7 +7,7 @@ import '../data/repositories/user_repository.dart';
 
 class UserProvider extends ChangeNotifier {
   UserProvider({UserRepository? repository})
-      : _repository = repository ?? UserRepository();
+    : _repository = repository ?? UserRepository();
 
   final UserRepository _repository;
   StreamSubscription<UserModel?>? _subscription;

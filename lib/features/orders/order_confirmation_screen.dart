@@ -8,10 +8,7 @@ import 'orders_screen.dart';
 import 'widgets/order_success_card.dart';
 
 class OrderConfirmationScreen extends StatefulWidget {
-  const OrderConfirmationScreen({
-    super.key,
-    this.arguments,
-  });
+  const OrderConfirmationScreen({super.key, this.arguments});
 
   final Map<String, dynamic>? arguments;
 
@@ -37,8 +34,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
     _initialized = true;
 
-    final Object? routeArguments =
-        ModalRoute.of(context)?.settings.arguments;
+    final Object? routeArguments = ModalRoute.of(context)?.settings.arguments;
 
     if (routeArguments is Map) {
       _order.addAll(Map<String, dynamic>.from(routeArguments));
@@ -86,7 +82,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
         setState(() {
           _loading = false;
           _loadMessage =
-          'Order placed successfully. Full details will appear shortly.';
+              'Order placed successfully. Full details will appear shortly.';
         });
       }
     } catch (_) {
@@ -97,23 +93,20 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
       setState(() {
         _loading = false;
         _loadMessage =
-        'Order placed successfully. Unable to refresh details right now.';
+            'Order placed successfully. Unable to refresh details right now.';
       });
     }
   }
 
   void _continueShopping() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.home,
-          (Route<dynamic> route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.home, (Route<dynamic> route) => false);
   }
 
   void _viewOrders() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => const OrdersScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const OrdersScreen()),
     );
   }
 
@@ -127,6 +120,21 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
   bool get _isCashOnDelivery {
     return _text(_order['paymentMethod']) == 'cash_on_delivery';
+  }
+
+  double get _deliveryPartnerTip => _toDouble(_order['deliveryPartnerTip']);
+
+  double get _displayTotalAmount {
+    final double current = _toDouble(_order['totalAmount']);
+    final double backend = _toDouble(_order['backendTotalAmount']);
+    if (_deliveryPartnerTip <= 0) return current;
+
+    // When full order details are refreshed, older backend builds can return a
+    // base total that does not contain the client-side delivery partner tip.
+    if (backend > 0 && current <= backend + 0.001) {
+      return backend + _deliveryPartnerTip;
+    }
+    return current;
   }
 
   @override
@@ -170,43 +178,42 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                             ],
                             desktop
                                 ? Row(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Expanded(
-                                  flex: 6,
-                                  child: Column(
-                                    children: <Widget>[
-                                      _buildOrderSummary(),
-                                      const SizedBox(height: 16),
-                                      _buildDeliveryCard(),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  flex: 4,
-                                  child: Column(
-                                    children: <Widget>[
-                                      _buildPaymentCard(),
-                                      const SizedBox(height: 16),
-                                      _buildAddressCard(),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Expanded(
+                                      flex: 6,
+                                      child: Column(
+                                        children: <Widget>[
+                                          _buildOrderSummary(),
+                                          const SizedBox(height: 16),
+                                          _buildDeliveryCard(),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    Expanded(
+                                      flex: 4,
+                                      child: Column(
+                                        children: <Widget>[
+                                          _buildPaymentCard(),
+                                          const SizedBox(height: 16),
+                                          _buildAddressCard(),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
                                 : Column(
-                              children: <Widget>[
-                                _buildOrderSummary(),
-                                const SizedBox(height: 16),
-                                _buildDeliveryCard(),
-                                const SizedBox(height: 16),
-                                _buildPaymentCard(),
-                                const SizedBox(height: 16),
-                                _buildAddressCard(),
-                              ],
-                            ),
+                                  children: <Widget>[
+                                    _buildOrderSummary(),
+                                    const SizedBox(height: 16),
+                                    _buildDeliveryCard(),
+                                    const SizedBox(height: 16),
+                                    _buildPaymentCard(),
+                                    const SizedBox(height: 16),
+                                    _buildAddressCard(),
+                                  ],
+                                ),
                             const SizedBox(height: 22),
                             _buildActionButtons(),
                           ],
@@ -239,11 +246,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
       ),
       child: const Row(
         children: <Widget>[
-          Icon(
-            Icons.eco_rounded,
-            color: AppColors.primary,
-            size: 29,
-          ),
+          Icon(Icons.eco_rounded, color: AppColors.primary, size: 29),
           SizedBox(width: 11),
           Expanded(
             child: Text(
@@ -255,11 +258,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
               ),
             ),
           ),
-          Icon(
-            Icons.verified_rounded,
-            color: AppColors.primary,
-            size: 22,
-          ),
+          Icon(Icons.verified_rounded, color: AppColors.primary, size: 22),
         ],
       ),
     );
@@ -267,15 +266,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
 
   Widget _buildSuccessCard() {
     final String orderId = _text(_order['orderId']);
-    final OrderModel order = OrderModel.fromMap(
-      _order,
-      documentId: orderId,
-    );
+    final OrderModel order = OrderModel.fromMap(_order, documentId: orderId);
 
-    return OrderSuccessCard(
-      order: order,
-      title: 'Order Confirmed!',
-    );
+    return OrderSuccessCard(order: order, title: 'Order Confirmed!');
   }
 
   Widget _buildLoadingCard() {
@@ -284,7 +277,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF7EF),
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(17),
       ),
       child: const Row(
@@ -356,16 +349,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                 ? 'Shop Owner'
                 : 'Home Customer',
           ),
-          _detailRow(
-            'Total items',
-            '${_toInt(_order['itemCount'])}',
-          ),
+          _detailRow('Total items', '${_toInt(_order['itemCount'])}'),
           const Divider(height: 24),
           _detailRow(
             'Grand total',
-            _currency(_toDouble(
-              _order['totalAmount'],
-            )),
+            _currency(_displayTotalAmount),
             important: true,
             valueColor: AppColors.primary,
           ),
@@ -387,21 +375,17 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
       child: Column(
         children: <Widget>[
           _detailRow('Delivery method', _deliveryLabel(deliveryMethod)),
-          if (deliveryDate != null)
-            _detailRow('Delivery date', deliveryDate),
+          if (deliveryDate != null) _detailRow('Delivery date', deliveryDate),
           _detailRow(
             'Delivery slot',
-            _text(
-              _order['deliverySlot'],
-              fallback: 'Earliest available',
-            ),
+            _text(_order['deliverySlot'], fallback: 'Earliest available'),
           ),
           const SizedBox(height: 5),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(13),
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF7EF),
+              color: const Color(0xFFE8F5E9),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Row(
@@ -439,23 +423,25 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
       title: 'Payment',
       child: Column(
         children: <Widget>[
-          _detailRow(
-            'Method',
-            _paymentLabel(_text(_order['paymentMethod'])),
-          ),
+          _detailRow('Method', _paymentLabel(_text(_order['paymentMethod']))),
           _detailRow(
             'Status',
             _paymentStatusLabel(_text(_order['paymentStatus'])),
-            valueColor: _isCashOnDelivery
-                ? const Color(0xFFE28A00)
-                : AppColors.primary,
+            valueColor:
+                _isCashOnDelivery ? const Color(0xFFE28A00) : AppColors.primary,
           ),
           if (transactionId.isNotEmpty)
             _detailRow('Transaction ID', transactionId),
+          if (_deliveryPartnerTip > 0)
+            _detailRow(
+              'Delivery partner tip',
+              _currency(_deliveryPartnerTip),
+              valueColor: AppColors.primary,
+            ),
           const Divider(height: 24),
           _detailRow(
             _isCashOnDelivery ? 'Amount to pay' : 'Amount paid',
-            _currency(_toDouble(_order['totalAmount'])),
+            _currency(_displayTotalAmount),
             important: true,
             valueColor: AppColors.primary,
           ),
@@ -542,7 +528,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7EF),
+                  color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 22),
@@ -568,11 +554,11 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
   }
 
   Widget _detailRow(
-      String label,
-      String value, {
-        bool important = false,
-        Color? valueColor,
-      }) {
+    String label,
+    String value, {
+    bool important = false,
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 11),
       child: Row(
@@ -582,13 +568,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
             child: Text(
               label,
               style: TextStyle(
-                color: important
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
+                color:
+                    important ? AppColors.textPrimary : AppColors.textSecondary,
                 fontSize: important ? 13 : 11,
-                fontWeight: important
-                    ? FontWeight.w900
-                    : FontWeight.w600,
+                fontWeight: important ? FontWeight.w900 : FontWeight.w600,
               ),
             ),
           ),
@@ -612,18 +595,24 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
   Widget _buildActionButtons() {
     return Column(
       children: <Widget>[
-        if (_isCashOnDelivery && _text(_order['paymentStatus']) != 'paid') ...<Widget>[
+        if (_isCashOnDelivery &&
+            _text(_order['paymentStatus']) != 'paid') ...<Widget>[
           SizedBox(
             width: double.infinity,
             height: 56,
             child: FilledButton.icon(
               onPressed: _openPayNow,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF073D24),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+                backgroundColor: const Color(0xFF1B5E20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(17),
+                ),
               ),
               icon: const Icon(Icons.lock_rounded),
-              label: const Text('PAY ONLINE BEFORE DELIVERY', style: TextStyle(fontWeight: FontWeight.w900)),
+              label: const Text(
+                'PAY ONLINE BEFORE DELIVERY',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
             ),
           ),
           const SizedBox(height: 11),
@@ -643,10 +632,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
             icon: const Icon(Icons.receipt_long_rounded),
             label: const Text(
               'VIEW MY ORDERS',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.2,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.2),
             ),
           ),
         ),
@@ -666,10 +652,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
             icon: const Icon(Icons.shopping_bag_rounded),
             label: const Text(
               'CONTINUE SHOPPING',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.2,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.2),
             ),
           ),
         ),
@@ -738,8 +721,8 @@ String _label(String value) {
       .where((String word) => word.isNotEmpty)
       .map(
         (String word) =>
-    '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-  )
+            '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+      )
       .join(' ');
 }
 
@@ -791,21 +774,20 @@ String _deliveryLabel(String value) {
 }
 
 String _formatAddress(Map<String, dynamic> address) {
-  final List<String> parts = <String>[
-    _text(address['houseNumber'] ?? address['houseNo']),
-    _text(address['building'] ?? address['apartment']),
-    _text(address['street'] ?? address['addressLine1']),
-    _text(address['landmark']),
-    _text(address['area'] ?? address['addressLine2']),
-    _text(address['city']),
-    _text(address['state']),
-    _text(address['pincode'] ?? address['postalCode']),
-  ].where((String value) => value.isNotEmpty).toList();
+  final List<String> parts =
+      <String>[
+        _text(address['houseNumber'] ?? address['houseNo']),
+        _text(address['building'] ?? address['apartment']),
+        _text(address['street'] ?? address['addressLine1']),
+        _text(address['landmark']),
+        _text(address['area'] ?? address['addressLine2']),
+        _text(address['city']),
+        _text(address['state']),
+        _text(address['pincode'] ?? address['postalCode']),
+      ].where((String value) => value.isNotEmpty).toList();
 
   if (parts.isEmpty) {
-    final String fallback = _text(
-      address['fullAddress'] ?? address['address'],
-    );
+    final String fallback = _text(address['fullAddress'] ?? address['address']);
     return fallback.isEmpty ? 'Address details unavailable' : fallback;
   }
 

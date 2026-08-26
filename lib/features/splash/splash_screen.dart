@@ -37,49 +37,31 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 900),
     );
 
-    _logoScale = Tween<double>(
-      begin: .6,
-      end: 1,
-    ).animate(
-      CurvedAnimation(
-        parent: _logoController,
-        curve: Curves.easeOutBack,
-      ),
+    _logoScale = Tween<double>(begin: .6, end: 1).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOutBack),
     );
 
-    _logoOpacity = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(_logoController);
+    _logoOpacity = Tween<double>(begin: 0, end: 1).animate(_logoController);
 
     _textOffset = Tween<Offset>(
       begin: const Offset(0, .4),
       end: Offset.zero,
     ).animate(_textController);
 
-    _textOpacity = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(_textController);
+    _textOpacity = Tween<double>(begin: 0, end: 1).animate(_textController);
 
     _logoController.forward();
 
     Future.delayed(
       const Duration(milliseconds: 500),
-          () => _textController.forward(),
+      () => _textController.forward(),
     );
 
-    Timer(
-      const Duration(seconds: 3),
-          () {
-        if (!mounted) return;
+    Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
 
-        Navigator.pushReplacementNamed(
-          context,
-          AppRoutes.session,
-        );
-      },
-    );
+      Navigator.pushReplacementNamed(context, AppRoutes.session);
+    });
   }
 
   @override
@@ -97,11 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xff014421),
-              Color(0xff0B7A3E),
-              Color(0xff23A559),
-            ],
+            colors: [Color(0xff014421), Color(0xff0B7A3E), Color(0xff23A559)],
           ),
         ),
         child: SafeArea(
@@ -144,15 +122,12 @@ class _SplashScreenState extends State<SplashScreen>
                           height: 150,
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius:
-                            BorderRadius.circular(40),
+                            borderRadius: BorderRadius.circular(40),
                             boxShadow: [
                               BoxShadow(
-                                color:
-                                Colors.black.withValues(alpha: .18),
+                                color: Colors.black.withValues(alpha: .18),
                                 blurRadius: 40,
-                                offset:
-                                const Offset(0, 15),
+                                offset: const Offset(0, 15),
                               ),
                             ],
                           ),
@@ -176,8 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 32,
-                                fontWeight:
-                                FontWeight.w900,
+                                fontWeight: FontWeight.w900,
                                 letterSpacing: 2,
                               ),
                             ),
@@ -187,8 +161,7 @@ class _SplashScreenState extends State<SplashScreen>
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 15,
-                                fontWeight:
-                                FontWeight.w600,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -214,13 +187,10 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Center(
                   child: Text(
                     "Version 1.0.0",
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.white60, fontSize: 12),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),

@@ -60,7 +60,11 @@ class _CartCouponSectionState extends State<CartCouponSection> {
         children: <Widget>[
           const Row(
             children: <Widget>[
-              Icon(Icons.confirmation_number_rounded, color: AppColors.primary, size: 20),
+              Icon(
+                Icons.confirmation_number_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               SizedBox(width: 7),
               Text(
                 'Apply Coupon',
@@ -127,9 +131,10 @@ class _CartCouponSectionState extends State<CartCouponSection> {
                 ),
                 const SizedBox(width: 9),
                 FilledButton(
-                  onPressed: widget.isLoading
-                      ? null
-                      : () => widget.onApply(_controller.text.trim()),
+                  onPressed:
+                      widget.isLoading
+                          ? null
+                          : () => widget.onApply(_controller.text.trim()),
                   child: const Text('APPLY'),
                 ),
               ],

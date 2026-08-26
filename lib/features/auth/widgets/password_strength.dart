@@ -18,12 +18,18 @@ class PasswordStrength extends StatelessWidget {
   Widget build(BuildContext context) {
     if (password.isEmpty) return const SizedBox.shrink();
     final int score = _score;
-    final Color color = score <= 1
-        ? const Color(0xFFD93C3C)
-        : score <= 3
+    final Color color =
+        score <= 1
+            ? const Color(0xFFD93C3C)
+            : score <= 3
             ? const Color(0xFFD88A09)
             : const Color(0xFF11854A);
-    final String label = score <= 1 ? 'Weak' : score <= 3 ? 'Good' : 'Strong';
+    final String label =
+        score <= 1
+            ? 'Weak'
+            : score <= 3
+            ? 'Good'
+            : 'Strong';
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
@@ -40,7 +46,14 @@ class PasswordStrength extends StatelessWidget {
               ),
             ),
           const SizedBox(width: 9),
-          Text(label, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );

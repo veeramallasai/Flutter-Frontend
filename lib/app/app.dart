@@ -12,7 +12,7 @@ class FarmToHomeApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Farm To Home',
-      theme: AppTheme.light,
+      theme: AppTheme.premiumTheme,
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );

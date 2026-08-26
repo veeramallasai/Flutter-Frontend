@@ -27,7 +27,9 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Bad state: ', '')),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
