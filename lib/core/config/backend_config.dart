@@ -28,14 +28,10 @@ class BackendConfig {
     if (_railwayUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_railwayUrl.trim());
     }
-    if (kIsWeb) {
-      final String origin = Uri.base.origin;
-      if (origin.isNotEmpty && !origin.startsWith('http://localhost') && !origin.startsWith('http://127.0.0.1')) {
-        return _withoutTrailingSlash(origin);
-      }
-    }
+    // Default Spring Boot backend host (Port 8082 for local dev)
     return 'http://localhost:8082';
   }
+
 
 
   static const Duration connectTimeout = Duration(seconds: 20);
