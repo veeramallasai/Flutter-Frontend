@@ -18,6 +18,11 @@ class BackendConfig {
     defaultValue: '',
   );
 
+  static const String _defaultProductionUrl = String.fromEnvironment(
+    'PROD_BACKEND_URL',
+    defaultValue: 'https://farm-to-home-backend.up.railway.app',
+  );
+
   static String get baseUrl {
     if (_overrideBaseUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_overrideBaseUrl.trim());
@@ -28,9 +33,12 @@ class BackendConfig {
     if (_railwayUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_railwayUrl.trim());
     }
-    // Default Spring Boot backend host (Port 8082 for local dev)
+    if (kIsWeb) {
+      return _withoutTrailingSlash(_defaultProductionUrl);
+    }
     return 'http://localhost:8082';
   }
+
 
 
 
