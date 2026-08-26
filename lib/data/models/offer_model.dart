@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class OfferModel {
   const OfferModel({
     required this.id,
@@ -36,8 +34,17 @@ class OfferModel {
         (endsAt == null || !now.isAfter(endsAt!));
   }
 
-  factory OfferModel.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) =>
-      OfferModel.fromMap(doc.data() ?? <String, dynamic>{}, documentId: doc.id);
+  factory OfferModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return OfferModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return OfferModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const OfferModel(id: '', title: '');
+    }
+  }
 
   factory OfferModel.fromMap(
     Map<String, dynamic> map, {
@@ -71,8 +78,8 @@ class OfferModel {
     'maximumDiscount': maximumDiscount,
     'imageUrl': imageUrl,
     'isActive': isActive,
-    if (startsAt != null) 'startsAt': Timestamp.fromDate(startsAt!),
-    if (endsAt != null) 'endsAt': Timestamp.fromDate(endsAt!),
+    if (startsAt != null) 'startsAt': startsAt!.toIso8601String(),
+    if (endsAt != null) 'endsAt': endsAt!.toIso8601String(),
   };
 
   OfferModel copyWith({
@@ -111,15 +118,15 @@ String _text(dynamic value, {String fallback = ''}) {
 
 double _number(dynamic value) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+
 bool _boolean(dynamic value, {bool fallback = false}) =>
     value is bool
         ? value
         : value == null
         ? fallback
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

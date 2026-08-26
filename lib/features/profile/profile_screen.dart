@@ -1,11 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/order_model.dart';
+import '../../data/models/user_model.dart';
 import '../../data/repositories/order_repository.dart';
+import '../../data/repositories/user_repository.dart';
 import 'widgets/logout_button.dart';
 import 'widgets/order_summary_card.dart';
 import 'widgets/profile_header.dart';
@@ -44,13 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) return;
     setState(() => _savingMode = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(<String, dynamic>{
-            'shoppingMode': mode == 'shop' ? 'shop' : 'home',
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+      await UserRepository().updateShoppingMode(mode);
       if (mounted)
         _message(
           mode == 'shop'
@@ -221,13 +216,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           EmailAuthProvider.credential(email: email, password: value),
         );
       }
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        <String, dynamic>{
-          'emailLoginEnabled': true,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
       if (!mounted) return;
       _message('Email & password login is ready.');
     } on BackendAuthException catch (error) {
@@ -262,33 +250,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAF9),
       body: SafeArea(
-        child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream:
-              uid.isEmpty
-                  ? const Stream<DocumentSnapshot<Map<String, dynamic>>>.empty()
-                  : FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(uid)
-                      .snapshots(),
+        child: StreamBuilder<UserModel?>(
+          stream: UserRepository().watchCurrentUser(),
           builder: (
             BuildContext context,
-            AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot,
+            AsyncSnapshot<UserModel?> snapshot,
           ) {
-            final Map<String, dynamic> data =
-                snapshot.data?.data() ?? <String, dynamic>{};
-            final String name =
-                (data['displayName'] ?? user?.displayName ?? '')
-                    .toString()
-                    .trim();
+            final UserModel? userModel = snapshot.data;
+            final String name = (userModel?.displayName ?? user?.displayName ?? '').trim();
             final String displayName = name.isEmpty ? 'Fresh Shopper' : name;
-            final String email =
-                (data['email'] ?? user?.email ?? '').toString();
-            final String phone =
-                (data['phoneNumber'] ?? user?.phoneNumber ?? '').toString();
-            final String photo =
-                (data['photoUrl'] ?? user?.photoURL ?? '').toString();
-            final String rawMode =
-                data['shoppingMode'] == 'shop' ? 'shop' : 'home';
+            final String email = userModel?.email ?? user?.email ?? '';
+            final String phone = userModel?.phoneNumber ?? user?.phoneNumber ?? '';
+            final String photo = userModel?.photoUrl ?? user?.photoURL ?? '';
+            final String rawMode = userModel?.isShopOwner == true ? 'shop' : 'home';
             final String mode =
                 rawMode == 'shop' ? 'Shop Owner' : 'Home Shopping';
 

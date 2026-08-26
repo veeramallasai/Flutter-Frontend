@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../core/utils/product_utils.dart';
 
 class ProductModel {
@@ -64,11 +62,14 @@ class ProductModel {
   }
 
   factory ProductModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> document,
+    dynamic document,
   ) {
+    if (document is Map<String, dynamic>) {
+      return ProductModel.fromMap(document);
+    }
     return ProductModel.fromMap(
-      document.data() ?? <String, dynamic>{},
-      documentId: document.id,
+      (document as dynamic)?.data() as Map<String, dynamic>? ?? <String, dynamic>{},
+      documentId: (document as dynamic)?.id?.toString() ?? '',
     );
   }
 
@@ -127,8 +128,8 @@ class ProductModel {
       'farmerId': farmerId,
       'nutritionInfo': nutritionInfo,
       'benefits': benefits,
-      if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 
@@ -226,7 +227,6 @@ Map<String, String> _stringMap(dynamic value) {
 }
 
 DateTime? _toDateTime(dynamic value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   return DateTime.tryParse(value?.toString() ?? '');
 }

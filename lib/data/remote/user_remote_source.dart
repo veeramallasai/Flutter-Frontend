@@ -1,43 +1,47 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../../core/network/api_client.dart';
 import '../models/user_model.dart';
 
 class UserRemoteSource {
-  UserRemoteSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  UserRemoteSource({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
-  final FirebaseFirestore _firestore;
+  final ApiClient _apiClient;
 
-  DocumentReference<Map<String, dynamic>> _user(String userId) {
-    final String id = userId.trim();
-    if (id.isEmpty) throw ArgumentError('User ID cannot be empty.');
-    return _firestore.collection('users').doc(id);
+  Stream<UserModel?> watchUser(String userId) async* {
+    yield await getUser(userId);
   }
-
-  Stream<UserModel?> watchUser(String userId) => _user(userId).snapshots().map(
-    (DocumentSnapshot<Map<String, dynamic>> document) =>
-        document.exists ? UserModel.fromDocument(document) : null,
-  );
 
   Future<UserModel?> getUser(String userId) async {
-    final DocumentSnapshot<Map<String, dynamic>> document =
-        await _user(userId).get();
-    return document.exists ? UserModel.fromDocument(document) : null;
+    try {
+      final response = await _apiClient.get('/api/v1/users/me');
+      if (response.data is Map) {
+        return UserModel.fromMap(
+          Map<String, dynamic>.from(response.data as Map),
+          docId: userId,
+        );
+      }
+    } catch (_) {}
+    return null;
   }
 
-  Future<void> saveUser(UserModel user) =>
-      _user(user.uid).set(<String, dynamic>{
-        ...user.toMap(),
-        if (user.createdAt == null) 'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+  Future<void> saveUser(UserModel user) async {
+    await _apiClient.put(
+      '/api/v1/users/me',
+      body: <String, dynamic>{
+        'firstName': user.firstName,
+        'lastName': user.lastName,
+        'phoneNumber': user.phoneNumber,
+        'photoUrl': user.photoUrl,
+        'shoppingMode': user.shoppingMode,
+      },
+    );
+  }
 
-  Future<void> updateFields(String userId, Map<String, dynamic> fields) =>
-      _user(userId).set(<String, dynamic>{
-        ...fields,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+  Future<void> updateFields(String userId, Map<String, dynamic> fields) async {
+    await _apiClient.put('/api/v1/users/me', body: fields);
+  }
 
-  Future<void> deactivate(String userId) =>
-      updateFields(userId, <String, dynamic>{'isActive': false});
+  Future<void> deactivate(String userId) async {
+    await updateFields(userId, <String, dynamic>{'isActive': false});
+  }
 }

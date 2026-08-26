@@ -1,8 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/models/user_model.dart';
+import '../../data/repositories/user_repository.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key, this.initialShoppingMode = 'home'});
@@ -68,10 +69,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
     _shoppingMode = widget.initialShoppingMode == 'shop' ? 'shop' : 'home';
 
-    _loadSavedMode();
+    _loadMode();
   }
 
-  Future<void> _loadSavedMode() async {
+  Future<void> _loadMode() async {
     try {
       final User? user = BackendAuth.instance.currentUser;
 
@@ -79,14 +80,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return;
       }
 
-      final DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
-
-      final String value =
-          (snapshot.data()?['shoppingMode'] ?? _shoppingMode).toString();
+      final UserModel userModel = await UserRepository().getCurrentUser();
+      final String value = userModel.shoppingMode;
 
       if (!mounted) {
         return;
@@ -110,15 +105,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return;
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        <String, dynamic>{
-          'shoppingMode': mode,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await UserRepository().updateShoppingMode(mode);
     } catch (_) {
-      // UI mode continues even if Firestore is temporarily unavailable.
+      // UI mode continues even if sync is temporarily unavailable.
     }
   }
 
@@ -243,7 +232,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             Expanded(
               child: RefreshIndicator(
                 color: AppColors.primary,
-                onRefresh: _loadSavedMode,
+                onRefresh: _loadMode,
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: <Widget>[

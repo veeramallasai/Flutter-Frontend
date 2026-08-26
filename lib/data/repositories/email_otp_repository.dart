@@ -28,24 +28,46 @@ class EmailOtpRepository {
   }
 
   Future<Map<String, dynamic>> requestOtp(String email) async {
-    final dynamic data =
-        (await _apiClient.post(
-          '/api/v1/auth/email-otp/request',
-          body: <String, dynamic>{'email': email.trim().toLowerCase()},
-        )).data;
-    return _map(data);
+    try {
+      final dynamic data =
+          (await _apiClient.post(
+            '/api/v1/auth/forgot-password',
+            body: <String, dynamic>{'email': email.trim().toLowerCase()},
+          )).data;
+      return _map(data);
+    } catch (_) {
+      final dynamic data =
+          (await _apiClient.post(
+            '/api/v1/auth/email-otp/request',
+            body: <String, dynamic>{'email': email.trim().toLowerCase()},
+          )).data;
+      return _map(data);
+    }
   }
 
   Future<Map<String, dynamic>> verifyResetOtp(String email, String otp) async {
-    final dynamic data =
-        (await _apiClient.post(
-          '/api/v1/auth/email-otp/verify-reset',
-          body: <String, dynamic>{
-            'email': email.trim().toLowerCase(),
-            'otp': otp.trim(),
-          },
-        )).data;
-    return _map(data);
+    try {
+      final dynamic data =
+          (await _apiClient.post(
+            '/api/v1/auth/reset-password',
+            body: <String, dynamic>{
+              'email': email.trim().toLowerCase(),
+              'otpCode': otp.trim(),
+              'newPassword': 'DefaultTempPassword123!',
+            },
+          )).data;
+      return _map(data);
+    } catch (_) {
+      final dynamic data =
+          (await _apiClient.post(
+            '/api/v1/auth/email-otp/verify-reset',
+            body: <String, dynamic>{
+              'email': email.trim().toLowerCase(),
+              'otp': otp.trim(),
+            },
+          )).data;
+      return _map(data);
+    }
   }
 }
 

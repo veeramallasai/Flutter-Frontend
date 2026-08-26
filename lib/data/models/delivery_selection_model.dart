@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class DeliverySelectionModel {
   const DeliverySelectionModel({
     required this.shoppingMode,
@@ -38,12 +36,12 @@ class DeliverySelectionModel {
   Map<String, dynamic> toMap() => <String, dynamic>{
     'shoppingMode': shoppingMode,
     'method': method,
-    if (deliveryDate != null) 'deliveryDate': Timestamp.fromDate(deliveryDate!),
+    if (deliveryDate != null) 'deliveryDate': deliveryDate!.toIso8601String(),
     'slotId': slotId,
     'slotLabel': slotLabel,
     'deliveryFee': deliveryFee,
     'instructions': instructions,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
   };
 
   DeliverySelectionModel copyWith({
@@ -80,7 +78,6 @@ double _toDouble(dynamic value) {
 }
 
 DateTime? _toDateTime(dynamic value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   return DateTime.tryParse(value?.toString() ?? '');
 }

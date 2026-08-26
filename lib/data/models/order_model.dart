@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'order_item_model.dart';
 
 class OrderModel {
@@ -189,11 +187,14 @@ class OrderModel {
   }
 
   factory OrderModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> document,
+    dynamic document,
   ) {
+    if (document is Map<String, dynamic>) {
+      return OrderModel.fromMap(document);
+    }
     return OrderModel.fromMap(
-      document.data() ?? <String, dynamic>{},
-      documentId: document.id,
+      (document as dynamic)?.data() as Map<String, dynamic>? ?? <String, dynamic>{},
+      documentId: (document as dynamic)?.id?.toString() ?? '',
     );
   }
 
@@ -290,8 +291,8 @@ class OrderModel {
       'deliveryMethod': deliveryMethod,
       'deliveryDate': deliveryDate,
       'deliverySlot': deliverySlot,
-      if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
       'statusHistory': statusHistory
           .map((OrderStatusHistoryEntry entry) => entry.toMap())
           .toList(growable: false),
@@ -395,7 +396,7 @@ class OrderStatusHistoryEntry {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'status': status,
-      if (time != null) 'time': Timestamp.fromDate(time!),
+      if (time != null) 'time': time!.toIso8601String(),
     };
   }
 
@@ -471,10 +472,6 @@ double _nonNegative(double value) {
 }
 
 DateTime? _toDateTime(dynamic value) {
-  if (value is Timestamp) {
-    return value.toDate();
-  }
-
   if (value is DateTime) {
     return value;
   }

@@ -1,13 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../models/cart_model.dart';
 import '../models/coupon_model.dart';
 
 class CheckoutRepository {
-  CheckoutRepository({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  final FirebaseFirestore _firestore;
+  CheckoutRepository();
 
   List<CouponModel> get localCoupons => const <CouponModel>[
     CouponModel(
@@ -33,18 +28,6 @@ class CheckoutRepository {
   Future<CouponModel?> findCoupon(String code) async {
     final String normalized = code.trim().toUpperCase();
     if (normalized.isEmpty) return null;
-    try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await _firestore
-              .collection('coupons')
-              .where('code', isEqualTo: normalized)
-              .limit(1)
-              .get();
-      if (snapshot.docs.isNotEmpty)
-        return CouponModel.fromDocument(snapshot.docs.first);
-    } catch (_) {
-      // Local offers keep checkout usable when Firestore is unavailable.
-    }
     for (final CouponModel coupon in localCoupons) {
       if (coupon.code == normalized) return coupon;
     }

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -34,15 +33,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
     try {
-      final DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
-      final Map<String, dynamic> data = snapshot.data() ?? <String, dynamic>{};
-      _name.text = (data['displayName'] ?? user.displayName ?? '').toString();
-      _phone.text = (data['phoneNumber'] ?? user.phoneNumber ?? '').toString();
-      _photo.text = (data['photoUrl'] ?? user.photoURL ?? '').toString();
+      final userModel = await UserRepository().getCurrentUser();
+      _name.text = userModel.displayName;
+      _phone.text = userModel.phoneNumber;
+      _photo.text = userModel.photoUrl;
     } catch (_) {
       _name.text = user.displayName ?? '';
       _phone.text = user.phoneNumber ?? '';
@@ -64,29 +58,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final List<String> names = name.split(RegExp(r'\s+'));
       final String phone = _phone.text.trim();
       final String photo = _photo.text.trim();
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(<String, dynamic>{
-            'displayName': name,
-            'firstName': names.isEmpty ? '' : names.first,
-            'lastName': names.length <= 1 ? '' : names.skip(1).join(' '),
-            'phoneNumber': phone,
-            'photoUrl': photo,
-            'email': user.email ?? '',
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
       await user.updateDisplayName(name);
       if (photo.isNotEmpty) await user.updatePhotoURL(photo);
-      await UserRepository().syncCurrentUser();
+      try {
+        await UserRepository().syncCurrentUser();
+      } catch (_) {}
       if (!mounted) return;
       PremiumToast.show(context, 'Profile updated successfully');
       Navigator.pop(context, true);
-    } on FirebaseException catch (error) {
+    } catch (error) {
       if (mounted) {
         PremiumToast.show(
           context,
-          error.message ?? 'Unable to update profile.',
+          'Unable to update profile.',
           error: true,
         );
       }

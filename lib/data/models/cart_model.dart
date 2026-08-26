@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'cart_item_model.dart';
 
 class CartModel {
@@ -44,11 +42,14 @@ class CartModel {
   }
 
   factory CartModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> document,
+    dynamic document,
   ) {
+    if (document is Map<String, dynamic>) {
+      return CartModel.fromMap(document);
+    }
     return CartModel.fromMap(
-      document.data() ?? <String, dynamic>{},
-      documentId: document.id,
+      (document as dynamic)?.data() as Map<String, dynamic>? ?? <String, dynamic>{},
+      documentId: (document as dynamic)?.id?.toString() ?? '',
     );
   }
 
@@ -89,7 +90,7 @@ class CartModel {
     'items': items.map((CartItemModel item) => item.toMap()).toList(),
     'couponCode': couponCode,
     'couponDiscount': couponDiscount,
-    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };
 
   CartModel copyWith({
@@ -122,7 +123,6 @@ double _toDouble(dynamic value) {
 }
 
 DateTime? _toDateTime(dynamic value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   return DateTime.tryParse(value?.toString() ?? '');
 }

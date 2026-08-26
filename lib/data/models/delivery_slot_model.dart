@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class DeliverySlotModel {
   const DeliverySlotModel({
     required this.id,
@@ -28,13 +26,26 @@ class DeliverySlotModel {
   bool get hasCapacity => capacity <= 0 || bookedCount < capacity;
   bool get canBook => isAvailable && hasCapacity;
 
-  factory DeliverySlotModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> document,
-  ) {
-    return DeliverySlotModel.fromMap(
-      document.data() ?? <String, dynamic>{},
-      documentId: document.id,
-    );
+  factory DeliverySlotModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return DeliverySlotModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return DeliverySlotModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const DeliverySlotModel(
+        id: '',
+        method: '',
+        label: '',
+        startTime: '',
+        endTime: '',
+        fee: 0,
+        isAvailable: false,
+        capacity: 0,
+        bookedCount: 0,
+      );
+    }
   }
 
   factory DeliverySlotModel.fromMap(
@@ -65,7 +76,7 @@ class DeliverySlotModel {
     'isAvailable': isAvailable,
     'capacity': capacity,
     'bookedCount': bookedCount,
-    if (date != null) 'date': Timestamp.fromDate(date!),
+    if (date != null) 'date': date!.toIso8601String(),
   };
 }
 
@@ -94,7 +105,6 @@ bool _toBool(dynamic value, {bool fallback = false}) {
 }
 
 DateTime? _toDateTime(dynamic value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   return DateTime.tryParse(value?.toString() ?? '');
 }

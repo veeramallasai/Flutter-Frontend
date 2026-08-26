@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class UserModel {
   const UserModel({
     required this.uid,
@@ -9,6 +7,7 @@ class UserModel {
     this.phoneNumber = '',
     this.photoUrl = '',
     this.shoppingMode = 'home',
+    this.accountType = 'customer',
     this.isPhoneVerified = false,
     this.isProfileComplete = false,
     this.isActive = true,
@@ -24,6 +23,7 @@ class UserModel {
   final String phoneNumber;
   final String photoUrl;
   final String shoppingMode;
+  final String accountType;
   final bool isPhoneVerified;
   final bool isProfileComplete;
   final bool isActive;
@@ -40,34 +40,47 @@ class UserModel {
         : 'Farm Friend';
   }
 
-  bool get isShopOwner => shoppingMode == 'shop';
+  bool get isShopOwner => shoppingMode == 'shop' || accountType == 'shop_owner';
 
-  factory UserModel.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) =>
-      UserModel.fromMap(doc.data() ?? <String, dynamic>{}, documentId: doc.id);
+  factory UserModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return UserModel.fromMap(doc, docId: (doc['uid'] ?? doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return UserModel.fromMap(map, docId: doc.id.toString());
+    } catch (_) {
+      return const UserModel(uid: '');
+    }
+  }
 
   factory UserModel.fromMap(
     Map<String, dynamic> map, {
+    String docId = '',
     String documentId = '',
-  }) => UserModel(
-    uid: _text(documentId.isNotEmpty ? documentId : map['uid'] ?? map['id']),
-    firstName: _text(map['firstName']),
-    lastName: _text(map['lastName']),
-    email: _text(map['email']).toLowerCase(),
-    phoneNumber: _text(map['phoneNumber'] ?? map['phone']),
-    photoUrl: _text(map['photoUrl'] ?? map['profileImage']),
-    shoppingMode:
-        _text(map['shoppingMode'], fallback: 'home').toLowerCase() == 'shop'
-            ? 'shop'
-            : 'home',
-    isPhoneVerified: _boolean(map['isPhoneVerified'] ?? map['phoneVerified']),
-    isProfileComplete: _boolean(
-      map['isProfileComplete'] ?? map['profileComplete'],
-    ),
-    isActive: _boolean(map['isActive'] ?? map['active'], fallback: true),
-    createdAt: _date(map['createdAt']),
-    updatedAt: _date(map['updatedAt']),
-    lastLoginAt: _date(map['lastLoginAt']),
-  );
+  }) {
+    final String id = docId.isNotEmpty ? docId : (documentId.isNotEmpty ? documentId : map['uid'] ?? map['id'] ?? '');
+    return UserModel(
+      uid: _text(id),
+      firstName: _text(map['firstName']),
+      lastName: _text(map['lastName']),
+      email: _text(map['email']).toLowerCase(),
+      phoneNumber: _text(map['phoneNumber'] ?? map['phone']),
+      photoUrl: _text(map['photoUrl'] ?? map['profileImage']),
+      shoppingMode:
+          _text(map['shoppingMode'], fallback: 'home').toLowerCase() == 'shop'
+              ? 'shop'
+              : 'home',
+      accountType: _text(map['accountType'], fallback: 'customer'),
+      isPhoneVerified: _boolean(map['phoneVerified'] ?? map['isPhoneVerified']),
+      isProfileComplete:
+          _boolean(map['isProfileComplete'], fallback: _text(map['firstName']).isNotEmpty),
+      isActive: _boolean(map['isActive'], fallback: true),
+      createdAt: _date(map['createdAt']),
+      updatedAt: _date(map['updatedAt']),
+      lastLoginAt: _date(map['lastLoginAt']),
+    );
+  }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
     'uid': uid,
@@ -77,12 +90,13 @@ class UserModel {
     'phoneNumber': phoneNumber,
     'photoUrl': photoUrl,
     'shoppingMode': shoppingMode,
+    'accountType': accountType,
     'isPhoneVerified': isPhoneVerified,
     'isProfileComplete': isProfileComplete,
     'isActive': isActive,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
-    if (lastLoginAt != null) 'lastLoginAt': Timestamp.fromDate(lastLoginAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+    if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.toIso8601String(),
   };
 
   UserModel copyWith({
@@ -93,6 +107,7 @@ class UserModel {
     String? phoneNumber,
     String? photoUrl,
     String? shoppingMode,
+    String? accountType,
     bool? isPhoneVerified,
     bool? isProfileComplete,
     bool? isActive,
@@ -107,6 +122,7 @@ class UserModel {
     phoneNumber: phoneNumber ?? this.phoneNumber,
     photoUrl: photoUrl ?? this.photoUrl,
     shoppingMode: shoppingMode ?? this.shoppingMode,
+    accountType: accountType ?? this.accountType,
     isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
     isProfileComplete: isProfileComplete ?? this.isProfileComplete,
     isActive: isActive ?? this.isActive,
@@ -127,9 +143,8 @@ bool _boolean(dynamic value, {bool fallback = false}) =>
         : value == null
         ? fallback
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

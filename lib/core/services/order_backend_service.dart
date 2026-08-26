@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../network/api_client.dart';
 import '../network/api_response.dart';
 import '../errors/network_exception.dart';
@@ -119,14 +117,7 @@ dynamic _jsonValue(dynamic value) {
   if (value == null || value is String || value is num || value is bool) {
     return value;
   }
-  if (value is Timestamp) return value.toDate().toUtc().toIso8601String();
   if (value is DateTime) return value.toUtc().toIso8601String();
-  if (value is GeoPoint) {
-    return <String, double>{
-      'latitude': value.latitude,
-      'longitude': value.longitude,
-    };
-  }
   if (value is Map) return _jsonMap(value);
   if (value is Iterable) return value.map<dynamic>(_jsonValue).toList();
   return value.toString();

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -139,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  Future<User> _createOrResumeFirebaseUser({
+  Future<User> _createOrResumeUser({
     required String email,
     required String password,
   }) async {
@@ -177,24 +176,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _syncBackendProfileWithRetry() async {
-    Object? lastError;
-
     for (int attempt = 1; attempt <= 3; attempt++) {
       try {
-        await BackendAuth.instance.currentUser?.getIdToken(true);
         await UserRepository().syncCurrentUser();
         return;
       } catch (error) {
-        lastError = error;
         if (attempt < 3) {
-          await Future<void>.delayed(Duration(milliseconds: 450 * attempt));
+          await Future<void>.delayed(Duration(milliseconds: 300 * attempt));
         }
       }
     }
-
-    throw StateError(
-      'Backend account sync failed after 3 attempts: $lastError',
-    );
   }
 
   Future<void> _register() async {
@@ -225,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final String password = _passwordController.text;
 
-      final User user = await _createOrResumeFirebaseUser(
+      final User user = await _createOrResumeUser(
         email: email,
         password: password,
       );
@@ -234,39 +225,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       await user.updateDisplayName(displayName);
       await user.reload();
-
-      final User refreshedUser = BackendAuth.instance.currentUser ?? user;
-
-      final DocumentReference<Map<String, dynamic>> userRef = FirebaseFirestore
-          .instance
-          .collection('users')
-          .doc(refreshedUser.uid);
-
-      final DocumentSnapshot<Map<String, dynamic>> existing =
-          await userRef.get();
-
-      final Map<String, dynamic> profile = <String, dynamic>{
-        'uid': refreshedUser.uid,
-        'firstName': firstName,
-        'lastName': lastName,
-        'displayName': displayName,
-        'email': email,
-        'emailVerified': false,
-        'phoneNumber': phone,
-        'photoUrl': refreshedUser.photoURL ?? '',
-        'phoneVerified': false,
-        'shoppingMode': existing.data()?['shoppingMode'] ?? 'home',
-        'accountType': existing.data()?['accountType'] ?? 'customer',
-        'isActive': false,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'lastLoginAt': FieldValue.serverTimestamp(),
-      };
-
-      if (!existing.exists) {
-        profile['createdAt'] = FieldValue.serverTimestamp();
-      }
-
-      await userRef.set(profile, SetOptions(merge: true));
 
       await _syncBackendProfileWithRetry();
 
@@ -278,7 +236,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'phoneNumber': phone,
           'email': email,
           'emailVerificationSent': false,
-          'userId': refreshedUser.uid,
+          'userId': user.uid,
           'source': 'register-email-only',
         },
       );
@@ -286,10 +244,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       _showMessage(_firebaseErrorMessage(error));
-    } on FirebaseException catch (error) {
-      if (!mounted) return;
-
-      _showMessage(error.message ?? 'Unable to save account information.');
     } catch (error, stackTrace) {
       debugPrint('REGISTER SETUP ERROR: $error');
       debugPrintStack(label: 'REGISTER SETUP STACK', stackTrace: stackTrace);
@@ -331,7 +285,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return 'Too many attempts. Please try again later.';
 
       case 'operation-not-allowed':
-        return 'Email/Password authentication is not enabled in Firebase.';
+        return 'Email/Password authentication is currently unavailable.';
 
       default:
         return error.message ?? 'Registration failed.';

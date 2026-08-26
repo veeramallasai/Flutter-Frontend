@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class NotificationModel {
   NotificationModel({
     required this.id,
@@ -27,12 +25,17 @@ class NotificationModel {
 
   bool get hasAction => route.isNotEmpty || data.isNotEmpty;
 
-  factory NotificationModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => NotificationModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory NotificationModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return NotificationModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return NotificationModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return NotificationModel(id: '', userId: '', title: '', body: '');
+    }
+  }
 
   factory NotificationModel.fromMap(
     Map<String, dynamic> map, {
@@ -60,7 +63,7 @@ class NotificationModel {
     'route': route,
     'data': data,
     'isRead': isRead,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
   };
 
   NotificationModel copyWith({
@@ -97,11 +100,11 @@ bool _boolean(dynamic value) =>
     value is bool
         ? value
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 Map<String, dynamic> _map(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

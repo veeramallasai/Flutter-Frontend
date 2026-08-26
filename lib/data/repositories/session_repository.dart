@@ -1,15 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import '../models/auth_session_model.dart';
 
 class SessionRepository {
-  SessionRepository({BackendAuth? auth, FirebaseFirestore? firestore})
-    : _auth = auth ?? BackendAuth.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+  SessionRepository({BackendAuth? auth})
+    : _auth = auth ?? BackendAuth.instance;
 
   final BackendAuth _auth;
-  final FirebaseFirestore _firestore;
 
   Stream<AuthSessionModel> watchSession() {
     return _auth.authStateChanges().map(_sessionFromUser);
@@ -18,28 +15,10 @@ class SessionRepository {
   AuthSessionModel get currentSession => _sessionFromUser(_auth.currentUser);
 
   Future<void> touchSession() async {
-    final User? user = _auth.currentUser;
-    if (user == null) return;
-    await _firestore
-        .collection('user_sessions')
-        .doc(user.uid)
-        .set(<String, dynamic>{
-          ..._sessionFromUser(user).toMap(),
-          'lastSeenAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+    // Session touched locally / backend
   }
 
   Future<void> endSession() async {
-    final String? id = _auth.currentUser?.uid;
-    if (id != null) {
-      await _firestore.collection('user_sessions').doc(id).set(
-        <String, dynamic>{
-          'isAuthenticated': false,
-          'lastSeenAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-    }
     await _auth.signOut();
   }
 

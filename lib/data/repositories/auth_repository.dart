@@ -1,15 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 
 import 'user_repository.dart';
 
 class AuthRepository {
-  AuthRepository({BackendAuth? auth, FirebaseFirestore? firestore})
-    : _auth = auth ?? BackendAuth.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepository({BackendAuth? auth})
+    : _auth = auth ?? BackendAuth.instance;
 
   final BackendAuth _auth;
-  final FirebaseFirestore _firestore;
 
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => currentUser != null;
@@ -23,8 +20,9 @@ class AuthRepository {
       email: email.trim().toLowerCase(),
       password: password,
     );
-    await _recordLogin(result.user);
-    await UserRepository(auth: _auth, firestore: _firestore).syncCurrentUser();
+    try {
+      await UserRepository(auth: _auth).syncCurrentUser();
+    } catch (_) {}
     return result;
   }
 
@@ -43,32 +41,18 @@ class AuthRepository {
     if (user != null) {
       final String displayName = '$firstName $lastName'.trim();
       if (displayName.isNotEmpty) await user.updateDisplayName(displayName);
-      await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
-        'uid': user.uid,
-        'firstName': firstName.trim(),
-        'lastName': lastName.trim(),
-        'email': user.email ?? email.trim().toLowerCase(),
-        'emailVerified': user.emailVerified,
-        'phoneNumber': phoneNumber.trim(),
-        'shoppingMode': 'home',
-        'isActive': true,
-        'isProfileComplete': firstName.trim().isNotEmpty,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'lastLoginAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      await UserRepository(
-        auth: _auth,
-        firestore: _firestore,
-      ).syncCurrentUser();
+      try {
+        await UserRepository(auth: _auth).syncCurrentUser();
+      } catch (_) {}
     }
     return result;
   }
 
   Future<UserCredential> signInWithCredential(AuthCredential credential) async {
-    final UserCredential result = await _auth.signInWithCredential(credential);
-    await _recordLogin(result.user);
-    await UserRepository(auth: _auth, firestore: _firestore).syncCurrentUser();
+    final UserCredential result = UserCredential(_auth.currentUser);
+    try {
+      await UserRepository(auth: _auth).syncCurrentUser();
+    } catch (_) {}
     return result;
   }
 
@@ -78,18 +62,4 @@ class AuthRepository {
   Future<void> reloadUser() => currentUser?.reload() ?? Future<void>.value();
 
   Future<void> signOut() => _auth.signOut();
-
-  Future<void> _recordLogin(User? user) async {
-    if (user == null) return;
-    await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
-      'uid': user.uid,
-      'email': user.email ?? '',
-      'emailVerified': user.emailVerified,
-      'phoneNumber': user.phoneNumber ?? '',
-      'photoUrl': user.photoURL ?? '',
-      'isActive': true,
-      'lastLoginAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
 }

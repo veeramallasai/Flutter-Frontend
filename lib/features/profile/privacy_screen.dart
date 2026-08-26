@@ -47,8 +47,8 @@ class PrivacyScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         emailVerified
-                            ? 'Verified email • Firebase secured'
-                            : 'Firebase secured authentication',
+                            ? 'Verified email • Securely authenticated'
+                            : 'Secure authentication',
                         style: const TextStyle(
                           color: Color(0xFFC9E7D6),
                           fontSize: 9.5,
@@ -65,7 +65,7 @@ class PrivacyScreen extends StatelessWidget {
             icon: Icons.lock_rounded,
             title: 'Secure authentication',
             text:
-                'Your password and sign-in credentials are handled securely through Firebase Authentication.',
+                'Your password and sign-in credentials are handled securely through our encrypted backend authentication.',
           ),
           const _PrivacyCard(
             icon: Icons.location_on_rounded,

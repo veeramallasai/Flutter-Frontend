@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class AuthSessionModel {
   const AuthSessionModel({
     required this.userId,
@@ -42,9 +40,9 @@ class AuthSessionModel {
     'phoneNumber': phoneNumber,
     'provider': provider,
     'isAuthenticated': isAuthenticated,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-    if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
-    if (lastSeenAt != null) 'lastSeenAt': Timestamp.fromDate(lastSeenAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (expiresAt != null) 'expiresAt': expiresAt!.toIso8601String(),
+    if (lastSeenAt != null) 'lastSeenAt': lastSeenAt!.toIso8601String(),
   };
 
   AuthSessionModel copyWith({
@@ -77,9 +75,8 @@ bool _boolean(dynamic value) =>
     value is bool
         ? value
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

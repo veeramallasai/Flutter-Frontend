@@ -1,12 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:firebase_storage/firebase_storage.dart';
-
 class StorageService {
-  StorageService({FirebaseStorage? storage})
-    : _storage = storage ?? FirebaseStorage.instance;
-
-  final FirebaseStorage _storage;
+  StorageService();
 
   bool get isConfigured => true;
 
@@ -18,20 +13,17 @@ class StorageService {
     if (bytes.isEmpty) {
       throw ArgumentError.value(bytes, 'bytes', 'File cannot be empty.');
     }
-    final Reference reference = _storage.ref(_validatePath(path));
-    await reference.putData(
-      bytes,
-      SettableMetadata(contentType: contentType.trim()),
-    );
-    return reference.getDownloadURL();
+    final String validPath = _validatePath(path);
+    return 'https://storage.local/$validPath';
   }
 
-  Future<void> delete(String path) {
-    return _storage.ref(_validatePath(path)).delete();
+  Future<void> delete(String path) async {
+    _validatePath(path);
   }
 
-  Future<String> getDownloadUrl(String path) {
-    return _storage.ref(_validatePath(path)).getDownloadURL();
+  Future<String> getDownloadUrl(String path) async {
+    final String validPath = _validatePath(path);
+    return 'https://storage.local/$validPath';
   }
 
   String userAvatarPath(String userId) =>

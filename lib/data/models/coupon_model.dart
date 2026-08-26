@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class CouponModel {
   const CouponModel({
     required this.id,
@@ -33,10 +31,11 @@ class CouponModel {
 
   bool get isCurrentlyValid {
     final DateTime now = DateTime.now();
-    return isActive &&
-        (usageLimit <= 0 || usedCount < usageLimit) &&
+    final bool timeValid =
         (startsAt == null || !now.isBefore(startsAt!)) &&
         (endsAt == null || !now.isAfter(endsAt!));
+    final bool limitValid = usageLimit <= 0 || usedCount < usageLimit;
+    return isActive && timeValid && limitValid;
   }
 
   double discountFor(double subtotal) {
@@ -50,12 +49,17 @@ class CouponModel {
     return discount.clamp(0, subtotal).toDouble();
   }
 
-  factory CouponModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => CouponModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory CouponModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return CouponModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return CouponModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const CouponModel(id: '', code: '', title: '');
+    }
+  }
 
   factory CouponModel.fromMap(
     Map<String, dynamic> map, {
@@ -90,10 +94,10 @@ class CouponModel {
     'minimumOrder': minimumOrder,
     'maximumDiscount': maximumDiscount,
     'isActive': isActive,
+    if (startsAt != null) 'startsAt': startsAt!.toIso8601String(),
+    if (endsAt != null) 'endsAt': endsAt!.toIso8601String(),
     'usageLimit': usageLimit,
     'usedCount': usedCount,
-    if (startsAt != null) 'startsAt': Timestamp.fromDate(startsAt!),
-    if (endsAt != null) 'endsAt': Timestamp.fromDate(endsAt!),
   };
 
   CouponModel copyWith({
@@ -134,17 +138,18 @@ String _text(dynamic value, {String fallback = ''}) {
 
 double _number(dynamic value) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+
 int _integer(dynamic value) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+
 bool _boolean(dynamic value, {bool fallback = false}) =>
     value is bool
         ? value
         : value == null
         ? fallback
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

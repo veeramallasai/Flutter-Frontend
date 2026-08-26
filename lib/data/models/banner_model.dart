@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class BannerModel {
   const BannerModel({
     required this.id,
@@ -32,12 +30,17 @@ class BannerModel {
         (endsAt == null || !now.isAfter(endsAt!));
   }
 
-  factory BannerModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => BannerModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory BannerModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return BannerModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return BannerModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const BannerModel(id: '', title: '');
+    }
+  }
 
   factory BannerModel.fromMap(
     Map<String, dynamic> map, {
@@ -64,8 +67,8 @@ class BannerModel {
     'route': route,
     'priority': priority,
     'isActive': isActive,
-    if (startsAt != null) 'startsAt': Timestamp.fromDate(startsAt!),
-    if (endsAt != null) 'endsAt': Timestamp.fromDate(endsAt!),
+    if (startsAt != null) 'startsAt': startsAt!.toIso8601String(),
+    if (endsAt != null) 'endsAt': endsAt!.toIso8601String(),
   };
 
   BannerModel copyWith({
@@ -100,15 +103,15 @@ String _text(dynamic value, {String fallback = ''}) {
 
 int _integer(dynamic value) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+
 bool _boolean(dynamic value, {bool fallback = false}) =>
     value is bool
         ? value
         : value == null
         ? fallback
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

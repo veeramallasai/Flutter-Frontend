@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import '../errors/app_exception.dart';
+import '../errors/network_exception.dart';
 import '../network/api_client.dart';
 import '../services/secure_storage_service.dart';
 
@@ -144,29 +145,52 @@ class BackendAuth {
     required String email,
     required String password,
   }) async {
-    final response = await _apiClient.post(
-      '/api/v1/auth/login',
-      body: <String, dynamic>{
-        'email': email.trim().toLowerCase(),
-        'password': password,
-      },
-    );
-    return _complete(response.data, email: email);
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/auth/login',
+        body: <String, dynamic>{
+          'email': email.trim().toLowerCase(),
+          'password': password,
+        },
+      );
+      return _complete(response.data, email: email);
+    } on NetworkException catch (e) {
+      if (e.code == 'http/401' || e.statusCode == 401) {
+        throw BackendAuthException(
+          code: 'invalid-credential',
+          message: 'Account not found or password incorrect. Please register first.',
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<UserCredential> createUserWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
-    final response = await _apiClient.post(
-      '/api/v1/auth/register',
-      body: <String, dynamic>{
-        'email': email.trim().toLowerCase(),
-        'password': password,
-      },
-    );
-    return _complete(response.data, email: email);
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/auth/register',
+        body: <String, dynamic>{
+          'email': email.trim().toLowerCase(),
+          'password': password,
+        },
+      );
+      return _complete(response.data, email: email);
+    } on NetworkException catch (e) {
+      if (e.code == 'http/409' || e.statusCode == 409) {
+        throw BackendAuthException(
+          code: 'email-already-in-use',
+          message: 'This email is already registered. Please sign in.',
+        );
+      }
+      rethrow;
+    }
   }
+
+  Future<UserCredential> signInWithCredential(AuthCredential credential) async =>
+      UserCredential(_currentUser);
 
   Future<UserCredential> signInWithSocial({
     required String provider,

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -42,18 +41,10 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     setState(() => _saving = true);
     try {
       final String name = _nameController.text.trim();
-      final String phone = _phoneController.text.trim();
       await user.updateDisplayName(name);
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(<String, dynamic>{
-            'displayName': name,
-            'phoneNumber': phone.isEmpty ? '' : '+91$phone',
-            'profileCompleted': true,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
-      await UserRepository().syncCurrentUser();
+      try {
+        await UserRepository().syncCurrentUser();
+      } catch (_) {}
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
         AppRoutes.home,

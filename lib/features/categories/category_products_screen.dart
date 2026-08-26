@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -6,7 +5,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/premium_toast.dart';
 import '../../data/models/cart_item_model.dart';
 import '../../data/models/product_model.dart';
+import '../../data/models/user_model.dart';
 import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/user_repository.dart';
 import '../../providers/cart_provider.dart';
 import '../home/widgets/floating_cart_bar.dart';
 import '../home/widgets/product_card.dart';
@@ -67,14 +68,8 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         return;
       }
 
-      final DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
-
-      final String mode =
-          (snapshot.data()?['shoppingMode'] ?? _shoppingMode).toString();
+      final UserModel userModel = await UserRepository().getCurrentUser();
+      final String mode = userModel.shoppingMode;
 
       if (!mounted) {
         return;
@@ -98,15 +93,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         return;
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        <String, dynamic>{
-          'shoppingMode': mode,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await UserRepository().updateShoppingMode(mode);
     } catch (_) {
-      // UI remains usable if Firestore sync fails.
+      // UI remains usable if sync fails.
     }
   }
 

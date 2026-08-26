@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ReviewModel {
   ReviewModel({
     required this.id,
@@ -27,12 +25,23 @@ class ReviewModel {
 
   int get starRating => rating.clamp(0, 5).round();
 
-  factory ReviewModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => ReviewModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory ReviewModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return ReviewModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return ReviewModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return ReviewModel(
+        id: '',
+        productId: '',
+        userId: '',
+        userName: '',
+        rating: 0,
+      );
+    }
+  }
 
   factory ReviewModel.fromMap(
     Map<String, dynamic> map, {
@@ -64,8 +73,8 @@ class ReviewModel {
     'comment': comment,
     'images': images,
     'isVerifiedPurchase': isVerifiedPurchase,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };
 
   ReviewModel copyWith({
@@ -115,8 +124,6 @@ List<String> _strings(dynamic value) =>
         : <String>[];
 
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

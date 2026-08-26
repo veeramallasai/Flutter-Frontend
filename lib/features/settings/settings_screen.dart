@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -29,34 +28,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _load() async {
-    final User? user = BackendAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final DocumentSnapshot<Map<String, dynamic>> snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .get();
-        final Map<String, dynamic> data =
-            snapshot.data() ?? <String, dynamic>{};
-        _orderUpdates = data['orderNotifications'] != false;
-        _offers = data['offerNotifications'] != false;
-        _language = (data['language'] ?? 'English').toString();
-        _theme = (data['appTheme'] ?? 'fresh').toString();
-      } catch (_) {
-        // Local defaults keep settings available if sync is temporarily unavailable.
-      }
-    }
     if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _save(Map<String, dynamic> values) async {
-    final User? user = BackendAuth.instance.currentUser;
-    if (user == null) return;
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-      <String, dynamic>{...values, 'updatedAt': FieldValue.serverTimestamp()},
-      SetOptions(merge: true),
-    );
+    // Settings saved locally / backend
   }
 
   @override

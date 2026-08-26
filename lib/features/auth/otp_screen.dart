@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -148,105 +147,7 @@ class _OtpScreenState extends State<OtpScreen>
   }
 
   Future<void> _sendOtp({bool resend = false}) async {
-    if (_sendingOtp || _verifyingOtp) {
-      return;
-    }
-
-    setState(() {
-      _sendingOtp = true;
-    });
-
-    try {
-      if (kIsWeb) {
-        await _sendWebOtp();
-      } else {
-        await _sendNativeOtp(resend: resend);
-      }
-    } on BackendAuthException catch (error) {
-      if (!mounted) return;
-
-      _showMessage(_firebaseMessage(error), error: true);
-    } catch (_) {
-      if (!mounted) return;
-
-      _showMessage('Unable to send OTP. Please try again.', error: true);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _sendingOtp = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _sendWebOtp() async {
-    final User? user = BackendAuth.instance.currentUser;
-
-    if (user == null) {
-      throw BackendAuthException(
-        code: 'user-not-found',
-        message: 'Your session expired. Please login again.',
-      );
-    }
-
-    /*
-      Dynamic is intentionally used here so this works across
-      FlutterFire versions which expose linkWithPhoneNumber
-      slightly differently on Web.
-    */
-    final dynamic firebaseUser = user;
-
-    _webConfirmation = await firebaseUser.linkWithPhoneNumber(_formattedPhone);
-
-    if (!mounted) return;
-
-    setState(() {
-      _otpSent = true;
-    });
-
-    _startTimer();
-
-    _otpFocusNode.requestFocus();
-
-    _showMessage('OTP sent successfully.', error: false);
-  }
-
-  Future<void> _sendNativeOtp({required bool resend}) async {
-    await BackendAuth.instance.verifyPhoneNumber(
-      phoneNumber: _formattedPhone,
-      timeout: const Duration(seconds: 60),
-      forceResendingToken: resend ? _resendToken : null,
-
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await _completeNativeVerification(credential);
-      },
-
-      verificationFailed: (BackendAuthException error) {
-        if (!mounted) return;
-
-        _showMessage(_firebaseMessage(error), error: true);
-      },
-
-      codeSent: (String verificationId, int? resendToken) {
-        if (!mounted) return;
-
-        setState(() {
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-          _otpSent = true;
-        });
-
-        _startTimer();
-
-        _otpFocusNode.requestFocus();
-
-        _showMessage('OTP sent successfully.', error: false);
-      },
-
-      codeAutoRetrievalTimeout: (String verificationId) {
-        _verificationId = verificationId;
-      },
-    );
+    await _sendEmailOtp(resend: resend);
   }
 
   Future<void> _verifyOtp() async {
@@ -273,7 +174,7 @@ class _OtpScreenState extends State<OtpScreen>
     } on BackendAuthException catch (error) {
       if (!mounted) return;
 
-      _showMessage(_firebaseMessage(error), error: true);
+      _showMessage(_authErrorMessage(error), error: true);
     } catch (error, stackTrace) {
       debugPrint('VERIFY OTP ERROR: $error\n$stackTrace');
       if (!mounted) return;
@@ -359,18 +260,10 @@ class _OtpScreenState extends State<OtpScreen>
             ? widget.userId!.trim()
             : currentUser.uid;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set(<String, dynamic>{
-          'phoneNumber': _formattedPhone,
-          'phoneVerified': true,
-          'phoneVerifiedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
     await currentUser.reload();
-    await UserRepository().syncCurrentUser();
+    try {
+      await UserRepository().syncCurrentUser();
+    } catch (_) {}
 
     if (!mounted) return;
 
@@ -479,26 +372,10 @@ class _OtpScreenState extends State<OtpScreen>
     final User? currentUser = BackendAuth.instance.currentUser;
     if (currentUser != null) {
       await _emailOtpRepository.verifyOtp(otp);
-
-      final String uid =
-          widget.userId?.trim().isNotEmpty == true
-              ? widget.userId!.trim()
-              : currentUser.uid;
-
-      if (uid.isNotEmpty) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .set(<String, dynamic>{
-              'emailVerified': true,
-              'isActive': true,
-              'emailVerifiedAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true));
-      }
-
       await currentUser.reload();
-      await UserRepository().syncCurrentUser();
+      try {
+        await UserRepository().syncCurrentUser();
+      } catch (_) {}
     } else {
       await _emailOtpRepository.verifyResetOtp(_emailAddress, otp);
     }
@@ -544,7 +421,7 @@ class _OtpScreenState extends State<OtpScreen>
     Navigator.of(context).pushReplacementNamed(AppRoutes.login);
   }
 
-  String _firebaseMessage(BackendAuthException error) {
+  String _authErrorMessage(BackendAuthException error) {
     switch (error.code) {
       case 'invalid-verification-code':
         return 'Incorrect OTP. Please try again.';
@@ -559,30 +436,13 @@ class _OtpScreenState extends State<OtpScreen>
         return 'Too many attempts. Please try again later.';
 
       case 'quota-exceeded':
-        return 'SMS quota exceeded. Please try again later.';
+        return 'OTP request limit exceeded. Please try again later.';
 
       case 'credential-already-in-use':
-        return 'This mobile number is already linked to another account.';
-
-      case 'provider-already-linked':
-        return 'This mobile number is already verified.';
+        return 'This account detail is already linked to another account.';
 
       case 'network-request-failed':
         return 'Check your internet connection and try again.';
-
-      case 'operation-not-allowed':
-        return 'Phone authentication is not enabled in Firebase.';
-
-      case 'captcha-check-failed':
-        return 'Security verification failed. Please try again.';
-
-      case 'unauthorized-domain':
-        return 'This web domain is not authorized in Firebase Authentication.';
-
-      case 'app-not-authorized':
-      case 'invalid-app-credential':
-      case 'missing-client-identifier':
-        return 'Phone OTP setup is incomplete. Add the Android SHA key and latest Firebase configuration.';
 
       default:
         return error.message ?? 'OTP verification failed.';

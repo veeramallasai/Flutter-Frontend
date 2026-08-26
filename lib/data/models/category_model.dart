@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class CategoryModel {
   const CategoryModel({
     required this.id,
@@ -25,12 +23,17 @@ class CategoryModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  factory CategoryModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => CategoryModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory CategoryModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return CategoryModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return CategoryModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const CategoryModel(id: '', name: '');
+    }
+  }
 
   factory CategoryModel.fromMap(
     Map<String, dynamic> map, {
@@ -59,8 +62,8 @@ class CategoryModel {
     'productCount': productCount,
     'sortOrder': sortOrder,
     'isActive': isActive,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };
 
   CategoryModel copyWith({
@@ -74,20 +77,18 @@ class CategoryModel {
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) {
-    return CategoryModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      imageUrl: imageUrl ?? this.imageUrl,
-      iconName: iconName ?? this.iconName,
-      productCount: productCount ?? this.productCount,
-      sortOrder: sortOrder ?? this.sortOrder,
-      isActive: isActive ?? this.isActive,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
+  }) => CategoryModel(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    description: description ?? this.description,
+    imageUrl: imageUrl ?? this.imageUrl,
+    iconName: iconName ?? this.iconName,
+    productCount: productCount ?? this.productCount,
+    sortOrder: sortOrder ?? this.sortOrder,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 }
 
 String _text(dynamic value, {String fallback = ''}) {
@@ -97,15 +98,15 @@ String _text(dynamic value, {String fallback = ''}) {
 
 int _integer(dynamic value) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+
 bool _boolean(dynamic value, {bool fallback = false}) =>
     value is bool
         ? value
         : value == null
         ? fallback
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

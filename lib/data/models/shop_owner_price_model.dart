@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ShopOwnerPriceModel {
   const ShopOwnerPriceModel({
     required this.id,
@@ -25,12 +23,17 @@ class ShopOwnerPriceModel {
   int get discountPercent =>
       mrp > price && mrp > 0 ? (savings * 100 / mrp).round() : 0;
 
-  factory ShopOwnerPriceModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => ShopOwnerPriceModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory ShopOwnerPriceModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return ShopOwnerPriceModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return ShopOwnerPriceModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const ShopOwnerPriceModel(id: '', productId: '');
+    }
+  }
 
   factory ShopOwnerPriceModel.fromMap(
     Map<String, dynamic> map, {
@@ -61,7 +64,7 @@ class ShopOwnerPriceModel {
     'price': price,
     'mrp': mrp,
     'isActive': isActive,
-    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };
 
   ShopOwnerPriceModel copyWith({
@@ -92,17 +95,18 @@ String _text(dynamic value, {String fallback = ''}) {
 
 double _number(dynamic value) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+
 int _integer(dynamic value, {int fallback = 0}) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
+
 bool _boolean(dynamic value, {bool fallback = false}) =>
     value is bool
         ? value
         : value == null
         ? fallback
         : <String>{'true', '1', 'yes'}.contains('$value'.toLowerCase());
+
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

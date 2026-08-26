@@ -20,7 +20,7 @@ class BackendConfig {
 
   static const String _defaultProductionUrl = String.fromEnvironment(
     'PROD_BACKEND_URL',
-    defaultValue: 'https://farm-to-home-backend.up.railway.app',
+    defaultValue: '',
   );
 
   static String get baseUrl {
@@ -33,10 +33,10 @@ class BackendConfig {
     if (_railwayUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_railwayUrl.trim());
     }
-    if (kIsWeb) {
-      return _withoutTrailingSlash(_defaultProductionUrl);
+    if (_defaultProductionUrl.trim().isNotEmpty) {
+      return _withoutTrailingSlash(_defaultProductionUrl.trim());
     }
-    return 'http://localhost:8082';
+    return 'http://localhost:8085';
   }
 
 

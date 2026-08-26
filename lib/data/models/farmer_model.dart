@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class FarmerModel {
   const FarmerModel({
     required this.id,
@@ -25,13 +23,27 @@ class FarmerModel {
   final int experienceYears;
   final String speciality;
 
-  factory FarmerModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> document,
-  ) {
-    return FarmerModel.fromMap(
-      document.data() ?? <String, dynamic>{},
-      documentId: document.id,
-    );
+  factory FarmerModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return FarmerModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return FarmerModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const FarmerModel(
+        id: '',
+        name: '',
+        farmName: '',
+        location: '',
+        imageUrl: '',
+        rating: 0,
+        reviewCount: 0,
+        isVerified: false,
+        experienceYears: 0,
+        speciality: '',
+      );
+    }
   }
 
   factory FarmerModel.fromMap(

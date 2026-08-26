@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class SupportTicketModel {
   const SupportTicketModel({
     required this.id,
@@ -36,12 +34,22 @@ class SupportTicketModel {
       )
       .join(' ');
 
-  factory SupportTicketModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) => SupportTicketModel.fromMap(
-    doc.data() ?? <String, dynamic>{},
-    documentId: doc.id,
-  );
+  factory SupportTicketModel.fromDocument(dynamic doc) {
+    if (doc is Map<String, dynamic>) {
+      return SupportTicketModel.fromMap(doc, documentId: (doc['id'] ?? '').toString());
+    }
+    try {
+      final map = (doc as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return SupportTicketModel.fromMap(map, documentId: doc.id.toString());
+    } catch (_) {
+      return const SupportTicketModel(
+        id: '',
+        userId: '',
+        subject: '',
+        message: '',
+      );
+    }
+  }
 
   factory SupportTicketModel.fromMap(
     Map<String, dynamic> map, {
@@ -68,8 +76,8 @@ class SupportTicketModel {
     'status': status,
     'priority': priority,
     'response': response,
-    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };
 
   SupportTicketModel copyWith({
@@ -103,8 +111,6 @@ String _text(dynamic value, {String fallback = ''}) {
 }
 
 DateTime? _date(dynamic value) =>
-    value is Timestamp
-        ? value.toDate()
-        : value is DateTime
+    value is DateTime
         ? value
         : DateTime.tryParse(value?.toString() ?? '');

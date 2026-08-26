@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class PaymentModel {
   const PaymentModel({
     required this.id,
@@ -40,13 +38,9 @@ class PaymentModel {
   final DateTime? updatedAt;
 
   bool get isCashOnDelivery => method == 'cash_on_delivery';
-
   bool get isPaid => status == 'paid' || status == 'paid_test';
-
   bool get isPending => status == 'pending';
-
   bool get isFailed => status == 'failed';
-
   bool get isRefunded => status == 'refunded';
 
   String get methodLabel {
@@ -84,13 +78,32 @@ class PaymentModel {
     }
   }
 
-  factory PaymentModel.fromDocument(
-    DocumentSnapshot<Map<String, dynamic>> document,
-  ) {
-    return PaymentModel.fromMap(
-      document.data() ?? <String, dynamic>{},
-      documentId: document.id,
-    );
+  factory PaymentModel.fromDocument(dynamic document) {
+    if (document is Map<String, dynamic>) {
+      return PaymentModel.fromMap(document, documentId: (document['id'] ?? '').toString());
+    }
+    try {
+      final map = (document as dynamic).data() as Map<String, dynamic>? ?? <String, dynamic>{};
+      return PaymentModel.fromMap(map, documentId: document.id.toString());
+    } catch (_) {
+      return const PaymentModel(
+        id: '',
+        paymentId: '',
+        userId: '',
+        orderId: '',
+        orderNumber: '',
+        method: 'cash_on_delivery',
+        status: 'pending',
+        subtotal: 0,
+        productSavings: 0,
+        couponCode: '',
+        couponDiscount: 0,
+        deliveryFee: 0,
+        totalAmount: 0,
+        transactionId: '',
+        gateway: '',
+      );
+    }
   }
 
   factory PaymentModel.fromMap(
@@ -142,8 +155,8 @@ class PaymentModel {
       'totalAmount': totalAmount,
       'transactionId': transactionId,
       'gateway': gateway,
-      if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 
@@ -206,7 +219,6 @@ double _toDouble(dynamic value, {double fallback = 0}) {
 }
 
 DateTime? _toDateTime(dynamic value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   return DateTime.tryParse(value?.toString() ?? '');
