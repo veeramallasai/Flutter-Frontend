@@ -68,34 +68,33 @@ public class SecurityConfig {
   }
 
   @Bean
-  public FilterRegistrationBean<CorsFilter> corsFilterRegistrationBean() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of("*"));
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "X-Total-Count", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
-    configuration.setAllowCredentials(true);
-    configuration.setMaxAge(3600L);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-
-    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
-    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
-    return bean;
-  }
-
-  @Bean
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of("*"));
+    // Allow origins using patterns (compatible with allowCredentials = true)
+    configuration.addAllowedOriginPattern("*");
+    configuration.addAllowedOriginPattern("https://*.railway.app");
+    configuration.addAllowedOriginPattern("https://*.up.railway.app");
+    configuration.addAllowedOriginPattern("http://localhost:*");
+    configuration.addAllowedOriginPattern("http://127.0.0.1:*");
+    
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
     configuration.setAllowedHeaders(List.of("*"));
-    configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "X-Total-Count", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
+    configuration.setExposedHeaders(List.of(
+        "Authorization", "Content-Type", "X-Total-Count", 
+        "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"
+    ));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(3600L);
+
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
+  }
+
+  @Bean
+  public FilterRegistrationBean<CorsFilter> corsFilterRegistrationBean() {
+    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(corsConfigurationSource()));
+    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    return bean;
   }
 }
