@@ -51,8 +51,9 @@ management:
 
 app:
   firebase-project-id: ${FIREBASE_PROJECT_ID:farm-to-home-8c520}
-  cors-origins: "${CORS_ORIGINS:https://*.railway.app}"
+  cors-origins: "${CORS_ORIGINS:https://*.railway.app,https://*.up.railway.app,http://localhost:*,*}"
   mail-from: ${MAIL_FROM:noreply@farmtohome.com}
+
 
 logging:
   level:

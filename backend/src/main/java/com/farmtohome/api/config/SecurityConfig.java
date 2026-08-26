@@ -35,7 +35,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .requestMatchers("/api/v1/auth/email-otp/request", "/api/v1/auth/email-otp/verify-reset").permitAll()
+            .requestMatchers("/api/v1/auth/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**", "/api/v1/products/**", "/api/v1/offers", "/api/v1/farmers/**", "/api/v1/delivery-slots").permitAll()
             .requestMatchers("/api/**").authenticated()
             .anyRequest().denyAll())
         .exceptionHandling(exceptions -> exceptions
@@ -59,8 +60,6 @@ public class SecurityConfig {
 
   @Bean
   UserDetailsService userDetailsService() {
-    // Authentication is handled exclusively by verified Firebase ID tokens.
-    // Declaring this bean also disables Spring's generated development password.
     return username -> {
       throw new UsernameNotFoundException("Password login is not enabled on this API.");
     };
@@ -68,7 +67,7 @@ public class SecurityConfig {
 
   @Bean
   CorsConfigurationSource corsConfigurationSource(
-      @Value("${app.cors-origins:https://*.railway.app}") String origins) {
+      @Value("${app.cors-origins:https://*.railway.app,https://*.up.railway.app,http://localhost:*,http://10.0.2.2:*,*}") String origins) {
     CorsConfiguration configuration = new CorsConfiguration();
     List<String> patterns = Arrays.stream(origins.split(","))
         .map(String::trim)
@@ -89,3 +88,4 @@ public class SecurityConfig {
     return source;
   }
 }
+
