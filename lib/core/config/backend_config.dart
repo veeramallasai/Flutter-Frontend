@@ -23,6 +23,10 @@ class BackendConfig {
     defaultValue: '',
   );
 
+  /// Default production Railway backend URL fallback when deployed
+  static const String fallbackRailwayBackendUrl =
+      'https://flutter-frontend-production-e8d6.up.railway.app';
+
   static String get baseUrl {
     if (_overrideBaseUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_overrideBaseUrl.trim());
@@ -36,11 +40,23 @@ class BackendConfig {
     if (_defaultProductionUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_defaultProductionUrl.trim());
     }
+
+    // Auto-detection for web production vs local environment
+    if (kIsWeb) {
+      final String host = Uri.base.host;
+      final bool isLocalHost = host == 'localhost' ||
+          host == '127.0.0.1' ||
+          host == '0.0.0.0' ||
+          host.isEmpty;
+      if (!isLocalHost) {
+        // App is deployed and running in browser (e.g. on Railway)
+        // Default to Railway backend URL, or current web origin if API is co-located
+        return _withoutTrailingSlash(fallbackRailwayBackendUrl);
+      }
+    }
+
     return 'http://localhost:8085';
   }
-
-
-
 
   static const Duration connectTimeout = Duration(seconds: 20);
   static const Duration receiveTimeout = Duration(seconds: 30);

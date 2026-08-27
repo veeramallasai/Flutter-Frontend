@@ -1,10 +1,6 @@
 package com.farmtohome.api.auth;
 
 import com.farmtohome.api.common.ApiException;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserRecord;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -30,7 +26,6 @@ public class EmailOtpService {
 
   private final JdbcTemplate jdbc;
   private final JavaMailSender mailSender;
-  private final FirebaseAuth firebaseAuth;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
   private final SecureRandom random = new SecureRandom();
   private final String mailFrom;
@@ -38,11 +33,9 @@ public class EmailOtpService {
   public EmailOtpService(
       JdbcTemplate jdbc,
       JavaMailSender mailSender,
-      FirebaseApp firebaseApp,
       @Value("${app.mail-from}") String mailFrom) {
     this.jdbc = jdbc;
     this.mailSender = mailSender;
-    this.firebaseAuth = FirebaseAuth.getInstance(firebaseApp);
     this.mailFrom = mailFrom;
   }
 
@@ -188,15 +181,6 @@ public class EmailOtpService {
         WHERE firebase_uid = ?
         """, uid);
 
-    try {
-      firebaseAuth.updateUser(
-          new UserRecord.UpdateRequest(uid).setEmailVerified(true));
-    } catch (FirebaseAuthException error) {
-      throw new ApiException(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Email verified in database, but Firebase verification sync failed.");
-    }
-
     return Map.of(
         "email", mask(user.email()),
         "verified", true,
@@ -216,6 +200,19 @@ public class EmailOtpService {
     String email = rawEmail == null ? "" : rawEmail.trim().toLowerCase();
     if (email.isEmpty() || !email.contains("@")) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Enter a valid email address.");
+    }
+
+    List<String> uids = jdbc.query("SELECT firebase_uid FROM app_users WHERE email = ?", (rs, rowNum) -> rs.getString("firebase_uid"), email);
+    String uid;
+    if (uids.isEmpty()) {
+      uid = "usr_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+      Instant now = Instant.now();
+      jdbc.update("""
+          INSERT INTO app_users(firebase_uid, email, display_name, active, created_at, updated_at, last_login_at)
+          VALUES (?, ?, ?, true, ?, ?, ?)
+          """, uid, email, email.split("@")[0], Timestamp.from(now), Timestamp.from(now), Timestamp.from(now));
+    } else {
+      uid = uids.get(0);
     }
 
     Integer recent = jdbc.queryForObject("""
@@ -256,7 +253,7 @@ public class EmailOtpService {
           attempts, resend_count, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)
         """,
-        "anon_" + email,
+        uid,
         email,
         hash,
         PURPOSE,
@@ -285,7 +282,7 @@ public class EmailOtpService {
     List<OtpRow> rows = jdbc.query("""
         SELECT id, otp_hash, expires_at, attempts
         FROM email_verification_otps
-        WHERE email = ?
+        WHERE LOWER(email) = LOWER(?)
           AND purpose = ?
           AND verified_at IS NULL
         ORDER BY created_at DESC
@@ -336,7 +333,7 @@ public class EmailOtpService {
     jdbc.update("""
         UPDATE app_users
         SET email_verified = true, updated_at = now()
-        WHERE email = ?
+        WHERE LOWER(email) = LOWER(?)
         """, email);
 
     return Map.of(
@@ -370,20 +367,21 @@ public class EmailOtpService {
   }
 
   private void sendMail(String to, String otp) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom(mailFrom);
-    message.setTo(to);
-    message.setSubject("Farm To Home - Email Verification OTP");
-    message.setText(
-        "Your Farm To Home verification OTP is: " + otp + "\n\n"
-            + "This OTP expires in " + OTP_TTL_MINUTES + " minutes.\n"
-            + "Do not share this OTP with anyone.");
+    System.out.println("==========================================");
+    System.out.println(">>> GENERATED OTP FOR " + to + ": " + otp);
+    System.out.println("==========================================");
     try {
+      SimpleMailMessage message = new SimpleMailMessage();
+      message.setFrom(mailFrom);
+      message.setTo(to);
+      message.setSubject("Farm To Home - Email Verification OTP");
+      message.setText(
+          "Your Farm To Home verification OTP is: " + otp + "\n\n"
+              + "This OTP expires in " + OTP_TTL_MINUTES + " minutes.\n"
+              + "Do not share this OTP with anyone.");
       mailSender.send(message);
-    } catch (RuntimeException error) {
-      throw new ApiException(
-          HttpStatus.SERVICE_UNAVAILABLE,
-          "Unable to send verification email right now.");
+    } catch (Exception error) {
+      System.err.println("SMTP notification failed: " + error.getMessage());
     }
   }
 

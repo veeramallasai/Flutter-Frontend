@@ -1,5 +1,6 @@
 package com.farmtohome.api.auth;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -33,7 +34,7 @@ public class AuthDtos {
 
   public record ResetPasswordRequest(
       @NotBlank @Email String email,
-      @NotBlank String otpCode,
+      @NotBlank @JsonAlias({"otp", "code"}) String otpCode,
       @NotBlank @Size(min = 6) String newPassword
   ) {}
 

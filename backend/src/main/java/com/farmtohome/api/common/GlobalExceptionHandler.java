@@ -38,12 +38,24 @@ public class GlobalExceptionHandler {
         "success", false, "message", "Access denied.", "code", "FORBIDDEN"));
   }
 
+  @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+  ResponseEntity<Map<String, Object>> dataIntegrity(org.springframework.dao.DataIntegrityViolationException error) {
+    log.error("Data integrity violation", error);
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+        "success", false,
+        "message", "An account already exists with this email address or details.",
+        "code", "CONFLICT"));
+  }
+
   @ExceptionHandler(Exception.class)
   ResponseEntity<Map<String, Object>> unexpected(Exception error) {
-    log.error("Unhandled API exception", error);
+    log.error("Unhandled API exception: {}", error.getMessage(), error);
+    String details = error.getMessage() != null && !error.getMessage().isBlank()
+        ? error.getMessage()
+        : error.getClass().getSimpleName();
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
         "success", false,
-        "message", "Unable to complete the request.",
+        "message", "Server error: " + details,
         "code", "INTERNAL_ERROR"));
   }
 }

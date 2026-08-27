@@ -1,7 +1,7 @@
 # PowerShell helper script to commit and push Flutter Frontend repository
 param(
-    [string]$RemoteUrl = "https://github.com/veeramallasai/Flutter-Frontend.git",
-    [string]$CommitMessage = "feat: update Flutter frontend base URL for Railway and enhance backend CORS"
+    [string]$RemoteUrl = "",
+    [string]$CommitMessage = "feat: migrate Flutter frontend app with Spring Boot backend integrations"
 )
 
 Write-Host "=========================================" -ForegroundColor Cyan

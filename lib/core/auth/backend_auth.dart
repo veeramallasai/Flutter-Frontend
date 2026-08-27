@@ -168,6 +168,8 @@ class BackendAuth {
   Future<UserCredential> createUserWithEmailAndPassword({
     required String email,
     required String password,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -175,6 +177,10 @@ class BackendAuth {
         body: <String, dynamic>{
           'email': email.trim().toLowerCase(),
           'password': password,
+          if (firstName != null && firstName.trim().isNotEmpty)
+            'firstName': firstName.trim(),
+          if (lastName != null && lastName.trim().isNotEmpty)
+            'lastName': lastName.trim(),
         },
       );
       return _complete(response.data, email: email);
@@ -200,22 +206,30 @@ class BackendAuth {
     String? photoUrl,
     String? idToken,
   }) async {
-    final response = await _apiClient.post(
-      '/api/v1/auth/social-login',
-      body: <String, dynamic>{
-        'provider': provider,
-        'email': email.trim().toLowerCase(),
-        if (firstName != null && firstName.trim().isNotEmpty)
-          'firstName': firstName.trim(),
-        if (lastName != null && lastName.trim().isNotEmpty)
-          'lastName': lastName.trim(),
-        if (photoUrl != null && photoUrl.trim().isNotEmpty)
-          'photoUrl': photoUrl.trim(),
-        if (idToken != null && idToken.trim().isNotEmpty)
-          'idToken': idToken.trim(),
-      },
-    );
-    return _complete(response.data, email: email);
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/auth/social-login',
+        body: <String, dynamic>{
+          'provider': provider,
+          'email': email.trim().toLowerCase(),
+          if (firstName != null && firstName.trim().isNotEmpty)
+            'firstName': firstName.trim(),
+          if (lastName != null && lastName.trim().isNotEmpty)
+            'lastName': lastName.trim(),
+          if (photoUrl != null && photoUrl.trim().isNotEmpty)
+            'photoUrl': photoUrl.trim(),
+          if (idToken != null && idToken.trim().isNotEmpty)
+            'idToken': idToken.trim(),
+        },
+      );
+      return _complete(response.data, email: email);
+    } on NetworkException catch (e) {
+      throw BackendAuthException(
+        code: e.code,
+        message: e.message,
+        details: e.details,
+      );
+    }
   }
 
   Future<void> verifyPhoneNumber({

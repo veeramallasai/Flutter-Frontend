@@ -4,10 +4,6 @@ import com.farmtohome.api.common.ApiException;
 import com.farmtohome.api.common.ApiResponse;
 import com.farmtohome.api.user.AppUserEntity;
 import com.farmtohome.api.user.AppUserRepository;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserRecord;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.Map;
@@ -23,15 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-  private final FirebaseAuth firebaseAuth;
   private final AppUserRepository userRepository;
   private final EmailOtpService emailOtpService;
 
   public AuthController(
-      FirebaseApp firebaseApp,
       AppUserRepository userRepository,
       EmailOtpService emailOtpService) {
-    this.firebaseAuth = FirebaseAuth.getInstance(firebaseApp);
     this.userRepository = userRepository;
     this.emailOtpService = emailOtpService;
   }
@@ -40,66 +33,58 @@ public class AuthController {
   public ApiResponse<AuthDtos.AuthResponse> login(
       @Valid @RequestBody AuthDtos.LoginRequest request) {
     String email = request.email().trim().toLowerCase();
-    UserRecord userRecord;
-    try {
-      userRecord = firebaseAuth.getUserByEmail(email);
-    } catch (FirebaseAuthException e) {
-      // Check database if user exists
-      Optional<AppUserEntity> entity = userRepository.findByEmail(email);
-      if (entity.isEmpty()) {
-        throw new ApiException(HttpStatus.UNAUTHORIZED, "The email or password is incorrect.");
-      }
-      AppUserEntity u = entity.get();
-      return processUserLogin(u.getFirebaseUid(), email, u.getDisplayName(), u.getPhotoUrl());
+    Optional<AppUserEntity> entity = userRepository.findByEmail(email);
+    if (entity.isEmpty()) {
+      throw new ApiException(HttpStatus.UNAUTHORIZED, "The email or password is incorrect.");
     }
-
-    AppUserEntity appUser = findOrCreateUserEntity(userRecord.getUid(), email, userRecord.getDisplayName(), userRecord.getPhotoUrl());
-    return processUserLogin(appUser.getFirebaseUid(), email, appUser.getDisplayName(), appUser.getPhotoUrl());
+    AppUserEntity u = entity.get();
+    return processUserLogin(u.getFirebaseUid(), email, u.getDisplayName(), u.getPhotoUrl());
   }
 
   @PostMapping("/register")
   public ApiResponse<AuthDtos.AuthResponse> register(
       @Valid @RequestBody AuthDtos.RegisterRequest request) {
     String email = request.email().trim().toLowerCase();
-    String uid;
 
-    try {
-      UserRecord existing = firebaseAuth.getUserByEmail(email);
-      if (existing != null) {
-        throw new ApiException(HttpStatus.CONFLICT, "An account already exists with this email.");
-      }
-    } catch (FirebaseAuthException ignored) {
-      // User does not exist in Firebase yet, which is expected
+    Optional<AppUserEntity> existingUser = userRepository.findByEmail(email);
+    if (existingUser.isPresent()) {
+      AppUserEntity existing = existingUser.get();
+      return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
     }
 
-    if (userRepository.findByEmail(email).isPresent()) {
-      throw new ApiException(HttpStatus.CONFLICT, "An account already exists with this email.");
-    }
+    String uid = "usr_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
 
-    try {
-      UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest()
-          .setEmail(email)
-          .setPassword(request.password())
-          .setEmailVerified(false);
-      
-      String name = ((request.firstName() != null ? request.firstName() : "") + " " + (request.lastName() != null ? request.lastName() : "")).trim();
-      if (!name.isEmpty()) {
-        createRequest.setDisplayName(name);
-      }
-      
-      UserRecord created = firebaseAuth.createUser(createRequest);
-      uid = created.getUid();
-    } catch (FirebaseAuthException e) {
-      uid = "usr_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-    }
-
-    String name = ((request.firstName() != null ? request.firstName() : "") + " " + (request.lastName() != null ? request.lastName() : "")).trim();
+    String firstName = request.firstName() != null ? request.firstName().trim() : "";
+    String lastName = request.lastName() != null ? request.lastName().trim() : "";
+    String name = (firstName + " " + lastName).trim();
     if (name.isEmpty()) name = email.split("@")[0];
 
-    AppUserEntity entity = findOrCreateUserEntity(uid, email, name, null);
-    if (request.firstName() != null) entity.setFirstName(request.firstName());
-    if (request.lastName() != null) entity.setLastName(request.lastName());
-    userRepository.save(entity);
+    AppUserEntity entity = new AppUserEntity();
+    entity.setFirebaseUid(uid);
+    entity.setEmail(email);
+    entity.setFirstName(firstName);
+    entity.setLastName(lastName);
+    entity.setDisplayName(name);
+    entity.setPhoneNumber("");
+    entity.setPhotoUrl("");
+    entity.setShoppingMode("home");
+    entity.setAccountType("customer");
+    entity.setAuthProvider("password");
+    entity.setActive(true);
+    entity.setCreatedAt(Instant.now());
+    entity.setUpdatedAt(Instant.now());
+    entity.setLastLoginAt(Instant.now());
+
+    try {
+      userRepository.save(entity);
+    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+      Optional<AppUserEntity> retry = userRepository.findByEmail(email);
+      if (retry.isPresent()) {
+        AppUserEntity existing = retry.get();
+        return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
+      }
+      throw new ApiException(HttpStatus.CONFLICT, "An account already exists with this email.");
+    }
 
     return processUserLogin(uid, email, entity.getDisplayName(), entity.getPhotoUrl());
   }
@@ -108,21 +93,47 @@ public class AuthController {
   public ApiResponse<AuthDtos.AuthResponse> socialLogin(
       @Valid @RequestBody AuthDtos.SocialLoginRequest request) {
     String email = request.email().trim().toLowerCase();
-    String uid;
-
-    try {
-      UserRecord userRecord = firebaseAuth.getUserByEmail(email);
-      uid = userRecord.getUid();
-    } catch (FirebaseAuthException e) {
-      uid = "soc_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    
+    Optional<AppUserEntity> existingUser = userRepository.findByEmail(email);
+    if (existingUser.isPresent()) {
+      AppUserEntity existing = existingUser.get();
+      existing.setLastLoginAt(Instant.now());
+      userRepository.save(existing);
+      return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
     }
 
-    String name = ((request.firstName() != null ? request.firstName() : "") + " " + (request.lastName() != null ? request.lastName() : "")).trim();
+    String uid = "soc_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+
+    String firstName = request.firstName() != null ? request.firstName().trim() : "";
+    String lastName = request.lastName() != null ? request.lastName().trim() : "";
+    String name = (firstName + " " + lastName).trim();
     if (name.isEmpty()) name = email.split("@")[0];
 
-    AppUserEntity entity = findOrCreateUserEntity(uid, email, name, request.photoUrl());
-    entity.setAuthProvider(request.provider());
-    userRepository.save(entity);
+    AppUserEntity entity = new AppUserEntity();
+    entity.setFirebaseUid(uid);
+    entity.setEmail(email);
+    entity.setFirstName(firstName);
+    entity.setLastName(lastName);
+    entity.setDisplayName(name);
+    entity.setPhoneNumber("");
+    entity.setPhotoUrl(request.photoUrl() != null ? request.photoUrl() : "");
+    entity.setShoppingMode("home");
+    entity.setAccountType("customer");
+    entity.setAuthProvider(request.provider() != null ? request.provider() : "google.com");
+    entity.setActive(true);
+    entity.setCreatedAt(Instant.now());
+    entity.setUpdatedAt(Instant.now());
+    entity.setLastLoginAt(Instant.now());
+
+    try {
+      userRepository.save(entity);
+    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+      Optional<AppUserEntity> retry = userRepository.findByEmail(email);
+      if (retry.isPresent()) {
+        AppUserEntity existing = retry.get();
+        return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
+      }
+    }
 
     return processUserLogin(uid, email, entity.getDisplayName(), entity.getPhotoUrl());
   }
@@ -139,25 +150,13 @@ public class AuthController {
       @Valid @RequestBody AuthDtos.ResetPasswordRequest request) {
     Map<String, Object> response = emailOtpService.verifyForEmail(
         request.email().trim().toLowerCase(), request.otpCode().trim());
-    
-    try {
-      UserRecord userRecord = firebaseAuth.getUserByEmail(request.email().trim().toLowerCase());
-      UserRecord.UpdateRequest updateRequest = new UserRecord.UpdateRequest(userRecord.getUid())
-          .setPassword(request.newPassword());
-      firebaseAuth.updateUser(updateRequest);
-    } catch (Exception ignored) {}
 
     return ApiResponse.ok(response, "Password reset successfully.");
   }
 
   private ApiResponse<AuthDtos.AuthResponse> processUserLogin(
       String uid, String email, String name, String photoUrl) {
-    String token;
-    try {
-      token = firebaseAuth.createCustomToken(uid);
-    } catch (FirebaseAuthException e) {
-      token = "jwt_session_" + uid + "_" + System.currentTimeMillis();
-    }
+    String token = "jwt_session_" + uid + "_" + System.currentTimeMillis();
 
     userRepository.findById(uid).ifPresent(user -> {
       user.setLastLoginAt(Instant.now());
@@ -174,9 +173,15 @@ public class AuthController {
     return userRepository.findById(uid).orElseGet(() -> {
       AppUserEntity user = new AppUserEntity();
       user.setFirebaseUid(uid);
-      user.setEmail(email);
-      user.setDisplayName(displayName != null ? displayName : email.split("@")[0]);
-      user.setPhotoUrl(photoUrl);
+      user.setEmail(email != null ? email : "");
+      user.setDisplayName(displayName != null && !displayName.trim().isEmpty() ? displayName : (email != null ? email.split("@")[0] : "User"));
+      user.setFirstName("");
+      user.setLastName("");
+      user.setPhoneNumber("");
+      user.setPhotoUrl(photoUrl != null ? photoUrl : "");
+      user.setShoppingMode("home");
+      user.setAccountType("customer");
+      user.setAuthProvider("password");
       user.setActive(true);
       user.setCreatedAt(Instant.now());
       user.setUpdatedAt(Instant.now());

@@ -1,4 +1,4 @@
-CREATE TABLE delivery_partners (
+CREATE TABLE IF NOT EXISTS delivery_partners (
   id uuid PRIMARY KEY,
   name varchar(160) NOT NULL,
   phone varchar(30),
@@ -12,15 +12,22 @@ CREATE TABLE delivery_partners (
 );
 
 ALTER TABLE orders
-  ADD COLUMN delivery_partner_id uuid;
+  ADD COLUMN IF NOT EXISTS delivery_partner_id uuid;
 
-ALTER TABLE orders
-  ADD CONSTRAINT fk_orders_delivery_partner
-  FOREIGN KEY (delivery_partner_id)
-  REFERENCES delivery_partners(id)
-  ON DELETE SET NULL;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fk_orders_delivery_partner'
+  ) THEN
+    ALTER TABLE orders
+      ADD CONSTRAINT fk_orders_delivery_partner
+      FOREIGN KEY (delivery_partner_id)
+      REFERENCES delivery_partners(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
 
-CREATE TABLE delivery_partner_reviews (
+CREATE TABLE IF NOT EXISTS delivery_partner_reviews (
   id uuid PRIMARY KEY,
   order_id uuid NOT NULL,
   customer_uid varchar(160) NOT NULL,
@@ -52,11 +59,11 @@ CREATE TABLE delivery_partner_reviews (
     UNIQUE (order_id, customer_uid)
 );
 
-CREATE INDEX idx_orders_delivery_partner_id
+CREATE INDEX IF NOT EXISTS idx_orders_delivery_partner_id
   ON orders(delivery_partner_id);
 
-CREATE INDEX idx_delivery_partner_reviews_partner
+CREATE INDEX IF NOT EXISTS idx_delivery_partner_reviews_partner
   ON delivery_partner_reviews(delivery_partner_id);
 
-CREATE INDEX idx_delivery_partner_reviews_customer
+CREATE INDEX IF NOT EXISTS idx_delivery_partner_reviews_customer
   ON delivery_partner_reviews(customer_uid);

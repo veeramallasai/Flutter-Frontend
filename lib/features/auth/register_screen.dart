@@ -141,10 +141,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<User> _createOrResumeUser({
     required String email,
     required String password,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       final UserCredential credential = await BackendAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+            firstName: firstName,
+            lastName: lastName,
+          );
 
       final User? user = credential.user;
       if (user == null) {
@@ -219,6 +226,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final User user = await _createOrResumeUser(
         email: email,
         password: password,
+        firstName: firstName,
+        lastName: lastName,
       );
 
       final String displayName = '$firstName $lastName'.trim();

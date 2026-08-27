@@ -57,7 +57,7 @@ class AuthRepository {
   }
 
   Future<void> sendPasswordReset(String email) =>
-      _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
+      BackendAuth.instance.sendPasswordResetEmail(email: email.trim().toLowerCase());
 
   Future<void> reloadUser() => currentUser?.reload() ?? Future<void>.value();
 

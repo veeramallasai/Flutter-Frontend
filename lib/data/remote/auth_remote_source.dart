@@ -28,7 +28,7 @@ class AuthRemoteSource {
       _auth.signInWithCredential(credential);
 
   Future<void> sendPasswordReset(String email) =>
-      _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
+      BackendAuth.instance.sendPasswordResetEmail(email: email.trim().toLowerCase());
 
   Future<void> sendEmailVerification() async {
     final User? user = currentUser;

@@ -58,7 +58,7 @@ public class AppUserEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
-  protected AppUserEntity() {}
+  public AppUserEntity() {}
 
   public String getFirebaseUid() { return firebaseUid; }
   public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }

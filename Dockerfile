@@ -5,7 +5,13 @@ ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PAT
 RUN git clone https://github.com/flutter/flutter.git -b stable /usr/local/flutter
 COPY . /app
 RUN flutter pub get
-RUN flutter build web --release
+ARG API_BASE_URL
+ENV API_BASE_URL=${API_BASE_URL}
+RUN if [ -n "$API_BASE_URL" ]; then \
+      flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL}; \
+    else \
+      flutter build web --release; \
+    fi
 FROM nginx:alpine
 COPY --from=0 /app/build/web /usr/share/nginx/html
 EXPOSE 80

@@ -1,6 +1,6 @@
 package com.farmtohome.api.config;
 
-import com.farmtohome.api.auth.FirebaseTokenFilter;
+import com.farmtohome.api.auth.JwtTokenFilter;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,10 +25,13 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+  @Value("${app.cors-origins:https://flutter-frontend-production-e8d6.up.railway.app,https://*.railway.app,https://*.up.railway.app,http://localhost:*,*}")
+  private String rawCorsOrigins;
+
   @Bean
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
-      FirebaseTokenFilter firebaseTokenFilter) throws Exception {
+      JwtTokenFilter jwtTokenFilter) throws Exception {
     return http
         .csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -56,8 +59,13 @@ public class SecurityConfig {
                   "{\"success\":false,\"message\":\"Access denied.\","
                       + "\"code\":\"FORBIDDEN\"}");
             }))
-        .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
+  }
+
+  @Bean
+  com.fasterxml.jackson.databind.ObjectMapper objectMapper() {
+    return new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
   }
 
   @Bean
@@ -70,15 +78,24 @@ public class SecurityConfig {
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    // Allow origins using patterns (compatible with allowCredentials = true)
-    configuration.addAllowedOriginPattern("*");
-    configuration.addAllowedOriginPattern("https://*.railway.app");
+    
+    if (rawCorsOrigins != null && !rawCorsOrigins.isBlank()) {
+      Arrays.stream(rawCorsOrigins.split(","))
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .forEach(configuration::addAllowedOriginPattern);
+    }
+
+    // Explicit allowed origin patterns for Railway & local development
+    configuration.addAllowedOriginPattern("https://flutter-frontend-production-e8d6.up.railway.app");
     configuration.addAllowedOriginPattern("https://*.up.railway.app");
+    configuration.addAllowedOriginPattern("https://*.railway.app");
     configuration.addAllowedOriginPattern("http://localhost:*");
     configuration.addAllowedOriginPattern("http://127.0.0.1:*");
+    configuration.addAllowedOriginPattern("*");
     
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
-    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "*"));
     configuration.setExposedHeaders(List.of(
         "Authorization", "Content-Type", "X-Total-Count", 
         "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"
@@ -89,12 +106,5 @@ public class SecurityConfig {
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
-  }
-
-  @Bean
-  public FilterRegistrationBean<CorsFilter> corsFilterRegistrationBean() {
-    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(corsConfigurationSource()));
-    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
-    return bean;
   }
 }
