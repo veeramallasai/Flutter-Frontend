@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/app_routes.dart';
+import '../../core/errors/app_exception.dart';
 import '../../core/errors/network_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/email_otp_repository.dart';
