@@ -31,23 +31,23 @@ class BackendConfig {
 
   /// Default production Railway backend URL fallback when deployed
   static const String fallbackRailwayBackendUrl =
-      'https://farm-to-home-backend-production.up.railway.app';
+      'https://farmtohome-backend-production-3378.up.railway.app';
 
   static String get baseUrl {
     if (_overrideBaseUrl.trim().isNotEmpty) {
-      return _withoutTrailingSlash(_overrideBaseUrl.trim());
+      return _formatUrl(_overrideBaseUrl);
     }
     if (_apiUrl.trim().isNotEmpty) {
-      return _withoutTrailingSlash(_apiUrl.trim());
+      return _formatUrl(_apiUrl);
     }
     if (_railwayUrl.trim().isNotEmpty) {
-      return _withoutTrailingSlash(_railwayUrl.trim());
+      return _formatUrl(_railwayUrl);
     }
     if (_springBackendUrl.trim().isNotEmpty) {
-      return _withoutTrailingSlash(_springBackendUrl.trim());
+      return _formatUrl(_springBackendUrl);
     }
     if (_defaultProductionUrl.trim().isNotEmpty) {
-      return _withoutTrailingSlash(_defaultProductionUrl.trim());
+      return _formatUrl(_defaultProductionUrl);
     }
 
     // Direct local debug requests to local Spring Boot server on port 8085
@@ -68,13 +68,13 @@ class BackendConfig {
       if (!isLocalHost) {
         // App is deployed and running in browser (e.g. on Railway)
         // Direct API calls to the Spring Boot backend server, not the Flutter web static host
-        return _withoutTrailingSlash(fallbackRailwayBackendUrl);
+        return _formatUrl(fallbackRailwayBackendUrl);
       }
       // When running on localhost in Flutter web, default to local Spring Boot server on port 8085
       return 'http://localhost:8085';
     }
 
-    return fallbackRailwayBackendUrl;
+    return _formatUrl(fallbackRailwayBackendUrl);
   }
 
   static const Duration connectTimeout = Duration(seconds: 20);
@@ -93,6 +93,16 @@ class BackendConfig {
     ).replace(queryParameters: query.isEmpty ? null : query);
   }
 
-  static String _withoutTrailingSlash(String value) =>
-      value.endsWith('/') ? value.substring(0, value.length - 1) : value;
+  static String _formatUrl(String value) {
+    String trimmed = value.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.endsWith('/')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      trimmed = 'https://$trimmed';
+    }
+    return trimmed;
+  }
+  static String _withoutTrailingSlash(String value) => _formatUrl(value);
 }
