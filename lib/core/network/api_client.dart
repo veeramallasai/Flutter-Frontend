@@ -104,6 +104,18 @@ class ApiClient {
         );
       }
       if (decoded is Map<String, dynamic>) {
+        final bool isSuccessFlag =
+            decoded['success'] != false && decoded['isSuccess'] != false;
+        if (!isSuccessFlag) {
+          final String errMsg =
+              (decoded['message'] ?? decoded['error'] ?? 'Operation failed')
+                  .toString();
+          throw NetworkException(
+            message: errMsg,
+            statusCode: response.statusCode,
+            details: decoded,
+          );
+        }
         return ApiResponse<dynamic>(
           isSuccess: true,
           data: decoded['data'] ?? decoded,

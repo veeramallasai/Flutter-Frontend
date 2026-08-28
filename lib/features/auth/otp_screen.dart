@@ -356,6 +356,8 @@ class _OtpScreenState extends State<OtpScreen>
           'Unable to send email OTP. Check SMTP setup and try again.';
       if (error is NetworkException && error.message.trim().isNotEmpty) {
         errorMessage = error.message.trim();
+      } else if (error is AppException && error.message.trim().isNotEmpty) {
+        errorMessage = error.message.trim();
       }
 
       _showMessage(errorMessage, error: true);

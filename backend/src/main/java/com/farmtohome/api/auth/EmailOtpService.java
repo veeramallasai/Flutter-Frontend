@@ -372,7 +372,7 @@ public class EmailOtpService {
     System.out.println("==========================================");
     try {
       SimpleMailMessage message = new SimpleMailMessage();
-      message.setFrom(mailFrom);
+      message.setFrom(mailFrom != null && !mailFrom.isBlank() ? mailFrom : "noreply@farmtohome.com");
       message.setTo(to);
       message.setSubject("Farm To Home - Email Verification OTP");
       message.setText(
@@ -382,6 +382,9 @@ public class EmailOtpService {
       mailSender.send(message);
     } catch (Exception error) {
       System.err.println("SMTP notification failed: " + error.getMessage());
+      throw new ApiException(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to send email OTP: " + (error.getMessage() != null ? error.getMessage() : "SMTP mail server error"));
     }
   }
 
