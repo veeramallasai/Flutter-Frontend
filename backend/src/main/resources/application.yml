@@ -30,7 +30,7 @@ spring:
     default-property-inclusion: non_null
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
+    port: ${MAIL_PORT:465}
     username: ${MAIL_USERNAME:veeramallasaipichaiah456@gmail.com}
     password: ${MAIL_PASSWORD:zgcdahzwvgdknexf}
     properties:
@@ -38,8 +38,18 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: true
-            required: true
+            enable: ${MAIL_STARTTLS_ENABLE:false}
+            required: ${MAIL_STARTTLS_REQUIRED:false}
+          ssl:
+            enable: ${MAIL_SSL_ENABLE:true}
+            trust: ${MAIL_SSL_TRUST:smtp.gmail.com}
+          socketFactory:
+            port: ${MAIL_PORT:465}
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
 
 management:
   endpoints:
