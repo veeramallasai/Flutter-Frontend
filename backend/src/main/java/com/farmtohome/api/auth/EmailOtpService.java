@@ -28,14 +28,23 @@ public class EmailOtpService {
   private final JavaMailSender mailSender;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
   private final SecureRandom random = new SecureRandom();
+  private final String mailHost;
+  private final String mailUsername;
+  private final String mailPassword;
   private final String mailFrom;
 
   public EmailOtpService(
       JdbcTemplate jdbc,
       JavaMailSender mailSender,
-      @Value("${app.mail-from}") String mailFrom) {
+      @Value("${spring.mail.host:smtp.gmail.com}") String mailHost,
+      @Value("${spring.mail.username:veeramallasaipichaiah456@gmail.com}") String mailUsername,
+      @Value("${spring.mail.password:zgcdahzwvgdknexf}") String mailPassword,
+      @Value("${app.mail-from:veeramallasaipichaiah456@gmail.com}") String mailFrom) {
     this.jdbc = jdbc;
     this.mailSender = mailSender;
+    this.mailHost = mailHost;
+    this.mailUsername = mailUsername;
+    this.mailPassword = mailPassword;
     this.mailFrom = mailFrom;
   }
 
@@ -370,21 +379,46 @@ public class EmailOtpService {
     System.out.println("==========================================");
     System.out.println(">>> GENERATED OTP FOR " + to + ": " + otp);
     System.out.println("==========================================");
+
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom(mailFrom != null && !mailFrom.isBlank() ? mailFrom : "veeramallasaipichaiah456@gmail.com");
+    message.setTo(to);
+    message.setSubject("Farm To Home - Email Verification OTP");
+    message.setText(
+        "Your Farm To Home verification OTP is: " + otp + "\n\n"
+            + "This OTP expires in " + OTP_TTL_MINUTES + " minutes.\n"
+            + "Do not share this OTP with anyone.");
+
     try {
-      SimpleMailMessage message = new SimpleMailMessage();
-      message.setFrom(mailFrom != null && !mailFrom.isBlank() ? mailFrom : "noreply@farmtohome.com");
-      message.setTo(to);
-      message.setSubject("Farm To Home - Email Verification OTP");
-      message.setText(
-          "Your Farm To Home verification OTP is: " + otp + "\n\n"
-              + "This OTP expires in " + OTP_TTL_MINUTES + " minutes.\n"
-              + "Do not share this OTP with anyone.");
       mailSender.send(message);
+      System.out.println("[SMTP] OTP email sent successfully to " + to);
     } catch (Exception error) {
-      System.err.println("SMTP notification failed: " + error.getMessage());
-      throw new ApiException(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to send email OTP: " + (error.getMessage() != null ? error.getMessage() : "SMTP mail server error"));
+      System.err.println("[SMTP] Primary mail send failed (" + error.getMessage() + "). Retrying with Port 465 SSL...");
+      try {
+        org.springframework.mail.javamail.JavaMailSenderImpl fallbackSender =
+            new org.springframework.mail.javamail.JavaMailSenderImpl();
+        fallbackSender.setHost(mailHost != null && !mailHost.isBlank() ? mailHost : "smtp.gmail.com");
+        fallbackSender.setPort(465);
+        fallbackSender.setUsername(mailUsername != null && !mailUsername.isBlank() ? mailUsername : "veeramallasaipichaiah456@gmail.com");
+        fallbackSender.setPassword(mailPassword != null && !mailPassword.isBlank() ? mailPassword : "zgcdahzwvgdknexf");
+        
+        java.util.Properties props = fallbackSender.getJavaMailProperties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.ssl.enable", "true");
+        props.put("mail.smtp.socketFactory.port", "465");
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.socketFactory.fallback", "false");
+        props.put("mail.smtp.connectiontimeout", "8000");
+        props.put("mail.smtp.timeout", "8000");
+
+        fallbackSender.send(message);
+        System.out.println("[SMTP] Fallback Port 465 SSL OTP email sent successfully to " + to);
+      } catch (Exception fallbackError) {
+        System.err.println("[SMTP] Fallback Port 465 SSL mail send also failed: " + fallbackError.getMessage());
+        throw new ApiException(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Failed to deliver OTP email: " + (fallbackError.getMessage() != null ? fallbackError.getMessage() : error.getMessage()));
+      }
     }
   }
 
