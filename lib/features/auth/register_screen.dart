@@ -252,7 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on BackendAuthException catch (error) {
       if (!mounted) return;
 
-      _showMessage(_firebaseErrorMessage(error));
+      _showMessage(_authErrorMessage(error));
     } catch (error, stackTrace) {
       debugPrint('REGISTER SETUP ERROR: $error');
       debugPrintStack(label: 'REGISTER SETUP STACK', stackTrace: stackTrace);
@@ -272,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String _firebaseErrorMessage(BackendAuthException error) {
+  String _authErrorMessage(BackendAuthException error) {
     switch (error.code) {
       case 'email-already-in-use':
         return 'This email already has an account. Use the same password to continue setup.';

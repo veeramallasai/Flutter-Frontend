@@ -51,7 +51,7 @@ mvn spring-boot:run
 
 Terminal close చేయవద్దు. చివర `Started FarmToHomeApiApplication` రావాలి.
 
-Browserలో `http://localhost:8080/actuator/health` open చేస్తే:
+Browserలో `http://localhost:8085/actuator/health` open చేస్తే:
 
 ```json
 {"status":"UP"}
@@ -72,14 +72,14 @@ flutter analyze
 flutter run -d chrome
 ```
 
-Chrome/Windowsకు backend address automaticగా `http://localhost:8080`.
-Android emulatorకు automaticగా `http://10.0.2.2:8080`.
+Chrome/Windowsకు backend address automaticగా `http://localhost:8085`.
+Android emulatorకు automaticగా `http://10.0.2.2:8085`.
 
 Physical Android phone ఉపయోగిస్తే PC మరియు phone ఒకే Wi-Fiలో ఉండాలి. PC IP
 ఉదాహరణకు `192.168.1.5` అయితే:
 
 ```powershell
-flutter run --dart-define=API_BASE_URL=http://192.168.1.5:8080
+flutter run --dart-define=API_BASE_URL=http://192.168.1.5:8085
 ```
 
 Windows Firewall prompt వస్తే private networksకు Java access allow చేయాలి.

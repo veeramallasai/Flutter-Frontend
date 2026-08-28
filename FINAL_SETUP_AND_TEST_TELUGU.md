@@ -29,7 +29,7 @@ Verification పూర్తయ్యాక backendని run చేయడాన
 powershell -ExecutionPolicy Bypass -File .\start_backend.ps1
 ```
 
-Password enter చేసిన తరువాత terminal close చేయకుండా ఉంచాలి. Browserలో `http://localhost:8080/actuator/health` → `UP` వస్తే backend + PostgreSQL connected.
+Password enter చేసిన తరువాత terminal close చేయకుండా ఉంచాలి. Browserలో `http://localhost:8085/actuator/health` → `UP` వస్తే backend + PostgreSQL connected.
 
 ## Flutter run
 

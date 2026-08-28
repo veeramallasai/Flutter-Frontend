@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kDebugMode, kIsWeb;
 
 class BackendConfig {
   BackendConfig._();
@@ -41,6 +42,14 @@ class BackendConfig {
       return _withoutTrailingSlash(_defaultProductionUrl.trim());
     }
 
+    // Direct local debug requests to local Spring Boot server on port 8085
+    if (kDebugMode) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        return 'http://10.0.2.2:8085';
+      }
+      return 'http://localhost:8085';
+    }
+
     // Auto-detection for web production vs local environment
     if (kIsWeb) {
       final String host = Uri.base.host;
@@ -50,12 +59,13 @@ class BackendConfig {
           host.isEmpty;
       if (!isLocalHost) {
         // App is deployed and running in browser (e.g. on Railway)
-        // Default to Railway backend URL, or current web origin if API is co-located
         return _withoutTrailingSlash(fallbackRailwayBackendUrl);
       }
+      // When running on localhost in Flutter web, default to local Spring Boot server on port 8085
+      return 'http://localhost:8085';
     }
 
-    return 'http://localhost:8085';
+    return fallbackRailwayBackendUrl;
   }
 
   static const Duration connectTimeout = Duration(seconds: 20);

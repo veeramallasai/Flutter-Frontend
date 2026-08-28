@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../app/app_routes.dart';
 import '../../core/auth/backend_auth.dart';
+import '../../core/errors/app_exception.dart';
 import '../../core/errors/network_exception.dart';
 import '../../core/theme/app_colors.dart';
 import 'widgets/password_strength.dart';
@@ -205,7 +206,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       if (!mounted) return;
 
       String message = 'Unable to send OTP. Check connection and try again.';
-      if (error is NetworkException && error.message.trim().isNotEmpty) {
+      if (error is AppException && error.message.trim().isNotEmpty) {
+        message = error.message.trim();
+      } else if (error is NetworkException && error.message.trim().isNotEmpty) {
         message = error.message.trim();
       }
 

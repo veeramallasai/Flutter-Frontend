@@ -53,7 +53,7 @@ function Wait-ForHealth {
   param([int]$Seconds = 90)
   for ($attempt = 0; $attempt -lt $Seconds; $attempt++) {
     try {
-      $health = Invoke-RestMethod -Uri 'http://localhost:8080/actuator/health' -TimeoutSec 2
+      $health = Invoke-RestMethod -Uri 'http://localhost:8085/actuator/health' -TimeoutSec 2
       if ($health.status -eq 'UP') { return $true }
     } catch {
       Start-Sleep -Seconds 1
@@ -131,7 +131,7 @@ try {
     }
   }
 
-  $health = Invoke-RestMethod -Uri 'http://localhost:8080/actuator/health'
+  $health = Invoke-RestMethod -Uri 'http://localhost:8085/actuator/health'
   if ($health.status -ne 'UP') { throw 'Backend or PostgreSQL is not UP.' }
 
   Write-Host '[5/5] Postman package validation...' -ForegroundColor Cyan

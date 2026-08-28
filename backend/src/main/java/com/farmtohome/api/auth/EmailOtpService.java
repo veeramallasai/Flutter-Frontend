@@ -202,7 +202,7 @@ public class EmailOtpService {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Enter a valid email address.");
     }
 
-    List<String> uids = jdbc.query("SELECT firebase_uid FROM app_users WHERE email = ?", (rs, rowNum) -> rs.getString("firebase_uid"), email);
+    List<String> uids = jdbc.query("SELECT firebase_uid FROM app_users WHERE LOWER(email) = LOWER(?)", (rs, rowNum) -> rs.getString("firebase_uid"), email);
     String uid;
     if (uids.isEmpty()) {
       uid = "usr_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16);

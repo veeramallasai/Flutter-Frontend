@@ -308,7 +308,7 @@ class _OtpScreenState extends State<OtpScreen>
       final User? currentUser = BackendAuth.instance.currentUser;
       final Map<String, dynamic> result =
           currentUser != null
-              ? await _emailOtpRepository.sendOtp()
+              ? await _emailOtpRepository.sendOtp(_emailAddress)
               : await _emailOtpRepository.requestOtp(_emailAddress);
 
       if (!mounted) return;
@@ -371,7 +371,7 @@ class _OtpScreenState extends State<OtpScreen>
   Future<void> _verifyEmailOtp(String otp) async {
     final User? currentUser = BackendAuth.instance.currentUser;
     if (currentUser != null) {
-      await _emailOtpRepository.verifyOtp(otp);
+      await _emailOtpRepository.verifyOtp(otp, _emailAddress);
       await currentUser.reload();
       try {
         await UserRepository().syncCurrentUser();
