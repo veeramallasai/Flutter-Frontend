@@ -19,6 +19,11 @@ class BackendConfig {
     defaultValue: '',
   );
 
+  static const String _springBackendUrl = String.fromEnvironment(
+    'SPRING_BACKEND_URL',
+    defaultValue: '',
+  );
+
   static const String _defaultProductionUrl = String.fromEnvironment(
     'PROD_BACKEND_URL',
     defaultValue: '',
@@ -26,7 +31,7 @@ class BackendConfig {
 
   /// Default production Railway backend URL fallback when deployed
   static const String fallbackRailwayBackendUrl =
-      'https://flutter-frontend-production-e8d6.up.railway.app';
+      'https://farm-to-home-backend-production.up.railway.app';
 
   static String get baseUrl {
     if (_overrideBaseUrl.trim().isNotEmpty) {
@@ -37,6 +42,9 @@ class BackendConfig {
     }
     if (_railwayUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_railwayUrl.trim());
+    }
+    if (_springBackendUrl.trim().isNotEmpty) {
+      return _withoutTrailingSlash(_springBackendUrl.trim());
     }
     if (_defaultProductionUrl.trim().isNotEmpty) {
       return _withoutTrailingSlash(_defaultProductionUrl.trim());
@@ -59,6 +67,7 @@ class BackendConfig {
           host.isEmpty;
       if (!isLocalHost) {
         // App is deployed and running in browser (e.g. on Railway)
+        // Direct API calls to the Spring Boot backend server, not the Flutter web static host
         return _withoutTrailingSlash(fallbackRailwayBackendUrl);
       }
       // When running on localhost in Flutter web, default to local Spring Boot server on port 8085

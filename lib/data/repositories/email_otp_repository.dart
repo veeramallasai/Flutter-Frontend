@@ -54,14 +54,14 @@ class EmailOtpRepository {
     try {
       final dynamic data =
           (await _apiClient.post(
-            '/api/v1/auth/forgot-password',
+            '/api/v1/auth/email-otp/request',
             body: <String, dynamic>{'email': email.trim().toLowerCase()},
           )).data;
       return _map(data);
     } catch (_) {
       final dynamic data =
           (await _apiClient.post(
-            '/api/v1/auth/email-otp/request',
+            '/api/v1/auth/forgot-password',
             body: <String, dynamic>{'email': email.trim().toLowerCase()},
           )).data;
       return _map(data);
@@ -72,18 +72,17 @@ class EmailOtpRepository {
     try {
       final dynamic data =
           (await _apiClient.post(
-            '/api/v1/auth/reset-password',
+            '/api/v1/auth/email-otp/verify-reset',
             body: <String, dynamic>{
               'email': email.trim().toLowerCase(),
-              'otpCode': otp.trim(),
-              'newPassword': 'DefaultTempPassword123!',
+              'otp': otp.trim(),
             },
           )).data;
       return _map(data);
     } catch (_) {
       final dynamic data =
           (await _apiClient.post(
-            '/api/v1/auth/email-otp/verify-reset',
+            '/api/v1/auth/email-otp/verify',
             body: <String, dynamic>{
               'email': email.trim().toLowerCase(),
               'otp': otp.trim(),
