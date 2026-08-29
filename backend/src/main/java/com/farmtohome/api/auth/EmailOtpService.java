@@ -1,6 +1,8 @@
 package com.farmtohome.api.auth;
 
 import com.farmtohome.api.common.ApiException;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -8,11 +10,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,10 +46,10 @@ public class EmailOtpService {
       @Value("${app.mail-from:veeramallasaipichaiah456@gmail.com}") String mailFrom) {
     this.jdbc = jdbc;
     this.mailSender = mailSender;
-    this.mailHost = mailHost;
-    this.mailUsername = mailUsername;
-    this.mailPassword = mailPassword;
-    this.mailFrom = mailFrom;
+    this.mailHost = mailHost != null ? mailHost.trim() : "smtp.gmail.com";
+    this.mailUsername = mailUsername != null ? mailUsername.trim() : "veeramallasaipichaiah456@gmail.com";
+    this.mailPassword = mailPassword != null ? mailPassword.trim().replaceAll("\\s+", "") : "";
+    this.mailFrom = mailFrom != null && !mailFrom.isBlank() ? mailFrom.trim() : this.mailUsername;
   }
 
   @Transactional
@@ -375,13 +379,82 @@ public class EmailOtpService {
     return user;
   }
 
+  public Map<String, Object> testSmtpConnection() {
+    Map<String, Object> result = new LinkedHashMap<>();
+    result.put("mailHost", mailHost);
+    result.put("mailUsername", mask(mailUsername));
+    result.put("hasPassword", mailPassword != null && !mailPassword.isBlank());
+
+    Map<String, Object> p587 = testPort(mailHost, 587, mailUsername, mailPassword, false);
+    result.put("port587_STARTTLS", p587);
+
+    Map<String, Object> p465 = testPort(mailHost, 465, mailUsername, mailPassword, true);
+    result.put("port465_SSL", p465);
+
+    boolean connected = Boolean.TRUE.equals(p587.get("connected")) || Boolean.TRUE.equals(p465.get("connected"));
+    result.put("smtpConnected", connected);
+    result.put("message", connected
+        ? "Successfully established connection to Gmail SMTP server."
+        : "Failed to connect to Gmail SMTP on both ports 587 and 465.");
+    return result;
+  }
+
+  private Map<String, Object> testPort(String host, int port, String user, String pass, boolean useSsl) {
+    Map<String, Object> status = new LinkedHashMap<>();
+    status.put("port", port);
+    status.put("protocol", useSsl ? "SSL" : "STARTTLS");
+    try {
+      JavaMailSenderImpl sender = createSender(host, port, user, pass, useSsl);
+      Session session = sender.getSession();
+      Transport transport = session.getTransport("smtp");
+      transport.connect(host, port, user, pass);
+      transport.close();
+      status.put("connected", true);
+      status.put("status", "SUCCESS");
+    } catch (Exception e) {
+      status.put("connected", false);
+      status.put("status", "FAILED");
+      status.put("error", e.getMessage() != null ? e.getMessage() : e.toString());
+    }
+    return status;
+  }
+
+  private JavaMailSenderImpl createSender(String host, int port, String user, String pass, boolean useSsl) {
+    JavaMailSenderImpl sender = new JavaMailSenderImpl();
+    sender.setHost(host);
+    sender.setPort(port);
+    sender.setUsername(user);
+    sender.setPassword(pass);
+    sender.setDefaultEncoding("UTF-8");
+
+    Properties props = sender.getJavaMailProperties();
+    props.put("mail.transport.protocol", "smtp");
+    props.put("mail.smtp.auth", "true");
+    props.put("mail.smtp.connectiontimeout", "8000");
+    props.put("mail.smtp.timeout", "8000");
+    props.put("mail.smtp.writetimeout", "8000");
+
+    if (useSsl) {
+      props.put("mail.smtp.ssl.enable", "true");
+      props.put("mail.smtp.ssl.trust", host);
+      props.put("mail.smtp.socketFactory.port", String.valueOf(port));
+      props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+      props.put("mail.smtp.socketFactory.fallback", "false");
+    } else {
+      props.put("mail.smtp.starttls.enable", "true");
+      props.put("mail.smtp.starttls.required", "true");
+      props.put("mail.smtp.ssl.trust", host);
+    }
+    return sender;
+  }
+
   private void sendMail(String to, String otp) {
     System.out.println("==========================================");
     System.out.println(">>> GENERATED OTP FOR " + to + ": " + otp);
     System.out.println("==========================================");
 
     SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom(mailFrom != null && !mailFrom.isBlank() ? mailFrom : "veeramallasaipichaiah456@gmail.com");
+    message.setFrom(mailFrom != null && !mailFrom.isBlank() ? mailFrom : mailUsername);
     message.setTo(to);
     message.setSubject("Farm To Home - Email Verification OTP");
     message.setText(
@@ -389,36 +462,39 @@ public class EmailOtpService {
             + "This OTP expires in " + OTP_TTL_MINUTES + " minutes.\n"
             + "Do not share this OTP with anyone.");
 
+    // Strategy 1: Primary configured mailSender
     try {
+      System.out.println("[SMTP] Strategy 1: Attempting send via primary mailSender...");
       mailSender.send(message);
-      System.out.println("[SMTP] OTP email sent successfully to " + to);
-    } catch (Exception error) {
-      System.err.println("[SMTP] Primary mail send failed (" + error.getMessage() + "). Retrying with Port 465 SSL...");
-      try {
-        org.springframework.mail.javamail.JavaMailSenderImpl fallbackSender =
-            new org.springframework.mail.javamail.JavaMailSenderImpl();
-        fallbackSender.setHost(mailHost != null && !mailHost.isBlank() ? mailHost : "smtp.gmail.com");
-        fallbackSender.setPort(465);
-        fallbackSender.setUsername(mailUsername != null && !mailUsername.isBlank() ? mailUsername : "veeramallasaipichaiah456@gmail.com");
-        fallbackSender.setPassword(mailPassword != null && !mailPassword.isBlank() ? mailPassword : "zgcdahzwvgdknexf");
-        
-        java.util.Properties props = fallbackSender.getJavaMailProperties();
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.ssl.enable", "true");
-        props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.socketFactory.fallback", "false");
-        props.put("mail.smtp.connectiontimeout", "8000");
-        props.put("mail.smtp.timeout", "8000");
+      System.out.println("[SMTP] Primary mailSender delivered OTP to " + to);
+      return;
+    } catch (Exception err1) {
+      System.err.println("[SMTP] Strategy 1 (Primary) failed: " + err1.getMessage());
+    }
 
-        fallbackSender.send(message);
-        System.out.println("[SMTP] Fallback Port 465 SSL OTP email sent successfully to " + to);
-      } catch (Exception fallbackError) {
-        System.err.println("[SMTP] Fallback Port 465 SSL mail send also failed: " + fallbackError.getMessage());
-        throw new ApiException(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Failed to deliver OTP email: " + (fallbackError.getMessage() != null ? fallbackError.getMessage() : error.getMessage()));
-      }
+    // Strategy 2: Explicit Port 587 (STARTTLS)
+    try {
+      System.out.println("[SMTP] Strategy 2: Attempting send via Port 587 STARTTLS...");
+      JavaMailSenderImpl sender587 = createSender(mailHost, 587, mailUsername, mailPassword, false);
+      sender587.send(message);
+      System.out.println("[SMTP] Strategy 2 (Port 587 STARTTLS) delivered OTP to " + to);
+      return;
+    } catch (Exception err2) {
+      System.err.println("[SMTP] Strategy 2 (Port 587 STARTTLS) failed: " + err2.getMessage());
+    }
+
+    // Strategy 3: Explicit Port 465 (SSL)
+    try {
+      System.out.println("[SMTP] Strategy 3: Attempting send via Port 465 SSL...");
+      JavaMailSenderImpl sender465 = createSender(mailHost, 465, mailUsername, mailPassword, true);
+      sender465.send(message);
+      System.out.println("[SMTP] Strategy 3 (Port 465 SSL) delivered OTP to " + to);
+      return;
+    } catch (Exception err3) {
+      System.err.println("[SMTP] Strategy 3 (Port 465 SSL) failed: " + err3.getMessage());
+      throw new ApiException(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to deliver OTP email via Gmail SMTP (Ports 587 & 465 failed). Error: " + err3.getMessage());
     }
   }
 
