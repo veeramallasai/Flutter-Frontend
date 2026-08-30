@@ -31,6 +31,11 @@ public class EmailOtpService {
   private static final int MAX_VERIFY_ATTEMPTS = 5;
   private static final int MAX_SENDS_PER_HOUR = 5;
 
+  static {
+    System.setProperty("java.net.preferIPv4Stack", "true");
+    System.setProperty("java.net.preferIPv4Addresses", "true");
+  }
+
   private final JdbcTemplate jdbc;
   private final JavaMailSender mailSender;
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -396,11 +401,16 @@ public class EmailOtpService {
     Map<String, Object> p465 = testPort(mailHost, 465, mailUsername, mailPassword, true);
     result.put("port465_SSL", p465);
 
-    boolean connected = Boolean.TRUE.equals(p587.get("connected")) || Boolean.TRUE.equals(p465.get("connected"));
+    Map<String, Object> pIpv4 = testPort("142.250.102.108", 587, mailUsername, mailPassword, false);
+    result.put("ipv4_STARTTLS", pIpv4);
+
+    boolean connected = Boolean.TRUE.equals(p587.get("connected")) ||
+                        Boolean.TRUE.equals(p465.get("connected")) ||
+                        Boolean.TRUE.equals(pIpv4.get("connected"));
     result.put("smtpConnected", connected);
     result.put("message", connected
         ? "Successfully established connection to Gmail SMTP server."
-        : "Failed to connect to Gmail SMTP on both ports 587 and 465.");
+        : "Failed to connect to Gmail SMTP on all ports/IPs.");
     return result;
   }
 
@@ -429,26 +439,26 @@ public class EmailOtpService {
     sender.setHost(host);
     sender.setPort(port);
     sender.setUsername(user);
-    sender.setPassword(pass);
+    sender.setPassword(pass != null ? pass.replaceAll("\\s+", "") : "");
     sender.setDefaultEncoding("UTF-8");
 
     Properties props = sender.getJavaMailProperties();
     props.put("mail.transport.protocol", "smtp");
     props.put("mail.smtp.auth", "true");
-    props.put("mail.smtp.connectiontimeout", "8000");
-    props.put("mail.smtp.timeout", "8000");
-    props.put("mail.smtp.writetimeout", "8000");
+    props.put("mail.smtp.connectiontimeout", "12000");
+    props.put("mail.smtp.timeout", "12000");
+    props.put("mail.smtp.writetimeout", "12000");
+    props.put("mail.smtp.ssl.trust", "*");
+    props.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
 
     if (useSsl) {
       props.put("mail.smtp.ssl.enable", "true");
-      props.put("mail.smtp.ssl.trust", host);
       props.put("mail.smtp.socketFactory.port", String.valueOf(port));
       props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
       props.put("mail.smtp.socketFactory.fallback", "false");
     } else {
       props.put("mail.smtp.starttls.enable", "true");
       props.put("mail.smtp.starttls.required", "true");
-      props.put("mail.smtp.ssl.trust", host);
     }
     return sender;
   }
@@ -496,10 +506,21 @@ public class EmailOtpService {
       log.info("[SMTP] Strategy 3 SUCCESS: Port 465 SSL delivered OTP to {}", to);
       return;
     } catch (Exception err3) {
-      log.error("[SMTP] Strategy 3 (Port 465 SSL) failed for {}: {}", to, err3.getMessage(), err3);
+      log.warn("[SMTP] Strategy 3 (Port 465 SSL) failed for {}: {}", to, err3.getMessage());
+    }
+
+    // Strategy 4: Direct Gmail IPv4 Host Fallback (Bypasses IPv6 DNS resolution issues on cloud containers)
+    try {
+      log.info("[SMTP] Strategy 4: Attempting send via Gmail IPv4 host (142.250.102.108)...");
+      JavaMailSenderImpl senderIpv4 = createSender("142.250.102.108", 587, mailUsername, mailPassword, false);
+      senderIpv4.send(message);
+      log.info("[SMTP] Strategy 4 SUCCESS: Delivered OTP via Gmail IPv4 cluster to {}", to);
+      return;
+    } catch (Exception err4) {
+      log.error("[SMTP] Strategy 4 (Gmail IPv4 cluster) failed for {}: {}", to, err4.getMessage(), err4);
       throw new ApiException(
           HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to deliver OTP email via Gmail SMTP (Ports 587 & 465 failed). Error: " + err3.getMessage());
+          "Failed to deliver OTP email via Gmail SMTP (All strategies 1-4 failed). Error: " + err4.getMessage());
     }
   }
 
