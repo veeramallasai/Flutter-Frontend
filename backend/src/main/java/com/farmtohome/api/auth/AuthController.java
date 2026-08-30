@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+  private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
   private final AppUserRepository userRepository;
   private final EmailOtpService emailOtpService;
@@ -141,6 +144,7 @@ public class AuthController {
   @PostMapping("/forgot-password")
   public ApiResponse<Map<String, Object>> forgotPassword(
       @Valid @RequestBody AuthDtos.ForgotPasswordRequest request) {
+    log.info("[API] POST /auth/forgot-password for email: {}", request.email());
     Map<String, Object> response = emailOtpService.sendForEmail(request.email().trim().toLowerCase());
     return ApiResponse.ok(response, "Password reset OTP sent to email.");
   }
@@ -148,6 +152,7 @@ public class AuthController {
   @PostMapping("/reset-password")
   public ApiResponse<Map<String, Object>> resetPassword(
       @Valid @RequestBody AuthDtos.ResetPasswordRequest request) {
+    log.info("[API] POST /auth/reset-password for email: {}", request.email());
     Map<String, Object> response = emailOtpService.verifyForEmail(
         request.email().trim().toLowerCase(), request.otpCode().trim());
 

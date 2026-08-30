@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/app_routes.dart';
+import '../../core/errors/app_exception.dart';
+import '../../core/errors/network_exception.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/repositories/email_otp_repository.dart';
 import '../../data/repositories/user_repository.dart';
 import 'widgets/password_strength.dart';
 import 'widgets/register_form.dart';
@@ -237,6 +240,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       await _syncBackendProfileWithRetry();
 
+      // Dispatch OTP email FIRST. Only navigate to OTP screen upon successful email send.
+      final EmailOtpRepository emailOtpRepo = EmailOtpRepository();
+      await emailOtpRepo.sendOtp(email);
+
       if (!mounted) return;
 
       Navigator.of(context).pushReplacementNamed(
@@ -244,7 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         arguments: <String, dynamic>{
           'phoneNumber': phone,
           'email': email,
-          'emailVerificationSent': false,
+          'emailVerificationSent': true,
           'userId': user.uid,
           'source': 'register-email-only',
         },
@@ -259,10 +266,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
-      _showMessage(
-        'Account was created, but setup could not finish. '
-        'Please press Create Account again with the same email and password.',
-      );
+      String message =
+          'Account created, but failed to send verification OTP email. Please try again.';
+      if (error is AppException && error.message.trim().isNotEmpty) {
+        message = error.message.trim();
+      } else if (error is NetworkException && error.message.trim().isNotEmpty) {
+        message = error.message.trim();
+      }
+
+      _showMessage(message);
     } finally {
       if (mounted) {
         setState(() {

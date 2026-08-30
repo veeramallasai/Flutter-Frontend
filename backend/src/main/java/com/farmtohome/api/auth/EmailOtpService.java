@@ -11,6 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EmailOtpService {
+  private static final Logger log = LoggerFactory.getLogger(EmailOtpService.class);
   private static final String PURPOSE = "email_verification";
   private static final int OTP_TTL_MINUTES = 10;
   private static final int MAX_VERIFY_ATTEMPTS = 5;
@@ -50,6 +53,8 @@ public class EmailOtpService {
     this.mailUsername = mailUsername != null ? mailUsername.trim() : "veeramallasaipichaiah456@gmail.com";
     this.mailPassword = mailPassword != null ? mailPassword.trim().replaceAll("\\s+", "") : "";
     this.mailFrom = mailFrom != null && !mailFrom.isBlank() ? mailFrom.trim() : this.mailUsername;
+    log.info("[SMTP-INIT] SMTP Configured - Host: {}, Username: {}, AppPassword Present: {}, From: {}",
+        this.mailHost, mask(this.mailUsername), (this.mailPassword != null && !this.mailPassword.isBlank()), this.mailFrom);
   }
 
   @Transactional
@@ -449,9 +454,9 @@ public class EmailOtpService {
   }
 
   private void sendMail(String to, String otp) {
-    System.out.println("==========================================");
-    System.out.println(">>> GENERATED OTP FOR " + to + ": " + otp);
-    System.out.println("==========================================");
+    log.info("==========================================");
+    log.info("[OTP-DISPATCH] Target Email: {}, Generated OTP: {}", to, otp);
+    log.info("==========================================");
 
     SimpleMailMessage message = new SimpleMailMessage();
     message.setFrom(mailFrom != null && !mailFrom.isBlank() ? mailFrom : mailUsername);
@@ -464,34 +469,34 @@ public class EmailOtpService {
 
     // Strategy 1: Primary configured mailSender
     try {
-      System.out.println("[SMTP] Strategy 1: Attempting send via primary mailSender...");
+      log.info("[SMTP] Strategy 1: Attempting send via primary mailSender to {}...", to);
       mailSender.send(message);
-      System.out.println("[SMTP] Primary mailSender delivered OTP to " + to);
+      log.info("[SMTP] Strategy 1 SUCCESS: Primary mailSender delivered OTP to {}", to);
       return;
     } catch (Exception err1) {
-      System.err.println("[SMTP] Strategy 1 (Primary) failed: " + err1.getMessage());
+      log.warn("[SMTP] Strategy 1 (Primary) failed for {}: {}", to, err1.getMessage());
     }
 
     // Strategy 2: Explicit Port 587 (STARTTLS)
     try {
-      System.out.println("[SMTP] Strategy 2: Attempting send via Port 587 STARTTLS...");
+      log.info("[SMTP] Strategy 2: Attempting send via Port 587 STARTTLS to {}...", to);
       JavaMailSenderImpl sender587 = createSender(mailHost, 587, mailUsername, mailPassword, false);
       sender587.send(message);
-      System.out.println("[SMTP] Strategy 2 (Port 587 STARTTLS) delivered OTP to " + to);
+      log.info("[SMTP] Strategy 2 SUCCESS: Port 587 STARTTLS delivered OTP to {}", to);
       return;
     } catch (Exception err2) {
-      System.err.println("[SMTP] Strategy 2 (Port 587 STARTTLS) failed: " + err2.getMessage());
+      log.warn("[SMTP] Strategy 2 (Port 587 STARTTLS) failed for {}: {}", to, err2.getMessage());
     }
 
     // Strategy 3: Explicit Port 465 (SSL)
     try {
-      System.out.println("[SMTP] Strategy 3: Attempting send via Port 465 SSL...");
+      log.info("[SMTP] Strategy 3: Attempting send via Port 465 SSL to {}...", to);
       JavaMailSenderImpl sender465 = createSender(mailHost, 465, mailUsername, mailPassword, true);
       sender465.send(message);
-      System.out.println("[SMTP] Strategy 3 (Port 465 SSL) delivered OTP to " + to);
+      log.info("[SMTP] Strategy 3 SUCCESS: Port 465 SSL delivered OTP to {}", to);
       return;
     } catch (Exception err3) {
-      System.err.println("[SMTP] Strategy 3 (Port 465 SSL) failed: " + err3.getMessage());
+      log.error("[SMTP] Strategy 3 (Port 465 SSL) failed for {}: {}", to, err3.getMessage(), err3);
       throw new ApiException(
           HttpStatus.INTERNAL_SERVER_ERROR,
           "Failed to deliver OTP email via Gmail SMTP (Ports 587 & 465 failed). Error: " + err3.getMessage());

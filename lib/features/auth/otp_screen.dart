@@ -85,7 +85,15 @@ class _OtpScreenState extends State<OtpScreen>
     _animationController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _sendEmailOtp();
+      if (widget.emailVerificationSent) {
+        setState(() {
+          _otpSent = true;
+        });
+        _startTimer();
+        _otpFocusNode.requestFocus();
+      } else {
+        _sendEmailOtp();
+      }
     });
   }
 
