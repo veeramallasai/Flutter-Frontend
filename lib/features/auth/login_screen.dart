@@ -4,6 +4,7 @@ import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../app/app_routes.dart';
 
@@ -145,38 +146,58 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _continueWithGoogle() async {
-    final Map<String, String>? account = await _showSocialAuthDialog(
-      provider: 'Google',
-      icon: Icons.g_mobiledata_rounded,
-      color: const Color(0xFF4285F4),
-    );
-
-    if (account == null) {
-      if (mounted) _showInfo('Google sign-in was cancelled.');
-      return;
-    }
-
     setState(() {
       _loading = true;
       _socialLoading = 'google';
     });
 
     try {
-      final UserCredential credential =
-          await BackendAuth.instance.signInWithSocial(
-            provider: 'google',
-            email: account['email']!,
-            firstName: account['firstName'],
-            lastName: account['lastName'],
-            photoUrl: account['photoUrl'],
-          );
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: <String>['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        if (mounted) _showInfo('Google sign-in was cancelled.');
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      final String email = googleUser.email;
+      final String displayName = googleUser.displayName ?? '';
+      final List<String> nameParts = displayName.trim().split(RegExp(r'\s+'));
+      final String firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final String lastName =
+          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      final String? photoUrl = googleUser.photoUrl;
+
+      final UserCredential credential = idToken != null && idToken.isNotEmpty
+          ? await BackendAuth.instance.signInWithGoogle(
+              idToken: idToken,
+              email: email,
+              name: displayName,
+              photoUrl: photoUrl,
+            )
+          : await BackendAuth.instance.signInWithSocial(
+              provider: 'google',
+              email: email,
+              firstName: firstName,
+              lastName: lastName,
+              photoUrl: photoUrl,
+            );
 
       await _completeSocialSignIn(credential);
     } on BackendAuthException catch (error) {
       if (mounted) _showError(_authErrorMessage(error));
-    } catch (e) {
-      if (mounted)
+    } catch (e, stackTrace) {
+      debugPrint('GOOGLE OAUTH ERROR: $e\n$stackTrace');
+      if (mounted) {
         _showError('Unable to complete Google sign-in. Please try again.');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -188,164 +209,11 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _continueWithApple() async {
-    final Map<String, String>? account = await _showSocialAuthDialog(
-      provider: 'Apple',
-      icon: Icons.apple_rounded,
-      color: Colors.black,
-    );
-
-    if (account == null) {
-      if (mounted) _showInfo('Apple sign-in was cancelled.');
+    if (kIsWeb || !defaultTargetPlatform.isApple) {
+      _showInfo('Apple Sign-In is supported on iOS / macOS devices.');
       return;
     }
-
-    setState(() {
-      _loading = true;
-      _socialLoading = 'apple';
-    });
-
-    try {
-      final UserCredential credential =
-          await BackendAuth.instance.signInWithSocial(
-            provider: 'apple',
-            email: account['email']!,
-            firstName: account['firstName'],
-            lastName: account['lastName'],
-          );
-
-      await _completeSocialSignIn(credential);
-    } on BackendAuthException catch (error) {
-      if (mounted) _showError(_authErrorMessage(error));
-    } catch (e) {
-      if (mounted)
-        _showError('Unable to complete Apple sign-in. Please try again.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _socialLoading = null;
-        });
-      }
-    }
-  }
-
-  Future<Map<String, String>?> _showSocialAuthDialog({
-    required String provider,
-    required IconData icon,
-    required Color color,
-  }) async {
-    final TextEditingController emailController = TextEditingController(
-      text:
-          provider == 'Google'
-              ? 'veeramallasaipichaiah456@gmail.com'
-              : 'veeramalla.sai@icloud.com',
-    );
-    final TextEditingController nameController = TextEditingController(
-      text: 'Veeramalla Sai',
-    );
-
-    return showDialog<Map<String, String>>(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Row(
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Sign in with $provider',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Text(
-                  'Select or enter your $provider account credentials to sign in to Farm To Home.',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF666666),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: '$provider Email Address',
-                    prefixIcon: Icon(Icons.email_outlined, color: color),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(null),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF666666),
-                ),
-              ),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: color),
-              onPressed: () {
-                final String email = emailController.text.trim();
-                if (email.isEmpty || !email.contains('@')) {
-                  return;
-                }
-                final List<String> parts = nameController.text
-                    .trim()
-                    .split(RegExp(r'\s+'));
-                final String firstName =
-                    parts.isNotEmpty ? parts.first : 'User';
-                final String lastName =
-                    parts.length > 1 ? parts.sublist(1).join(' ') : '';
-                Navigator.of(dialogContext).pop(<String, String>{
-                  'email': email,
-                  'firstName': firstName,
-                  'lastName': lastName,
-                  'photoUrl':
-                      'https://lh3.googleusercontent.com/a/default-user',
-                });
-              },
-              child: Text('Continue with $provider'),
-            ),
-          ],
-        );
-      },
-    );
+    _showInfo('Apple Sign-In is coming soon.');
   }
 
   void _showInfo(String message) {

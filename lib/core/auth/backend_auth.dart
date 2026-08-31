@@ -232,6 +232,34 @@ class BackendAuth {
     }
   }
 
+  Future<UserCredential> signInWithGoogle({
+    required String idToken,
+    String? email,
+    String? name,
+    String? photoUrl,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/auth/google-login',
+        body: <String, dynamic>{
+          'idToken': idToken,
+          if (email != null && email.trim().isNotEmpty)
+            'email': email.trim().toLowerCase(),
+          if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+          if (photoUrl != null && photoUrl.trim().isNotEmpty)
+            'photoUrl': photoUrl.trim(),
+        },
+      );
+      return _complete(response.data, email: email ?? '');
+    } on NetworkException catch (e) {
+      throw BackendAuthException(
+        code: e.code,
+        message: e.message,
+        details: e.details,
+      );
+    }
+  }
+
   Future<void> verifyPhoneNumber({
     required String phoneNumber,
     void Function(String, int?)? onCodeSent,

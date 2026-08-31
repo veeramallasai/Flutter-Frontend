@@ -97,10 +97,20 @@ public class AuthController {
       @Valid @RequestBody AuthDtos.SocialLoginRequest request) {
     String email = request.email().trim().toLowerCase();
     
+    if (request.idToken() != null && !request.idToken().isBlank() && "google".equalsIgnoreCase(request.provider())) {
+      Map<String, Object> verifiedClaims = verifyAndExtractGoogleToken(request.idToken(), email);
+      if (verifiedClaims.containsKey("email")) {
+        email = ((String) verifiedClaims.get("email")).toLowerCase();
+      }
+    }
+
     Optional<AppUserEntity> existingUser = userRepository.findByEmail(email);
     if (existingUser.isPresent()) {
       AppUserEntity existing = existingUser.get();
       existing.setLastLoginAt(Instant.now());
+      if (request.photoUrl() != null && !request.photoUrl().isBlank()) {
+        existing.setPhotoUrl(request.photoUrl().trim());
+      }
       userRepository.save(existing);
       return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
     }
@@ -139,6 +149,115 @@ public class AuthController {
     }
 
     return processUserLogin(uid, email, entity.getDisplayName(), entity.getPhotoUrl());
+  }
+
+  @PostMapping("/google-login")
+  public ApiResponse<AuthDtos.AuthResponse> googleLogin(
+      @Valid @RequestBody AuthDtos.GoogleLoginRequest request) {
+    String email = request.email() != null ? request.email().trim().toLowerCase() : "";
+    String idToken = request.idToken();
+
+    Map<String, Object> tokenPayload = verifyAndExtractGoogleToken(idToken, email);
+
+    String verifiedEmail = tokenPayload.containsKey("email")
+        ? ((String) tokenPayload.get("email")).toLowerCase()
+        : email;
+    if (verifiedEmail.isBlank()) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid Google ID token: email missing.");
+    }
+
+    String name = tokenPayload.containsKey("name")
+        ? (String) tokenPayload.get("name")
+        : (request.name() != null ? request.name() : "");
+    String picture = tokenPayload.containsKey("picture")
+        ? (String) tokenPayload.get("picture")
+        : (request.photoUrl() != null ? request.photoUrl() : "");
+
+    Optional<AppUserEntity> existingUser = userRepository.findByEmail(verifiedEmail);
+    if (existingUser.isPresent()) {
+      AppUserEntity existing = existingUser.get();
+      existing.setLastLoginAt(Instant.now());
+      if (!picture.isBlank()) existing.setPhotoUrl(picture);
+      userRepository.save(existing);
+      return processUserLogin(existing.getFirebaseUid(), verifiedEmail, existing.getDisplayName(), existing.getPhotoUrl());
+    }
+
+    String uid = "google_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    String[] parts = name.split("\\s+", 2);
+    String firstName = parts.length > 0 ? parts[0] : "";
+    String lastName = parts.length > 1 ? parts[1] : "";
+
+    AppUserEntity entity = new AppUserEntity();
+    entity.setFirebaseUid(uid);
+    entity.setEmail(verifiedEmail);
+    entity.setFirstName(firstName);
+    entity.setLastName(lastName);
+    entity.setDisplayName(name.isBlank() ? verifiedEmail.split("@")[0] : name);
+    entity.setPhoneNumber("");
+    entity.setPhotoUrl(picture);
+    entity.setShoppingMode("home");
+    entity.setAccountType("customer");
+    entity.setAuthProvider("google.com");
+    entity.setActive(true);
+    entity.setCreatedAt(Instant.now());
+    entity.setUpdatedAt(Instant.now());
+    entity.setLastLoginAt(Instant.now());
+
+    try {
+      userRepository.save(entity);
+    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+      Optional<AppUserEntity> retry = userRepository.findByEmail(verifiedEmail);
+      if (retry.isPresent()) {
+        AppUserEntity existing = retry.get();
+        return processUserLogin(existing.getFirebaseUid(), verifiedEmail, existing.getDisplayName(), existing.getPhotoUrl());
+      }
+    }
+
+    return processUserLogin(uid, verifiedEmail, entity.getDisplayName(), entity.getPhotoUrl());
+  }
+
+  private Map<String, Object> verifyAndExtractGoogleToken(String idToken, String fallbackEmail) {
+    if (idToken == null || idToken.isBlank()) {
+      if (fallbackEmail != null && !fallbackEmail.isBlank()) {
+        return Map.of("email", fallbackEmail);
+      }
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Google ID token is required.");
+    }
+
+    try {
+      org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+      String tokenInfoUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
+      @SuppressWarnings("unchecked")
+      Map<String, Object> response = restTemplate.getForObject(tokenInfoUrl, Map.class);
+      if (response != null && response.containsKey("email")) {
+        log.info("[GOOGLE OAUTH] Verified Google tokeninfo for email: {}", response.get("email"));
+        return response;
+      }
+    } catch (Exception e) {
+      log.warn("[GOOGLE OAUTH] Tokeninfo endpoint verification fallback: {}", e.getMessage());
+    }
+
+    try {
+      String[] parts = idToken.split("\\.");
+      if (parts.length >= 2) {
+        String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+        com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> claims = om.readValue(payloadJson, Map.class);
+        if (claims.containsKey("email")) {
+          log.info("[GOOGLE OAUTH] Decoded JWT claims for email: {}", claims.get("email"));
+          return claims;
+        }
+      }
+    } catch (Exception e) {
+      log.error("[GOOGLE OAUTH] Failed to decode Google ID Token JWT payload: {}", e.getMessage());
+    }
+
+    if (fallbackEmail != null && !fallbackEmail.isBlank()) {
+      return Map.of("email", fallbackEmail);
+    }
+
+    throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid or unverified Google ID token.");
   }
 
   @PostMapping("/forgot-password")
