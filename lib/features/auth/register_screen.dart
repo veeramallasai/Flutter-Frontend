@@ -240,9 +240,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       await _syncBackendProfileWithRetry();
 
-      // Dispatch OTP email FIRST. Only navigate to OTP screen upon successful email send.
-      final EmailOtpRepository emailOtpRepo = EmailOtpRepository();
-      await emailOtpRepo.sendOtp(email);
+      // Dispatch OTP email. Navigate to OTP screen directly after email submission.
+      bool emailSent = true;
+      try {
+        final EmailOtpRepository emailOtpRepo = EmailOtpRepository();
+        await emailOtpRepo.sendOtp(email);
+      } catch (error) {
+        debugPrint('REGISTER EMAIL OTP SEND WARNING: $error');
+        emailSent = false;
+      }
 
       if (!mounted) return;
 
@@ -251,7 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         arguments: <String, dynamic>{
           'phoneNumber': phone,
           'email': email,
-          'emailVerificationSent': true,
+          'emailVerificationSent': emailSent,
           'userId': user.uid,
           'source': 'register-email-only',
         },
