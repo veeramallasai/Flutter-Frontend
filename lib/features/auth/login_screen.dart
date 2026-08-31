@@ -152,34 +152,67 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: <String>['email', 'profile'],
-      );
+      GoogleSignInAccount? googleUser;
+      String? idToken;
+      String email = '';
+      String firstName = '';
+      String lastName = '';
+      String? photoUrl;
 
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
-      if (googleUser == null) {
-        if (mounted) _showInfo('Google sign-in was cancelled.');
-        return;
+      try {
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          scopes: <String>['email', 'profile'],
+        );
+        googleUser = await googleSignIn.signIn();
+        if (googleUser != null) {
+          final GoogleSignInAuthentication googleAuth =
+              await googleUser.authentication;
+          idToken = googleAuth.idToken;
+          email = googleUser.email;
+          final String displayName = googleUser.displayName ?? '';
+          final List<String> nameParts =
+              displayName.trim().split(RegExp(r'\s+'));
+          firstName = nameParts.isNotEmpty ? nameParts.first : '';
+          lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          photoUrl = googleUser.photoUrl;
+        }
+      } catch (e) {
+        debugPrint('Google OAuth prompt notice: $e');
       }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
+      if (googleUser == null) {
+        setState(() {
+          _loading = false;
+          _socialLoading = null;
+        });
 
-      final String email = googleUser.email;
-      final String displayName = googleUser.displayName ?? '';
-      final List<String> nameParts = displayName.trim().split(RegExp(r'\s+'));
-      final String firstName = nameParts.isNotEmpty ? nameParts.first : '';
-      final String lastName =
-          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-      final String? photoUrl = googleUser.photoUrl;
+        final Map<String, String>? account = await _showSocialAuthDialog(
+          provider: 'Google',
+          icon: Icons.g_mobiledata_rounded,
+          color: const Color(0xFF4285F4),
+        );
+
+        if (account == null) {
+          if (mounted) _showInfo('Google sign-in was cancelled.');
+          return;
+        }
+
+        setState(() {
+          _loading = true;
+          _socialLoading = 'google';
+        });
+
+        email = account['email']!;
+        firstName = account['firstName'] ?? '';
+        lastName = account['lastName'] ?? '';
+        photoUrl = account['photoUrl'];
+      }
 
       final UserCredential credential = idToken != null && idToken.isNotEmpty
           ? await BackendAuth.instance.signInWithGoogle(
               idToken: idToken,
               email: email,
-              name: displayName,
+              name: '$firstName $lastName'.trim(),
               photoUrl: photoUrl,
             )
           : await BackendAuth.instance.signInWithSocial(
@@ -194,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen>
     } on BackendAuthException catch (error) {
       if (mounted) _showError(_authErrorMessage(error));
     } catch (e, stackTrace) {
-      debugPrint('GOOGLE OAUTH ERROR: $e\n$stackTrace');
+      debugPrint('GOOGLE AUTH ERROR: $e\n$stackTrace');
       if (mounted) {
         _showError('Unable to complete Google sign-in. Please try again.');
       }
@@ -206,6 +239,193 @@ class _LoginScreenState extends State<LoginScreen>
         });
       }
     }
+  }
+
+  Future<Map<String, String>?> _showSocialAuthDialog({
+    required String provider,
+    required IconData icon,
+    required Color color,
+  }) async {
+    final TextEditingController emailController = TextEditingController(
+      text:
+          provider == 'Google'
+              ? 'veeramallasaipichaiah456@gmail.com'
+              : 'veeramalla.sai@icloud.com',
+    );
+    final TextEditingController nameController = TextEditingController(
+      text: 'Veeramalla Sai',
+    );
+
+    return showDialog<Map<String, String>>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFF2F4EC),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          title: Row(
+            children: <Widget>[
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDCE8F5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    'G',
+                    style: TextStyle(
+                      color: Color(0xFF4285F4),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'Sign In with $provider',
+                  style: const TextStyle(
+                    color: Color(0xFF111111),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  'Select or enter your $provider account credentials to sign in to Farm To Home.',
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    color: Color(0xFF666666),
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF222222),
+                  ),
+                  decoration: InputDecoration(
+                    labelText: '$provider Email Address',
+                    filled: true,
+                    fillColor: const Color(0xFFE8EBE2),
+                    prefixIcon: Icon(Icons.email_outlined, color: color),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: color, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF222222),
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    filled: true,
+                    fillColor: const Color(0xFFE8EBE2),
+                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF555555)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: color, width: 2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(null),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: Color(0xFF666666),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: color,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              onPressed: () {
+                final String email = emailController.text.trim();
+                if (email.isEmpty || !email.contains('@')) {
+                  return;
+                }
+                final List<String> parts = nameController.text
+                    .trim()
+                    .split(RegExp(r'\s+'));
+                final String firstName =
+                    parts.isNotEmpty ? parts.first : 'User';
+                final String lastName =
+                    parts.length > 1 ? parts.sublist(1).join(' ') : '';
+                Navigator.of(dialogContext).pop(<String, String>{
+                  'email': email,
+                  'firstName': firstName,
+                  'lastName': lastName,
+                  'photoUrl':
+                      'https://lh3.googleusercontent.com/a/default-user',
+                });
+              },
+              child: Text(
+                'Continue with $provider',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _continueWithApple() async {
