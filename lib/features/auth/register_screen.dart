@@ -252,14 +252,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
-      _showMessage(
-        'Registration successful. Please verify the OTP sent to your email.',
-        isError: false,
-      );
-
-      await Future<void>.delayed(const Duration(milliseconds: 350));
-      if (!mounted) return;
-
       Navigator.of(context).pushReplacementNamed(
         AppRoutes.otp,
         arguments: <String, dynamic>{

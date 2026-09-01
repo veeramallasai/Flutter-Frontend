@@ -77,6 +77,12 @@ class _OtpScreenState extends State<OtpScreen>
     _animationController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.source == 'register' || widget.source == 'register-email-only') {
+        _showMessage(
+          'Registration successful. Please verify the OTP sent to your email.',
+          error: false,
+        );
+      }
       if (widget.emailVerificationSent) {
         setState(() {
           _otpSent = true;
