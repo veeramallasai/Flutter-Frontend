@@ -252,6 +252,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
+      _showMessage(
+        'Registration successful. Please verify the OTP sent to your email.',
+        isError: false,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      if (!mounted) return;
+
       Navigator.of(context).pushReplacementNamed(
         AppRoutes.otp,
         arguments: <String, dynamic>{
@@ -319,23 +327,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showMessage(String message) {
+  void _showMessage(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.error,
+          backgroundColor: isError ? AppColors.error : const Color(0xFF257A3E),
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          content: Text(
-            message,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
+          content: Row(
+            children: <Widget>[
+              Icon(
+                isError
+                    ? Icons.error_outline_rounded
+                    : Icons.check_circle_outline_rounded,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );

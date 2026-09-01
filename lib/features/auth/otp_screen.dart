@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -45,18 +44,11 @@ class _OtpScreenState extends State<OtpScreen>
 
   Timer? _timer;
 
-  String? _verificationId;
-  int? _resendToken;
-
-  dynamic _webConfirmation;
-
-  bool _sendingOtp = false;
   bool _sendingEmail = false;
   bool _verifyingOtp = false;
   bool _otpSent = false;
-  bool _emailStage = true;
 
-  int _secondsRemaining = 30;
+  int _secondsRemaining = 45;
 
   bool get _hasEmail => (widget.email ?? '').trim().isNotEmpty;
   String get _emailAddress => (widget.email ?? '').trim();
@@ -106,31 +98,11 @@ class _OtpScreenState extends State<OtpScreen>
     super.dispose();
   }
 
-  String get _formattedPhone {
-    String phone = widget.phoneNumber.trim();
-
-    if (!phone.startsWith('+')) {
-      phone = '+91$phone';
-    }
-
-    return phone;
-  }
-
-  String get _maskedPhone {
-    final String phone = _formattedPhone;
-
-    if (phone.length < 4) {
-      return phone;
-    }
-
-    return '••••••${phone.substring(phone.length - 4)}';
-  }
-
   void _startTimer() {
     _timer?.cancel();
 
     setState(() {
-      _secondsRemaining = 30;
+      _secondsRemaining = 45;
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
@@ -153,10 +125,6 @@ class _OtpScreenState extends State<OtpScreen>
         _secondsRemaining--;
       });
     });
-  }
-
-  Future<void> _sendOtp({bool resend = false}) async {
-    await _sendEmailOtp(resend: resend);
   }
 
   Future<void> _verifyOtp() async {
@@ -188,10 +156,7 @@ class _OtpScreenState extends State<OtpScreen>
       debugPrint('VERIFY OTP ERROR: $error\n$stackTrace');
       if (!mounted) return;
 
-      String errorMessage =
-          _emailStage
-              ? 'Email OTP verification failed. Please try again.'
-              : 'OTP verification failed. Please try again.';
+      String errorMessage = 'Email OTP verification failed. Please try again.';
       if (error is NetworkException && error.message.trim().isNotEmpty) {
         errorMessage = error.message.trim();
       }
@@ -206,100 +171,6 @@ class _OtpScreenState extends State<OtpScreen>
     }
   }
 
-  Future<void> _verifyWebOtp(String otp) async {
-    if (_webConfirmation == null) {
-      throw BackendAuthException(
-        code: 'session-expired',
-        message: 'OTP session expired. Please resend OTP.',
-      );
-    }
-
-    await _webConfirmation.confirm(otp);
-
-    await _markPhoneVerified();
-  }
-
-  Future<void> _verifyNativeOtp(String otp) async {
-    final String? verificationId = _verificationId;
-
-    if (verificationId == null || verificationId.isEmpty) {
-      throw BackendAuthException(
-        code: 'session-expired',
-        message: 'OTP session expired. Please resend OTP.',
-      );
-    }
-
-    final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-      verificationId: verificationId,
-      smsCode: otp,
-    );
-
-    await _completeNativeVerification(credential);
-  }
-
-  Future<void> _completeNativeVerification(
-    PhoneAuthCredential credential,
-  ) async {
-    final User? user = BackendAuth.instance.currentUser;
-
-    if (user == null) {
-      throw BackendAuthException(
-        code: 'user-not-found',
-        message: 'Your login session expired.',
-      );
-    }
-
-    await user.linkWithCredential(credential);
-
-    await _markPhoneVerified();
-  }
-
-  Future<void> _markPhoneVerified() async {
-    final User? currentUser = BackendAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      throw BackendAuthException(
-        code: 'user-not-found',
-        message: 'Unable to verify user session.',
-      );
-    }
-
-    final String uid =
-        widget.userId?.trim().isNotEmpty == true
-            ? widget.userId!.trim()
-            : currentUser.uid;
-
-    await currentUser.reload();
-    try {
-      await UserRepository().syncCurrentUser();
-    } catch (_) {}
-
-    if (!mounted) return;
-
-    _timer?.cancel();
-
-    _showMessage('Mobile number verified successfully.', error: false);
-
-    final User? refreshedUser = BackendAuth.instance.currentUser;
-    final bool needsEmailVerification =
-        _hasEmail && !(refreshedUser?.emailVerified ?? false);
-
-    if (needsEmailVerification) {
-      await Future<void>.delayed(const Duration(milliseconds: 350));
-      if (!mounted) return;
-      await _sendEmailOtp();
-      return;
-    }
-
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    if (!mounted) return;
-
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.home, (Route<dynamic> route) => false);
-  }
-
   Future<void> _sendEmailOtp({bool resend = false}) async {
     if (_sendingEmail || _verifyingOtp || !_hasEmail) {
       return;
@@ -307,7 +178,6 @@ class _OtpScreenState extends State<OtpScreen>
 
     setState(() {
       _sendingEmail = true;
-      _emailStage = true;
       _otpSent = false;
     });
 
@@ -407,10 +277,7 @@ class _OtpScreenState extends State<OtpScreen>
   }
 
   Future<void> _resendOtp() async {
-    if (_secondsRemaining > 0 ||
-        _sendingOtp ||
-        _sendingEmail ||
-        _verifyingOtp) {
+    if (_secondsRemaining > 0 || _sendingEmail || _verifyingOtp) {
       return;
     }
 
@@ -420,11 +287,11 @@ class _OtpScreenState extends State<OtpScreen>
   }
 
   void _changePhoneNumber() {
-    if (_sendingOtp || _sendingEmail || _verifyingOtp) {
+    if (_sendingEmail || _verifyingOtp) {
       return;
     }
 
-    if (widget.source == 'register') {
+    if (widget.source == 'register' || widget.source == 'register-email-only') {
       Navigator.of(context).pushReplacementNamed(AppRoutes.register);
       return;
     }
@@ -468,7 +335,7 @@ class _OtpScreenState extends State<OtpScreen>
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: error ? AppColors.error : AppColors.primary,
+          backgroundColor: error ? AppColors.error : const Color(0xFF257A3E),
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -497,52 +364,6 @@ class _OtpScreenState extends State<OtpScreen>
       );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final double width = MediaQuery.sizeOf(context).width;
-
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.background,
-      body: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          const _OtpBackground(),
-
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: width >= 700 ? 28 : 18,
-                vertical: 20,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 540),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          _buildTopBar(),
-
-                          const SizedBox(height: 32),
-
-                          _buildOtpCard(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _maskEmail(String email) {
     final String clean = email.trim();
     if (clean.isEmpty || !clean.contains('@')) return clean;
@@ -558,25 +379,70 @@ class _OtpScreenState extends State<OtpScreen>
     return '${username.substring(0, 2)}***@$domain';
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final double width = MediaQuery.sizeOf(context).width;
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: const Color(0xFFF9FAF7),
+      body: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          const _OtpBackground(),
+
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: width >= 700 ? 28 : 18,
+                vertical: 20,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          _buildTopBar(),
+
+                          const SizedBox(height: 28),
+
+                          _buildOtpCard(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTopBar() {
     return Row(
       children: <Widget>[
         Material(
           color: Colors.white,
+          elevation: 1,
+          shadowColor: const Color(0x1A000000),
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap:
-                _sendingOtp || _sendingEmail || _verifyingOtp
-                    ? null
-                    : _changePhoneNumber,
+            onTap: _sendingEmail || _verifyingOtp ? null : _changePhoneNumber,
             child: const SizedBox(
-              width: 46,
-              height: 46,
+              width: 44,
+              height: 44,
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 18,
-                color: AppColors.textPrimary,
+                color: Color(0xFF257A3E),
               ),
             ),
           ),
@@ -598,59 +464,62 @@ class _OtpScreenState extends State<OtpScreen>
     final String maskedEmail = _maskEmail(_emailAddress);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 34),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 36,
-            offset: Offset(0, 14),
+            color: Color(0x0E000000),
+            blurRadius: 32,
+            offset: Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          // Green Mail check icon container
           Center(
             child: Container(
-              width: 84,
-              height: 84,
+              width: 76,
+              height: 76,
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF6ED),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: const Icon(
                 Icons.mark_email_read_rounded,
                 color: Color(0xFF257A3E),
-                size: 42,
+                size: 38,
               ),
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
+          // Title
           const Text(
             'Enter Verification Code',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
+              color: Color(0xFF1E293B),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
+          // Subtitle
           Text(
             _hasEmail
                 ? 'We sent a 6-digit verification OTP code to\n$maskedEmail'
                 : 'We sent a 6-digit verification OTP code',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: AppColors.textSecondary,
+              color: Color(0xFF64748B),
               fontSize: 13.5,
               height: 1.45,
               fontWeight: FontWeight.w600,
@@ -659,90 +528,29 @@ class _OtpScreenState extends State<OtpScreen>
 
           const SizedBox(height: 28),
 
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F5F4),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE1E7E3)),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE4EBE6),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.onetwothree_rounded,
-                    color: Color(0xFF257A3E),
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: OtpInput(
-                    child: TextField(
-                      controller: _otpController,
-                      focusNode: _otpFocusNode,
-                      enabled: !_verifyingOtp,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      maxLength: 6,
-                      autofillHints: const <String>[AutofillHints.oneTimeCode],
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
-                      ],
-                      onSubmitted: (_) => _verifyOtp(),
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 4,
-                      ),
-                      decoration: const InputDecoration(
-                        counterText: '',
-                        hintText: '6-Digit OTP Code',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF9EABA2),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Custom Outlined 6-Digit OTP Field matching reference design
+          _buildOtpInputBox(),
 
           const SizedBox(height: 24),
 
+          // VERIFY OTP button
           SizedBox(
-            height: 56,
+            height: 54,
             child: FilledButton(
               onPressed:
-                  _verifyingOtp || _sendingOtp || _sendingEmail
-                      ? null
-                      : _verifyOtp,
+                  _verifyingOtp || _sendingEmail ? null : _verifyOtp,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF257A3E),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                elevation: 0,
               ),
               child:
                   _verifyingOtp
                       ? const SizedBox(
-                        width: 23,
-                        height: 23,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           color: Colors.white,
@@ -752,8 +560,8 @@ class _OtpScreenState extends State<OtpScreen>
                         'VERIFY OTP',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -762,22 +570,21 @@ class _OtpScreenState extends State<OtpScreen>
 
           const SizedBox(height: 20),
 
+          // Resend Timer / Resend Action
           Center(
             child:
                 _secondsRemaining > 0
                     ? Text(
                       'Resend OTP in ${_secondsRemaining}s',
                       style: const TextStyle(
-                        color: AppColors.textSecondary,
+                        color: Color(0xFF64748B),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     )
                     : TextButton(
                       onPressed:
-                          _sendingOtp || _sendingEmail || _verifyingOtp
-                              ? null
-                              : _resendOtp,
+                          _sendingEmail || _verifyingOtp ? null : _resendOtp,
                       child: const Text(
                         'Resend OTP',
                         style: TextStyle(
@@ -789,14 +596,13 @@ class _OtpScreenState extends State<OtpScreen>
                     ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
+          // Use another email address link
           Center(
             child: TextButton(
               onPressed:
-                  _sendingOtp || _sendingEmail || _verifyingOtp
-                      ? null
-                      : _changePhoneNumber,
+                  _sendingEmail || _verifyingOtp ? null : _changePhoneNumber,
               child: const Text(
                 'Use another email address',
                 style: TextStyle(
@@ -809,6 +615,106 @@ class _OtpScreenState extends State<OtpScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildOtpInputBox() {
+    final bool isFocused = _otpFocusNode.hasFocus;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: <Widget>[
+        Container(
+          height: 62,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isFocused ? const Color(0xFF257A3E) : const Color(0xFF257A3E),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              // 123 Icon badge on left
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.onetwothree_rounded,
+                  color: Color(0xFF257A3E),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // OTP text field
+              Expanded(
+                child: OtpInput(
+                  child: TextField(
+                    controller: _otpController,
+                    focusNode: _otpFocusNode,
+                    enabled: !_verifyingOtp,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.done,
+                    maxLength: 6,
+                    autofillHints: const <String>[AutofillHints.oneTimeCode],
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
+                    onSubmitted: (_) => _verifyOtp(),
+                    onChanged: (_) => setState(() {}),
+                    style: const TextStyle(
+                      color: Color(0xFF1E293B),
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 14,
+                    ),
+                    decoration: const InputDecoration(
+                      counterText: '',
+                      hintText: '1 2 3 4 5 6',
+                      hintStyle: TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 10,
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Floating notch label on top border line
+        Positioned(
+          top: -9,
+          left: 20,
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: const Text(
+              '6-Digit OTP Code',
+              style: TextStyle(
+                color: Color(0xFF257A3E),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -829,7 +735,7 @@ class _OtpBackground extends StatelessWidget {
                 colors: <Color>[
                   Color(0xFFE8F5E9),
                   Color(0xFFFFFBF2),
-                  AppColors.background,
+                  Color(0xFFF9FAF7),
                 ],
               ),
             ),

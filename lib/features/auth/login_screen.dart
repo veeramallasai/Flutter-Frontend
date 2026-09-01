@@ -429,7 +429,9 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _continueWithApple() async {
-    if (kIsWeb || !defaultTargetPlatform.isApple) {
+    final isApplePlatform = defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+    if (kIsWeb || !isApplePlatform) {
       _showInfo('Apple Sign-In is supported on iOS / macOS devices.');
       return;
     }
