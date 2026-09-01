@@ -40,10 +40,10 @@ This document explains how to configure **Google Cloud Console OAuth 2.0** for F
 4. Name: `Farm To Home Web Client`.
 5. **Authorized JavaScript origins**:
    - Local Development: `http://localhost:8080`
-   - Production URL: `https://flutter-frontend-production-e8d6.up.railway.app`
+   - Production URL: `https://flutter-frontend-production-1590.up.railway.app`
 6. **Authorized redirect URIs**:
    - Local Development: `http://localhost:8080`, `http://localhost:8080/`, `http://localhost:3000`
-   - Production URL: `https://flutter-frontend-production-e8d6.up.railway.app`, `https://flutter-frontend-production-e8d6.up.railway.app/`
+   - Production URL: `https://flutter-frontend-production-1590.up.railway.app`, `https://flutter-frontend-production-1590.up.railway.app/`
 7. Click **Create**.
 8. Copy your **Client ID** (e.g. `123456789012-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com`).
 
@@ -63,7 +63,7 @@ not use a random Flutter web port: Google compares the full origin, including
 the port, with the OAuth client's Authorized JavaScript origins.
 
 For client
-`1066615778167-ochceogaf54rramkojskbrbqlkfr3fi6.apps.googleusercontent.com`,
+`629064242041-e9cl3id38mtasb9asii6qlmdu08t1fri.apps.googleusercontent.com`,
 open Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client
 IDs > Web client and ensure `http://localhost:8080` appears under
 **Authorized JavaScript origins**. Save and allow several minutes for the

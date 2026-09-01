@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen>
   static const String _googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
     defaultValue:
-        '1066615778167-ochceogaf54rramkojskbrbqlkfr3fi6.apps.googleusercontent.com',
+        '629064242041-e9cl3id38mtasb9asii6qlmdu08t1fri.apps.googleusercontent.com',
   );
   static const String _appleServiceId = String.fromEnvironment(
     'APPLE_SERVICE_ID',
@@ -705,52 +705,66 @@ class _LoginScreenState extends State<LoginScreen>
             if (kIsWeb)
               buildGoogleWebSignInButton()
             else
-              _SocialButton(
-                enabled: !_loading,
-                onPressed: _continueWithGoogle,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    if (_socialLoading == 'google')
-                      const SizedBox(
-                        width: 21,
-                        height: 21,
-                        child: CircularProgressIndicator(strokeWidth: 2.3),
-                      )
-                    else
-                      Image.asset(
-                        'assets/icons/google logo.png',
-                        width: 22,
-                        height: 22,
-                        errorBuilder:
-                            (_, __, ___) => const Icon(
-                              Icons.g_mobiledata_rounded,
-                              size: 28,
-                            ),
-                      ),
-                    const SizedBox(width: 11),
-                    const Text('Continue with Google'),
-                  ],
+              Center(
+                child: SizedBox(
+                  width: _socialButtonWidth(context),
+                  child: _SocialButton(
+                    enabled: !_loading,
+                    onPressed: _continueWithGoogle,
+                    height: 44,
+                    borderRadius: 24,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        if (_socialLoading == 'google')
+                          const SizedBox(
+                            width: 21,
+                            height: 21,
+                            child: CircularProgressIndicator(strokeWidth: 2.3),
+                          )
+                        else
+                          Image.asset(
+                            'assets/icons/google logo.png',
+                            width: 22,
+                            height: 22,
+                            errorBuilder:
+                                (_, __, ___) => const Icon(
+                                  Icons.g_mobiledata_rounded,
+                                  size: 28,
+                                ),
+                          ),
+                        const SizedBox(width: 11),
+                        const Text('Continue with Google'),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             const SizedBox(height: 12),
-            _SocialButton(
-              enabled: !_loading,
-              onPressed: _continueWithApple,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  if (_socialLoading == 'apple')
-                    const SizedBox(
-                      width: 21,
-                      height: 21,
-                      child: CircularProgressIndicator(strokeWidth: 2.3),
-                    )
-                  else
-                    const Icon(Icons.apple, size: 23, color: Colors.black),
-                  const SizedBox(width: 11),
-                  const Text('Continue with Apple'),
-                ],
+            Center(
+              child: SizedBox(
+                width: _socialButtonWidth(context),
+                child: _SocialButton(
+                  enabled: !_loading,
+                  onPressed: _continueWithApple,
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  borderColor: const Color(0xFFD2D2D2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      if (_socialLoading == 'apple')
+                        const SizedBox(
+                          width: 21,
+                          height: 21,
+                          child: CircularProgressIndicator(strokeWidth: 2.3),
+                        )
+                      else
+                        const Icon(Icons.apple, size: 23, color: Colors.black),
+                      const SizedBox(width: 11),
+                      const Text('Continue with Apple'),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 22),
@@ -786,6 +800,9 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+
+  double _socialButtonWidth(BuildContext context) =>
+      (MediaQuery.sizeOf(context).width - 76).clamp(1, 330);
 }
 
 class _SocialButton extends StatelessWidget {
@@ -793,24 +810,32 @@ class _SocialButton extends StatelessWidget {
     required this.enabled,
     required this.onPressed,
     required this.child,
+    this.height = 54,
+    this.backgroundColor = Colors.white,
+    this.borderColor = _LoginScreenState._border,
+    this.borderRadius = 16,
   });
 
   final bool enabled;
   final VoidCallback onPressed;
   final Widget child;
+  final double height;
+  final Color backgroundColor;
+  final Color borderColor;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 54,
+      height: height,
       child: OutlinedButton(
         onPressed: enabled ? onPressed : null,
         style: OutlinedButton.styleFrom(
           foregroundColor: _LoginScreenState._text,
-          side: const BorderSide(color: _LoginScreenState._border),
-          backgroundColor: Colors.white,
+          side: BorderSide(color: borderColor),
+          backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
           textStyle: const TextStyle(
             fontSize: 13.5,
