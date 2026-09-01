@@ -80,12 +80,24 @@ class ApiClient {
     Object? body,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
+    bool isFallbackAttempt = false,
   }) async {
     if (_networkInfo != null && !await _networkInfo.isConnected) {
       throw NetworkException.offline;
     }
     try {
-      final Uri uri = BackendConfig.uri(path, queryParameters: queryParameters);
+      final String primaryBase = BackendConfig.baseUrl;
+      final String targetBase = isFallbackAttempt
+          ? BackendConfig.fallbackRailwayBackendUrl
+          : primaryBase;
+      final String normalizedPath = path.startsWith('/') ? path : '/$path';
+      final Map<String, String> query = <String, String>{};
+      queryParameters?.forEach((String key, dynamic value) {
+        if (value != null) query[key] = value.toString();
+      });
+      final Uri uri = Uri.parse('$targetBase$normalizedPath')
+          .replace(queryParameters: query.isEmpty ? null : query);
+
       final http.Request request = await _interceptor.prepare(
         method,
         uri,
@@ -129,10 +141,32 @@ class ApiClient {
         statusCode: response.statusCode,
       );
     } on TimeoutException {
+      if (!isFallbackAttempt &&
+          BackendConfig.baseUrl != BackendConfig.fallbackRailwayBackendUrl) {
+        return _request(
+          method,
+          path,
+          body: body,
+          queryParameters: queryParameters,
+          headers: headers,
+          isFallbackAttempt: true,
+        );
+      }
       throw NetworkException.timeout;
     } on NetworkException {
       rethrow;
     } catch (error, stackTrace) {
+      if (!isFallbackAttempt &&
+          BackendConfig.baseUrl != BackendConfig.fallbackRailwayBackendUrl) {
+        return _request(
+          method,
+          path,
+          body: body,
+          queryParameters: queryParameters,
+          headers: headers,
+          isFallbackAttempt: true,
+        );
+      }
       throw ErrorHandler.handle(error, stackTrace);
     }
   }

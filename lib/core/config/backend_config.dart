@@ -29,9 +29,14 @@ class BackendConfig {
     defaultValue: '',
   );
 
-  /// Default production Railway backend URL fallback when deployed
+  /// Default production Railway backend URL
   static const String fallbackRailwayBackendUrl =
       'https://farmtohome-backend-production-3378.up.railway.app';
+
+  static const String _useLocalBackend = String.fromEnvironment(
+    'USE_LOCAL_BACKEND',
+    defaultValue: 'false',
+  );
 
   static String get baseUrl {
     if (_overrideBaseUrl.trim().isNotEmpty) {
@@ -50,30 +55,15 @@ class BackendConfig {
       return _formatUrl(_defaultProductionUrl);
     }
 
-    // Direct local debug requests to local Spring Boot server on port 8085
-    if (kDebugMode) {
+    // Opt-in flag if developer explicitly requests local Spring Boot server
+    if (_useLocalBackend == 'true') {
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         return 'http://10.0.2.2:8085';
       }
       return 'http://localhost:8085';
     }
 
-    // Auto-detection for web production vs local environment
-    if (kIsWeb) {
-      final String host = Uri.base.host;
-      final bool isLocalHost = host == 'localhost' ||
-          host == '127.0.0.1' ||
-          host == '0.0.0.0' ||
-          host.isEmpty;
-      if (!isLocalHost) {
-        // App is deployed and running in browser (e.g. on Railway)
-        // Direct API calls to the Spring Boot backend server, not the Flutter web static host
-        return _formatUrl(fallbackRailwayBackendUrl);
-      }
-      // When running on localhost in Flutter web, default to local Spring Boot server on port 8085
-      return 'http://localhost:8085';
-    }
-
+    // Default to Railway backend for all local and production runs
     return _formatUrl(fallbackRailwayBackendUrl);
   }
 

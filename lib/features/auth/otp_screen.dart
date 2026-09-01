@@ -77,7 +77,8 @@ class _OtpScreenState extends State<OtpScreen>
     _animationController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.source == 'register' || widget.source == 'register-email-only') {
+      if (widget.source == 'register' ||
+          widget.source == 'register-email-only') {
         _showMessage(
           'Registration successful. Please verify the OTP sent to your email.',
           error: false,
@@ -259,6 +260,7 @@ class _OtpScreenState extends State<OtpScreen>
     final User? currentUser = BackendAuth.instance.currentUser;
     if (currentUser != null) {
       await _emailOtpRepository.verifyOtp(otp, _emailAddress);
+      BackendAuth.instance.markEmailVerified();
       await currentUser.reload();
       try {
         await UserRepository().syncCurrentUser();
@@ -277,9 +279,10 @@ class _OtpScreenState extends State<OtpScreen>
 
     if (!mounted) return;
 
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.home, (Route<dynamic> route) => false);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      currentUser == null ? AppRoutes.login : AppRoutes.home,
+      (Route<dynamic> route) => false,
+    );
   }
 
   Future<void> _resendOtp() async {
@@ -543,8 +546,7 @@ class _OtpScreenState extends State<OtpScreen>
           SizedBox(
             height: 54,
             child: FilledButton(
-              onPressed:
-                  _verifyingOtp || _sendingEmail ? null : _verifyOtp,
+              onPressed: _verifyingOtp || _sendingEmail ? null : _verifyOtp,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF257A3E),
                 shape: RoundedRectangleBorder(
@@ -637,7 +639,8 @@ class _OtpScreenState extends State<OtpScreen>
             color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isFocused ? const Color(0xFF257A3E) : const Color(0xFF257A3E),
+              color:
+                  isFocused ? const Color(0xFF257A3E) : const Color(0xFF257A3E),
               width: 1.5,
             ),
           ),

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 import '../errors/app_exception.dart';
 import '../errors/network_exception.dart';
 import '../network/api_client.dart';
@@ -98,7 +100,7 @@ class User {
     this.phoneNumber,
     this.displayName,
     this.photoURL,
-    this.emailVerified = true,
+    this.emailVerified = false,
   }) : metadata = UserMetadata(lastSignInTime: DateTime.now());
   final String uid;
   final String? email;
@@ -121,14 +123,25 @@ class User {
 }
 
 class UserCredential {
-  const UserCredential(this.user);
+  const UserCredential(
+    this.user, {
+    this.authenticationPending = false,
+    this.emailVerificationSent = false,
+  });
+
   final User? user;
+  final bool authenticationPending;
+  final bool emailVerificationSent;
 }
 
 class BackendAuth {
-  BackendAuth._();
+  BackendAuth._({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+
+  @visibleForTesting
+  BackendAuth.forTesting(ApiClient apiClient) : _apiClient = apiClient;
+
   static final BackendAuth instance = BackendAuth._();
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
   final SecureStorageService _storage = SecureStorageService();
   final StreamController<User?> _changes = StreamController<User?>.broadcast();
   User? _currentUser;
@@ -158,7 +171,8 @@ class BackendAuth {
       if (e.code == 'http/401' || e.statusCode == 401) {
         throw BackendAuthException(
           code: 'invalid-credential',
-          message: 'Account not found or password incorrect. Please register first.',
+          message:
+              'Account not found or password incorrect. Please register first.',
         );
       }
       rethrow;
@@ -183,6 +197,30 @@ class BackendAuth {
             'lastName': lastName.trim(),
         },
       );
+      if (response.data is Map) {
+        final Map<String, dynamic> data = Map<String, dynamic>.from(
+          response.data as Map,
+        );
+        final String pendingFlag =
+            data['requiresEmailVerification'].toString().toLowerCase();
+        final String responseMessage =
+            (data['message'] ?? response.message).toString().toLowerCase();
+        final bool verificationPending =
+            data['requiresEmailVerification'] == true ||
+            pendingFlag == 'true' ||
+            (responseMessage.contains('registration successful') &&
+                responseMessage.contains('otp'));
+        if (verificationPending) {
+          return UserCredential(
+            User(
+              uid: (data['userId'] ?? email).toString(),
+              email: (data['email'] ?? email).toString(),
+            ),
+            authenticationPending: true,
+            emailVerificationSent: true,
+          );
+        }
+      }
       return _complete(response.data, email: email);
     } on NetworkException catch (e) {
       if (e.code == 'http/409' || e.statusCode == 409) {
@@ -195,8 +233,9 @@ class BackendAuth {
     }
   }
 
-  Future<UserCredential> signInWithCredential(AuthCredential credential) async =>
-      UserCredential(_currentUser);
+  Future<UserCredential> signInWithCredential(
+    AuthCredential credential,
+  ) async => UserCredential(_currentUser);
 
   Future<UserCredential> signInWithSocial({
     required String provider,
@@ -297,28 +336,26 @@ class BackendAuth {
   Future<void> verifyResetOtp({
     required String email,
     required String otpCode,
-  }) async =>
-      _apiClient.post(
-        '/api/v1/auth/email-otp/verify-reset',
-        body: <String, dynamic>{
-          'email': email.trim().toLowerCase(),
-          'otp': otpCode.trim(),
-        },
-      );
+  }) async => _apiClient.post(
+    '/api/v1/auth/email-otp/verify-reset',
+    body: <String, dynamic>{
+      'email': email.trim().toLowerCase(),
+      'otp': otpCode.trim(),
+    },
+  );
 
   Future<void> resetPassword({
     required String email,
     required String otpCode,
     required String newPassword,
-  }) async =>
-      _apiClient.post(
-        '/api/v1/auth/reset-password',
-        body: <String, dynamic>{
-          'email': email.trim().toLowerCase(),
-          'otpCode': otpCode.trim(),
-          'newPassword': newPassword,
-        },
-      );
+  }) async => _apiClient.post(
+    '/api/v1/auth/reset-password',
+    body: <String, dynamic>{
+      'email': email.trim().toLowerCase(),
+      'otpCode': otpCode.trim(),
+      'newPassword': newPassword,
+    },
+  );
   Future<void> reload() async => _currentUser?.reload();
 
   Future<void> signOut() async {
@@ -327,6 +364,13 @@ class BackendAuth {
     await _storage.delete('access_token');
     await _storage.delete('refresh_token');
     _changes.add(null);
+  }
+
+  void markEmailVerified() {
+    if (_currentUser != null) {
+      _currentUser!.emailVerified = true;
+      _changes.add(_currentUser);
+    }
   }
 
   Future<UserCredential> _complete(
@@ -347,10 +391,13 @@ class BackendAuth {
     final refresh = (data['refreshToken'] ?? '').toString();
     if (refresh.isNotEmpty) await _storage.write('refresh_token', refresh);
     final claims = _claims(token);
+    final bool isVerified =
+        data['emailVerified'] == true || claims['email_verified'] == true;
     _currentUser = User(
       uid: (claims['sub'] ?? data['userId'] ?? email).toString(),
       email: (data['email'] ?? email).toString(),
       displayName: (data['name'] ?? '').toString(),
+      emailVerified: isVerified,
     );
     _changes.add(_currentUser);
     return UserCredential(_currentUser);

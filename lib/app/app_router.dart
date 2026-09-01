@@ -69,7 +69,7 @@ class AppRouter {
       case AppRoutes.otp:
         final Map<String, dynamic> args = _getArguments(settings);
 
-        return _page(
+        return _instantPage(
           OtpScreen(
             phoneNumber: (args['phoneNumber'] ?? '').toString(),
             email: args['email']?.toString(),
@@ -347,6 +347,23 @@ class AppRouter {
     return MaterialPageRoute<dynamic>(
       settings: settings,
       builder: (BuildContext context) => screen,
+    );
+  }
+
+  static PageRouteBuilder<dynamic> _instantPage(
+    Widget screen,
+    RouteSettings settings,
+  ) {
+    return PageRouteBuilder<dynamic>(
+      settings: settings,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder:
+          (
+            BuildContext context,
+            Animation<double> animation,
+            Animation<double> secondaryAnimation,
+          ) => screen,
     );
   }
 

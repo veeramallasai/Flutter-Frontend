@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +10,7 @@ import '../../core/errors/network_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/email_otp_repository.dart';
 import '../../data/repositories/user_repository.dart';
+import 'widgets/otp_input.dart';
 import 'widgets/password_strength.dart';
 import 'widgets/register_form.dart';
 
@@ -28,21 +31,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  final FocusNode _otpFocusNode = FocusNode();
 
   bool _hidePassword = true;
   bool _hideConfirmPassword = true;
   bool _loading = false;
   bool _termsAccepted = false;
 
+  int _currentStep = 1; // 1 = DETAILS, 2 = VERIFY OTP, 3 = FRESH
+  bool _verifyingOtp = false;
+  bool _sendingOtp = false;
+  int _secondsRemaining = 45;
+  Timer? _otpTimer;
+
   @override
   void dispose() {
+    _otpTimer?.cancel();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _otpController.dispose();
+    _otpFocusNode.dispose();
     super.dispose();
+  }
+
+  void _startOtpTimer() {
+    _otpTimer?.cancel();
+    setState(() {
+      _secondsRemaining = 45;
+    });
+    _otpTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_secondsRemaining <= 1) {
+        timer.cancel();
+        setState(() {
+          _secondsRemaining = 0;
+        });
+        return;
+      }
+      setState(() {
+        _secondsRemaining--;
+      });
+    });
   }
 
   String _normalizePhone(String value) {
@@ -141,7 +178,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  Future<User> _createOrResumeUser({
+  Future<UserCredential> _createOrResumeUser({
     required String email,
     required String password,
     String? firstName,
@@ -156,15 +193,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             lastName: lastName,
           );
 
-      final User? user = credential.user;
-      if (user == null) {
+      if (credential.user == null) {
         throw BackendAuthException(
           code: 'registration-failed',
           message: 'Unable to create your account.',
         );
       }
 
-      return user;
+      return credential;
     } on BackendAuthException catch (error) {
       if (error.code != 'email-already-in-use') {
         rethrow;
@@ -173,19 +209,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final UserCredential credential = await BackendAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
-      final User? user = credential.user;
-      if (user == null) {
+      if (credential.user == null) {
         throw BackendAuthException(
           code: 'registration-failed',
           message: 'Unable to resume account setup.',
         );
       }
 
-      return user;
+      return credential;
     }
   }
 
-  Future<void> _syncBackendProfileWithRetry() async {
+  Future<void> _completeProfileSetup(
+    User user,
+    String firstName,
+    String lastName,
+  ) async {
+    try {
+      final String displayName = '$firstName $lastName'.trim();
+      await user.updateDisplayName(displayName);
+      await user.reload();
+    } catch (error) {
+      debugPrint('REGISTER DISPLAY NAME UPDATE WARNING: $error');
+    }
+
     for (int attempt = 1; attempt <= 3; attempt++) {
       try {
         await UserRepository().syncCurrentUser();
@@ -198,6 +245,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  void _openOtpScreen({
+    required String email,
+    required String phone,
+    required bool emailSent,
+    required String userId,
+  }) {
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacementNamed(
+      AppRoutes.otp,
+      arguments: <String, dynamic>{
+        'phoneNumber': phone,
+        'email': email,
+        'emailVerificationSent': emailSent,
+        'userId': userId,
+        'source': 'register-email-only',
+      },
+    );
+  }
+
   Future<void> _register() async {
     FocusScope.of(context).unfocus();
 
@@ -206,7 +273,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (!_termsAccepted) {
-      _showMessage('Please accept Terms of Service and Privacy Policy.');
+      _showMessage(
+        'Please accept Terms of Service and Privacy Policy.',
+        isError: true,
+      );
       return;
     }
 
@@ -214,77 +284,181 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _loading = true;
     });
 
+    final String firstName = _firstNameController.text.trim();
+    final String lastName = _lastNameController.text.trim();
+    final String email = _emailController.text.trim().toLowerCase();
+    final String phoneDigits = _normalizePhone(_phoneController.text);
+    final String phone = phoneDigits.isEmpty ? '' : '+91$phoneDigits';
+    final String password = _passwordController.text;
+
+    UserCredential credential;
     try {
-      final String firstName = _firstNameController.text.trim();
-
-      final String lastName = _lastNameController.text.trim();
-
-      final String email = _emailController.text.trim().toLowerCase();
-
-      final String phoneDigits = _normalizePhone(_phoneController.text);
-      final String phone = phoneDigits.isEmpty ? '' : '+91$phoneDigits';
-
-      final String password = _passwordController.text;
-
-      final User user = await _createOrResumeUser(
+      credential = await _createOrResumeUser(
         email: email,
         password: password,
         firstName: firstName,
         lastName: lastName,
       );
+    } on BackendAuthException catch (error) {
+      final String message = (error.message ?? '').toLowerCase();
+      final bool verificationPending =
+          error.code == 'authentication-pending' ||
+          (message.contains('registration successful') &&
+              message.contains('otp'));
+      if (verificationPending) {
+        _openOtpScreen(
+          email: email,
+          phone: phone,
+          emailSent: true,
+          userId: email,
+        );
+        return;
+      }
+      if (mounted) {
+        _showMessage(_authErrorMessage(error), isError: true);
+        setState(() => _loading = false);
+      }
+      return;
+    } catch (error) {
+      if (mounted) {
+        String msg = 'Unable to create account. Please try again.';
+        if (error is AppException && error.message.trim().isNotEmpty) {
+          msg = error.message.trim();
+        } else if (error is NetworkException &&
+            error.message.trim().isNotEmpty) {
+          msg = error.message.trim();
+        }
+        _showMessage(msg, isError: true);
+        setState(() => _loading = false);
+      }
+      return;
+    }
 
-      final String displayName = '$firstName $lastName'.trim();
-
-      await user.updateDisplayName(displayName);
-      await user.reload();
-
-      await _syncBackendProfileWithRetry();
-
-      // Dispatch OTP email. Navigate to OTP screen directly after email submission.
-      bool emailSent = true;
+    final User user = credential.user!;
+    bool emailSent = credential.emailVerificationSent;
+    if (!emailSent) {
       try {
         final EmailOtpRepository emailOtpRepo = EmailOtpRepository();
         await emailOtpRepo.sendOtp(email);
+        emailSent = true;
       } catch (error) {
         debugPrint('REGISTER EMAIL OTP SEND WARNING: $error');
-        emailSent = false;
+      }
+    }
+
+    if (!mounted) return;
+
+    _openOtpScreen(
+      email: email,
+      phone: phone,
+      emailSent: emailSent,
+      userId: user.uid,
+    );
+    if (!credential.authenticationPending) {
+      unawaited(_completeProfileSetup(user, firstName, lastName));
+    }
+  }
+
+  Future<void> _verifyStep2Otp() async {
+    FocusScope.of(context).unfocus();
+
+    final String otp = _otpController.text.trim();
+    if (otp.length != 6) {
+      _showMessage('Enter the complete 6-digit OTP code.', isError: true);
+      return;
+    }
+
+    setState(() {
+      _verifyingOtp = true;
+    });
+
+    final String email = _emailController.text.trim().toLowerCase();
+
+    try {
+      final EmailOtpRepository emailOtpRepo = EmailOtpRepository();
+      final User? currentUser = BackendAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        await emailOtpRepo.verifyOtp(otp, email);
+        await currentUser.reload();
+        try {
+          await UserRepository().syncCurrentUser();
+        } catch (_) {}
+      } else {
+        await emailOtpRepo.verifyResetOtp(email, otp);
       }
 
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacementNamed(
-        AppRoutes.otp,
-        arguments: <String, dynamic>{
-          'phoneNumber': phone,
-          'email': email,
-          'emailVerificationSent': emailSent,
-          'userId': user.uid,
-          'source': 'register-email-only',
-        },
+      _otpTimer?.cancel();
+      setState(() {
+        _currentStep = 3;
+      });
+
+      _showMessage('Email verified successfully.', isError: false);
+
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.home,
+        (Route<dynamic> route) => false,
       );
     } on BackendAuthException catch (error) {
       if (!mounted) return;
 
-      _showMessage(_authErrorMessage(error));
-    } catch (error, stackTrace) {
-      debugPrint('REGISTER SETUP ERROR: $error');
-      debugPrintStack(label: 'REGISTER SETUP STACK', stackTrace: stackTrace);
-
+      _showMessage(_authErrorMessage(error), isError: true);
+    } catch (error) {
+      debugPrint('VERIFY STEP 2 OTP ERROR: $error');
       if (!mounted) return;
 
-      String message =
-          'Account created, but failed to send verification OTP email. Please try again.';
-      if (error is AppException && error.message.trim().isNotEmpty) {
+      String message = 'OTP verification failed. Please try again.';
+      if (error is NetworkException && error.message.trim().isNotEmpty) {
         message = error.message.trim();
-      } else if (error is NetworkException && error.message.trim().isNotEmpty) {
+      } else if (error is AppException && error.message.trim().isNotEmpty) {
         message = error.message.trim();
       }
 
-      _showMessage(message);
+      _showMessage(message, isError: true);
     } finally {
       if (mounted) {
         setState(() {
-          _loading = false;
+          _verifyingOtp = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _resendStep2Otp() async {
+    if (_secondsRemaining > 0 || _sendingOtp || _verifyingOtp) return;
+
+    setState(() {
+      _sendingOtp = true;
+    });
+
+    _otpController.clear();
+    final String email = _emailController.text.trim().toLowerCase();
+
+    try {
+      final EmailOtpRepository emailOtpRepo = EmailOtpRepository();
+      await emailOtpRepo.sendOtp(email);
+
+      if (!mounted) return;
+
+      _startOtpTimer();
+      _otpFocusNode.requestFocus();
+      _showMessage('A new OTP code was sent to your email.', isError: false);
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(
+        'Unable to send email OTP. Please try again.',
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _sendingOtp = false;
         });
       }
     }
@@ -319,7 +493,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showMessage(String message, {bool isError = true}) {
+  void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -481,10 +655,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Join Fresh Club',
-                      style: TextStyle(
+                      _currentStep == 2
+                          ? 'Verify Email OTP'
+                          : 'Join Fresh Club',
+                      style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 27,
                         fontWeight: FontWeight.w900,
@@ -525,9 +701,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'One account for fresh home shopping and business bulk orders.',
-                style: TextStyle(
+              Text(
+                _currentStep == 2
+                    ? 'Enter the 6-digit verification code sent to your email.'
+                    : 'One account for fresh home shopping and business bulk orders.',
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12.5,
                   height: 1.45,
@@ -537,232 +715,494 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 17),
 
-              const _RegistrationSteps(),
+              _RegistrationSteps(currentStep: _currentStep),
 
               const SizedBox(height: 20),
 
-              TextFormField(
-                controller: _firstNameController,
-                enabled: !_loading,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                validator: _validateFirstName,
-                decoration: const InputDecoration(
-                  labelText: 'First Name',
-                  prefixIcon: Icon(
-                    Icons.person_outline_rounded,
-                    color: AppColors.primary,
+              if (_currentStep == 2)
+                _buildStep2OtpView()
+              else ...<Widget>[
+                TextFormField(
+                  controller: _firstNameController,
+                  enabled: !_loading,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  validator: _validateFirstName,
+                  decoration: const InputDecoration(
+                    labelText: 'First Name',
+                    prefixIcon: Icon(
+                      Icons.person_outline_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              TextFormField(
-                controller: _lastNameController,
-                enabled: !_loading,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                validator: _validateLastName,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name',
-                  prefixIcon: Icon(
-                    Icons.badge_outlined,
-                    color: AppColors.primary,
+                TextFormField(
+                  controller: _lastNameController,
+                  enabled: !_loading,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  validator: _validateLastName,
+                  decoration: const InputDecoration(
+                    labelText: 'Last Name',
+                    prefixIcon: Icon(
+                      Icons.badge_outlined,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              TextFormField(
-                controller: _phoneController,
-                enabled: !_loading,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                validator: _validatePhone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  hintText: '9876543210',
-                  prefixText: '+91  ',
-                  prefixIcon: Icon(
-                    Icons.phone_iphone_rounded,
-                    color: AppColors.primary,
+                TextFormField(
+                  controller: _phoneController,
+                  enabled: !_loading,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  validator: _validatePhone,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: '9876543210',
+                    prefixText: '+91  ',
+                    prefixIcon: Icon(
+                      Icons.phone_iphone_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              TextFormField(
-                controller: _emailController,
-                enabled: !_loading,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                validator: _validateEmail,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  hintText: 'name@example.com',
-                  prefixIcon: Icon(
-                    Icons.alternate_email_rounded,
-                    color: AppColors.primary,
+                TextFormField(
+                  controller: _emailController,
+                  enabled: !_loading,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  validator: _validateEmail,
+                  decoration: const InputDecoration(
+                    labelText: 'Email Address',
+                    hintText: 'name@example.com',
+                    prefixIcon: Icon(
+                      Icons.alternate_email_rounded,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              TextFormField(
-                controller: _passwordController,
-                enabled: !_loading,
-                obscureText: _hidePassword,
-                textInputAction: TextInputAction.next,
-                validator: _validatePassword,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(
-                    Icons.lock_outline_rounded,
-                    color: AppColors.primary,
+                TextFormField(
+                  controller: _passwordController,
+                  enabled: !_loading,
+                  obscureText: _hidePassword,
+                  textInputAction: TextInputAction.next,
+                  validator: _validatePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed:
+                          _loading
+                              ? null
+                              : () {
+                                setState(() {
+                                  _hidePassword = !_hidePassword;
+                                });
+                              },
+                      icon: Icon(
+                        _hidePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
                   ),
-                  suffixIcon: IconButton(
-                    onPressed:
+                ),
+
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _passwordController,
+                  builder:
+                      (
+                        BuildContext context,
+                        TextEditingValue value,
+                        Widget? child,
+                      ) => PasswordStrength(password: value.text),
+                ),
+
+                const SizedBox(height: 14),
+
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  enabled: !_loading,
+                  obscureText: _hideConfirmPassword,
+                  textInputAction: TextInputAction.done,
+                  validator: _validateConfirmPassword,
+                  onFieldSubmitted: (_) {
+                    if (!_loading) {
+                      _register();
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: const Icon(
+                      Icons.verified_user_outlined,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed:
+                          _loading
+                              ? null
+                              : () {
+                                setState(() {
+                                  _hideConfirmPassword = !_hideConfirmPassword;
+                                });
+                              },
+                      icon: Icon(
+                        _hideConfirmPassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                Material(
+                  color: Colors.transparent,
+                  child: CheckboxListTile(
+                    value: _termsAccepted,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: const Text(
+                      'I agree to the Terms of Service and Privacy Policy.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onChanged:
                         _loading
                             ? null
-                            : () {
+                            : (bool? value) {
                               setState(() {
-                                _hidePassword = !_hidePassword;
+                                _termsAccepted = value ?? false;
                               });
                             },
-                    icon: Icon(
-                      _hidePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
                   ),
                 ),
-              ),
 
-              ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _passwordController,
-                builder:
-                    (
-                      BuildContext context,
-                      TextEditingValue value,
-                      Widget? child,
-                    ) => PasswordStrength(password: value.text),
-              ),
+                const SizedBox(height: 14),
 
-              const SizedBox(height: 14),
-
-              TextFormField(
-                controller: _confirmPasswordController,
-                enabled: !_loading,
-                obscureText: _hideConfirmPassword,
-                textInputAction: TextInputAction.done,
-                validator: _validateConfirmPassword,
-                onFieldSubmitted: (_) {
-                  if (!_loading) {
-                    _register();
-                  }
-                },
-                decoration: InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: const Icon(
-                    Icons.verified_user_outlined,
-                    color: AppColors.primary,
-                  ),
-                  suffixIcon: IconButton(
-                    onPressed:
+                SizedBox(
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: _loading ? null : _register,
+                    child:
                         _loading
-                            ? null
-                            : () {
-                              setState(() {
-                                _hideConfirmPassword = !_hideConfirmPassword;
-                              });
-                            },
-                    icon: Icon(
-                      _hideConfirmPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
+                            ? const SizedBox(
+                              width: 23,
+                              height: 23,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                            : const Text('CREATE MY FRESH ACCOUNT'),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-              Material(
-                color: Colors.transparent,
-                child: CheckboxListTile(
-                  value: _termsAccepted,
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text(
-                    'I agree to the Terms of Service and Privacy Policy.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    const Text(
+                      'Already have an account?',
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
-                  ),
-                  onChanged:
-                      _loading
-                          ? null
-                          : (bool? value) {
-                            setState(() {
-                              _termsAccepted = value ?? false;
-                            });
-                          },
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              SizedBox(
-                height: 56,
-                child: FilledButton(
-                  onPressed: _loading ? null : _register,
-                  child:
-                      _loading
-                          ? const SizedBox(
-                            width: 23,
-                            height: 23,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                          : const Text('CREATE MY FRESH ACCOUNT'),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Text(
-                    'Already have an account?',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                  TextButton(
-                    onPressed: _loading ? null : _goLogin,
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                    TextButton(
+                      onPressed: _loading ? null : _goLogin,
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildStep2OtpView() {
+    final String maskedEmail = _maskEmail(_emailController.text.trim());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const SizedBox(height: 10),
+
+        // Green Mail check icon container matching reference design
+        Center(
+          child: Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF6ED),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.mark_email_read_rounded,
+              color: AppColors.primary,
+              size: 38,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 22),
+
+        // Title
+        const Text(
+          'Enter Verification Code',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFF1E293B),
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Subtitle
+        Text(
+          'We sent a 6-digit verification OTP code to\n$maskedEmail',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 13.5,
+            height: 1.45,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+
+        const SizedBox(height: 28),
+
+        // Custom Outlined 6-Digit OTP Field matching reference design
+        Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            Container(
+              height: 62,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary, width: 1.5),
+              ),
+              child: Row(
+                children: <Widget>[
+                  // 123 Icon badge on left
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.onetwothree_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+
+                  // OTP text field
+                  Expanded(
+                    child: OtpInput(
+                      child: TextField(
+                        controller: _otpController,
+                        focusNode: _otpFocusNode,
+                        enabled: !_verifyingOtp && !_sendingOtp,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        maxLength: 6,
+                        autofillHints: const <String>[
+                          AutofillHints.oneTimeCode,
+                        ],
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(6),
+                        ],
+                        onSubmitted: (_) => _verifyStep2Otp(),
+                        onChanged: (_) => setState(() {}),
+                        style: const TextStyle(
+                          color: Color(0xFF1E293B),
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          hintText: '1 2 3 4 5 6',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 10,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Floating notch label on top border line
+            Positioned(
+              top: -9,
+              left: 20,
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: const Text(
+                  '6-Digit OTP Code',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // VERIFY OTP button
+        SizedBox(
+          height: 54,
+          child: FilledButton(
+            onPressed: _verifyingOtp || _sendingOtp ? null : _verifyStep2Otp,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
+            child:
+                _verifyingOtp
+                    ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                    : const Text(
+                      'VERIFY OTP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Resend Timer / Resend Action
+        Center(
+          child:
+              _secondsRemaining > 0
+                  ? Text(
+                    'Resend OTP in ${_secondsRemaining}s',
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                  : TextButton(
+                    onPressed:
+                        _sendingOtp || _verifyingOtp ? null : _resendStep2Otp,
+                    child: const Text(
+                      'Resend OTP',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+        ),
+
+        const SizedBox(height: 4),
+
+        // Edit account details / Use another email link
+        Center(
+          child: TextButton(
+            onPressed:
+                _verifyingOtp || _sendingOtp
+                    ? null
+                    : () {
+                      _otpTimer?.cancel();
+                      setState(() {
+                        _currentStep = 1;
+                      });
+                    },
+            child: const Text(
+              'Use another email address',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _maskEmail(String email) {
+    final String clean = email.trim();
+    if (clean.isEmpty || !clean.contains('@')) return clean;
+
+    final List<String> parts = clean.split('@');
+    final String username = parts[0];
+    final String domain = parts[1];
+
+    if (username.length <= 2) {
+      return '${username.substring(0, 1)}***@$domain';
+    }
+
+    return '${username.substring(0, 2)}***@$domain';
   }
 }
 
@@ -839,7 +1279,10 @@ class _RegisterHero extends StatelessWidget {
 }
 
 class _RegistrationSteps extends StatelessWidget {
-  const _RegistrationSteps();
+  const _RegistrationSteps({this.currentStep = 1});
+
+  final int currentStep;
+
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
@@ -848,17 +1291,27 @@ class _RegistrationSteps extends StatelessWidget {
       borderRadius: BorderRadius.circular(17),
       border: Border.all(color: const Color(0xFFE2ECE6)),
     ),
-    child: const Row(
+    child: Row(
       children: <Widget>[
-        _StepDot(number: '1', label: 'DETAILS', active: true),
+        _StepDot(number: '1', label: 'DETAILS', active: currentStep >= 1),
         Expanded(
-          child: Divider(color: Color(0xFFC7D9CF), indent: 7, endIndent: 7),
+          child: Divider(
+            color:
+                currentStep >= 2 ? AppColors.primary : const Color(0xFFC7D9CF),
+            indent: 7,
+            endIndent: 7,
+          ),
         ),
-        _StepDot(number: '2', label: 'VERIFY'),
+        _StepDot(number: '2', label: 'VERIFY', active: currentStep >= 2),
         Expanded(
-          child: Divider(color: Color(0xFFC7D9CF), indent: 7, endIndent: 7),
+          child: Divider(
+            color:
+                currentStep >= 3 ? AppColors.primary : const Color(0xFFC7D9CF),
+            indent: 7,
+            endIndent: 7,
+          ),
         ),
-        _StepDot(number: '3', label: 'FRESH'),
+        _StepDot(number: '3', label: 'FRESH', active: currentStep >= 3),
       ],
     ),
   );

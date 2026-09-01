@@ -4,6 +4,7 @@ import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../features/auth/login_screen.dart';
+import '../features/auth/otp_screen.dart';
 import '../features/home/home_screen.dart';
 import '../data/repositories/user_repository.dart';
 
@@ -46,6 +47,16 @@ class _SessionGateState extends State<SessionGate> {
           _syncUid = '';
           _syncFuture = null;
           return const LoginScreen();
+        }
+
+        if (!user.emailVerified) {
+          return OtpScreen(
+            phoneNumber: user.phoneNumber ?? '',
+            email: user.email,
+            emailVerificationSent: true,
+            userId: user.uid,
+            source: 'register-email-only',
+          );
         }
 
         return FutureBuilder<void>(
