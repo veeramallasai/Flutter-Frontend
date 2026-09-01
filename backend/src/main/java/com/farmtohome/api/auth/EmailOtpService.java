@@ -50,7 +50,7 @@ public class EmailOtpService {
       JavaMailSender mailSender,
       @Value("${spring.mail.host:smtp.gmail.com}") String mailHost,
       @Value("${spring.mail.username:veeramallasaipichaiah456@gmail.com}") String mailUsername,
-      @Value("${spring.mail.password:zgcdahzwvgdknexf}") String mailPassword,
+      @Value("${spring.mail.password:}") String mailPassword,
       @Value("${app.mail-from:veeramallasaipichaiah456@gmail.com}") String mailFrom) {
     this.jdbc = jdbc;
     this.mailSender = mailSender;

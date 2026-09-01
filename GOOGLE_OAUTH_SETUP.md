@@ -39,7 +39,7 @@ This document explains how to configure **Google Cloud Console OAuth 2.0** for F
 3. Select **Application type**: `Web application`.
 4. Name: `Farm To Home Web Client`.
 5. **Authorized JavaScript origins**:
-   - Local Development: `http://localhost:8080`, `http://localhost:3000`, `http://localhost:8085`
+   - Local Development: `http://localhost:8080`
    - Production URL: `https://flutter-frontend-production-e8d6.up.railway.app`
 6. **Authorized redirect URIs**:
    - Local Development: `http://localhost:8080`, `http://localhost:8080/`, `http://localhost:3000`
@@ -51,11 +51,23 @@ This document explains how to configure **Google Cloud Console OAuth 2.0** for F
 
 ## 4. Configure Client ID in Flutter Web
 
-Open [`web/index.html`](file:///c:/fluttersai/farm_to_home_app/web/index.html) and replace `GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com` with your Google Web Client ID:
+The current web client ID is configured in Flutter. For another Google Cloud
+project, pass the client ID at build or run time:
 
 ```html
-<meta name="google-signin-client_id" content="YOUR_ACTUAL_CLIENT_ID.apps.googleusercontent.com">
+flutter build web --dart-define=GOOGLE_WEB_CLIENT_ID=YOUR_CLIENT_ID
 ```
+
+Use the VS Code launch configuration **Flutter Web (OAuth - port 8080)**. Do
+not use a random Flutter web port: Google compares the full origin, including
+the port, with the OAuth client's Authorized JavaScript origins.
+
+For client
+`1066615778167-ochceogaf54rramkojskbrbqlkfr3fi6.apps.googleusercontent.com`,
+open Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client
+IDs > Web client and ensure `http://localhost:8080` appears under
+**Authorized JavaScript origins**. Save and allow several minutes for the
+change to propagate.
 
 ---
 
@@ -66,5 +78,20 @@ Open [`web/index.html`](file:///c:/fluttersai/farm_to_home_app/web/index.html) a
 3. **Google Authentication**: User selects their Google account.
 4. **Token Generation**: Google returns an official signed **Google ID Token** (`idToken`).
 5. **Backend Verification**: Flutter app sends `idToken` to `/api/v1/auth/google-login` in Spring Boot.
-6. **Google Verification API**: Spring Boot verifies the token via `https://oauth2.googleapis.com/tokeninfo?id_token=...` and extracts verified email, name, and profile photo.
+6. **Google Verification**: Spring Boot validates the Google JWT signature using Google's JWKS, plus issuer, audience, expiry, and verified email.
 7. **Session JWT**: Backend creates a user account if new, creates a backend JWT session token, and logs the user into Farm To Home.
+
+## 6. Railway variables
+
+Frontend build variables:
+
+- `GOOGLE_WEB_CLIENT_ID`
+- `APPLE_SERVICE_ID`
+- `APPLE_REDIRECT_URI`
+
+Backend variables:
+
+- `GOOGLE_CLIENT_IDS` (comma-separated web, Android, and iOS client IDs)
+- `APPLE_CLIENT_IDS` (comma-separated bundle and Service IDs)
+- `JWT_SECRET` (at least 32 random bytes)
+- `JWT_ISSUER=farm-to-home-api`

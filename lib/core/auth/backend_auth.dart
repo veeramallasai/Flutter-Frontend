@@ -237,31 +237,13 @@ class BackendAuth {
     AuthCredential credential,
   ) async => UserCredential(_currentUser);
 
-  Future<UserCredential> signInWithSocial({
-    required String provider,
-    required String email,
-    String? firstName,
-    String? lastName,
-    String? photoUrl,
-    String? idToken,
-  }) async {
+  Future<UserCredential> signInWithGoogle({required String idToken}) async {
     try {
       final response = await _apiClient.post(
-        '/api/v1/auth/social-login',
-        body: <String, dynamic>{
-          'provider': provider,
-          'email': email.trim().toLowerCase(),
-          if (firstName != null && firstName.trim().isNotEmpty)
-            'firstName': firstName.trim(),
-          if (lastName != null && lastName.trim().isNotEmpty)
-            'lastName': lastName.trim(),
-          if (photoUrl != null && photoUrl.trim().isNotEmpty)
-            'photoUrl': photoUrl.trim(),
-          if (idToken != null && idToken.trim().isNotEmpty)
-            'idToken': idToken.trim(),
-        },
+        '/api/v1/auth/google-login',
+        body: <String, dynamic>{'idToken': idToken},
       );
-      return _complete(response.data, email: email);
+      return _complete(response.data, email: '');
     } on NetworkException catch (e) {
       throw BackendAuthException(
         code: e.code,
@@ -271,30 +253,30 @@ class BackendAuth {
     }
   }
 
-  Future<UserCredential> signInWithGoogle({
+  Future<UserCredential> signInWithApple({
     required String idToken,
-    String? email,
-    String? name,
-    String? photoUrl,
+    required String rawNonce,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/v1/auth/google-login',
+        '/api/v1/auth/apple-login',
         body: <String, dynamic>{
           'idToken': idToken,
-          if (email != null && email.trim().isNotEmpty)
-            'email': email.trim().toLowerCase(),
-          if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
-          if (photoUrl != null && photoUrl.trim().isNotEmpty)
-            'photoUrl': photoUrl.trim(),
+          'rawNonce': rawNonce,
+          if (firstName != null && firstName.trim().isNotEmpty)
+            'firstName': firstName.trim(),
+          if (lastName != null && lastName.trim().isNotEmpty)
+            'lastName': lastName.trim(),
         },
       );
-      return _complete(response.data, email: email ?? '');
-    } on NetworkException catch (e) {
+      return _complete(response.data, email: '');
+    } on NetworkException catch (error) {
       throw BackendAuthException(
-        code: e.code,
-        message: e.message,
-        details: e.details,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       );
     }
   }

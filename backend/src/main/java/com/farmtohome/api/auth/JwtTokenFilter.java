@@ -20,13 +20,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtTokenFilter extends OncePerRequestFilter {
 
   private final ObjectMapper objectMapper;
+  private final JwtTokenService jwtTokenService;
 
-  public JwtTokenFilter() {
-    this(new ObjectMapper());
-  }
-
-  public JwtTokenFilter(ObjectMapper objectMapper) {
+  public JwtTokenFilter(ObjectMapper objectMapper, JwtTokenService jwtTokenService) {
     this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
+    this.jwtTokenService = jwtTokenService;
   }
 
   @Override
@@ -52,7 +50,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     try {
-      String uid = extractUidFromToken(token);
+      String uid = jwtTokenService.decode(token).getSubject();
       if (uid != null && !uid.isEmpty()) {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
@@ -72,15 +70,4 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
   }
 
-  private String extractUidFromToken(String token) {
-    if (token.startsWith("jwt_session_")) {
-      String payload = token.substring("jwt_session_".length());
-      int lastUnderscore = payload.lastIndexOf('_');
-      if (lastUnderscore > 0) {
-        return payload.substring(0, lastUnderscore);
-      }
-      return payload;
-    }
-    return token;
-  }
 }

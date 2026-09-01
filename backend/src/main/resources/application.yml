@@ -32,7 +32,7 @@ spring:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:veeramallasaipichaiah456@gmail.com}
-    password: ${MAIL_PASSWORD:zgcdahzwvgdknexf}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -60,6 +60,13 @@ management:
 app:
   cors-origins: "${CORS_ORIGINS:https://flutter-frontend-production-e8d6.up.railway.app,https://*.railway.app,https://*.up.railway.app,http://localhost:*,*}"
   mail-from: ${MAIL_FROM:veeramallasaipichaiah456@gmail.com}
+  auth:
+    google-client-ids: ${GOOGLE_CLIENT_IDS:1066615778167-ochceogaf54rramkojskbrbqlkfr3fi6.apps.googleusercontent.com}
+    apple-client-ids: ${APPLE_CLIENT_IDS:com.example.farmToHomeApp}
+  jwt:
+    issuer: ${JWT_ISSUER:farm-to-home-api}
+    secret: ${JWT_SECRET:local-development-secret-change-before-production-32chars}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:1440}
 
 logging:
   level:

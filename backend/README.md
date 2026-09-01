@@ -8,7 +8,8 @@ Spring Boot REST backend for the Farm To Home Flutter application.
 - Spring Boot 4.1
 - PostgreSQL
 - Flyway database migrations
-- Firebase Admin token verification
+- Google and Apple identity-token verification
+- Signed application JWT sessions
 
 ## Included commerce APIs
 
@@ -20,8 +21,15 @@ Spring Boot REST backend for the Farm To Home Flutter application.
 - Orders, order details, cancellation, and reorder
 - Automatic stock restoration on cancellation
 
-The Flutter app sends the signed-in user's Firebase ID token as a Bearer token.
-The backend verifies it before accessing any user cart or order.
+The Flutter app sends a Google or Apple identity token to the matching auth
+endpoint. The backend verifies its signature, issuer, audience, expiry, email,
+and Apple nonce before creating or loading the user. It then returns a signed
+application JWT used as the Bearer token for protected APIs.
+
+For Railway, configure `GOOGLE_CLIENT_IDS`, `APPLE_CLIENT_IDS`, `JWT_SECRET`,
+`JWT_ISSUER`, and `CORS_ORIGINS`. `GOOGLE_CLIENT_IDS` and `APPLE_CLIENT_IDS`
+accept comma-separated IDs for web and native apps. `JWT_SECRET` must contain
+at least 32 random bytes and must be the same across all backend instances.
 
 ## Run
 

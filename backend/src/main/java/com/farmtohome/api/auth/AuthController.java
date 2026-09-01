@@ -5,6 +5,8 @@ import com.farmtohome.api.common.ApiResponse;
 import com.farmtohome.api.user.AppUserEntity;
 import com.farmtohome.api.user.AppUserRepository;
 import jakarta.validation.Valid;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -12,9 +14,13 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,12 +30,18 @@ public class AuthController {
 
   private final AppUserRepository userRepository;
   private final EmailOtpService emailOtpService;
+  private final ProviderIdentityTokenVerifier identityTokenVerifier;
+  private final JwtTokenService jwtTokenService;
 
   public AuthController(
       AppUserRepository userRepository,
-      EmailOtpService emailOtpService) {
+      EmailOtpService emailOtpService,
+      ProviderIdentityTokenVerifier identityTokenVerifier,
+      JwtTokenService jwtTokenService) {
     this.userRepository = userRepository;
     this.emailOtpService = emailOtpService;
+    this.identityTokenVerifier = identityTokenVerifier;
+    this.jwtTokenService = jwtTokenService;
   }
 
   @PostMapping("/login")
@@ -92,173 +104,36 @@ public class AuthController {
     return processUserLogin(uid, email, entity.getDisplayName(), entity.getPhotoUrl());
   }
 
-  @PostMapping("/social-login")
-  public ApiResponse<AuthDtos.AuthResponse> socialLogin(
-      @Valid @RequestBody AuthDtos.SocialLoginRequest request) {
-    String email = request.email().trim().toLowerCase();
-    
-    if (request.idToken() != null && !request.idToken().isBlank() && "google".equalsIgnoreCase(request.provider())) {
-      Map<String, Object> verifiedClaims = verifyAndExtractGoogleToken(request.idToken(), email);
-      if (verifiedClaims.containsKey("email")) {
-        email = ((String) verifiedClaims.get("email")).toLowerCase();
-      }
-    }
-
-    Optional<AppUserEntity> existingUser = userRepository.findByEmail(email);
-    if (existingUser.isPresent()) {
-      AppUserEntity existing = existingUser.get();
-      existing.setLastLoginAt(Instant.now());
-      if (request.photoUrl() != null && !request.photoUrl().isBlank()) {
-        existing.setPhotoUrl(request.photoUrl().trim());
-      }
-      userRepository.save(existing);
-      return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
-    }
-
-    String uid = "soc_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-
-    String firstName = request.firstName() != null ? request.firstName().trim() : "";
-    String lastName = request.lastName() != null ? request.lastName().trim() : "";
-    String name = (firstName + " " + lastName).trim();
-    if (name.isEmpty()) name = email.split("@")[0];
-
-    AppUserEntity entity = new AppUserEntity();
-    entity.setFirebaseUid(uid);
-    entity.setEmail(email);
-    entity.setFirstName(firstName);
-    entity.setLastName(lastName);
-    entity.setDisplayName(name);
-    entity.setPhoneNumber("");
-    entity.setPhotoUrl(request.photoUrl() != null ? request.photoUrl() : "");
-    entity.setShoppingMode("home");
-    entity.setAccountType("customer");
-    entity.setAuthProvider(request.provider() != null ? request.provider() : "google.com");
-    entity.setActive(true);
-    entity.setCreatedAt(Instant.now());
-    entity.setUpdatedAt(Instant.now());
-    entity.setLastLoginAt(Instant.now());
-
-    try {
-      userRepository.save(entity);
-    } catch (org.springframework.dao.DataIntegrityViolationException e) {
-      Optional<AppUserEntity> retry = userRepository.findByEmail(email);
-      if (retry.isPresent()) {
-        AppUserEntity existing = retry.get();
-        return processUserLogin(existing.getFirebaseUid(), email, existing.getDisplayName(), existing.getPhotoUrl());
-      }
-    }
-
-    return processUserLogin(uid, email, entity.getDisplayName(), entity.getPhotoUrl());
-  }
-
   @PostMapping("/google-login")
   public ApiResponse<AuthDtos.AuthResponse> googleLogin(
       @Valid @RequestBody AuthDtos.GoogleLoginRequest request) {
-    String email = request.email() != null ? request.email().trim().toLowerCase() : "";
-    String idToken = request.idToken();
-
-    Map<String, Object> tokenPayload = verifyAndExtractGoogleToken(idToken, email);
-
-    String verifiedEmail = tokenPayload.containsKey("email")
-        ? ((String) tokenPayload.get("email")).toLowerCase()
-        : email;
-    if (verifiedEmail.isBlank()) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid Google ID token: email missing.");
-    }
-
-    String name = tokenPayload.containsKey("name")
-        ? (String) tokenPayload.get("name")
-        : (request.name() != null ? request.name() : "");
-    String picture = tokenPayload.containsKey("picture")
-        ? (String) tokenPayload.get("picture")
-        : (request.photoUrl() != null ? request.photoUrl() : "");
-
-    Optional<AppUserEntity> existingUser = userRepository.findByEmail(verifiedEmail);
-    if (existingUser.isPresent()) {
-      AppUserEntity existing = existingUser.get();
-      existing.setLastLoginAt(Instant.now());
-      if (!picture.isBlank()) existing.setPhotoUrl(picture);
-      userRepository.save(existing);
-      return processUserLogin(existing.getFirebaseUid(), verifiedEmail, existing.getDisplayName(), existing.getPhotoUrl());
-    }
-
-    String uid = "google_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-    String[] parts = name.split("\\s+", 2);
-    String firstName = parts.length > 0 ? parts[0] : "";
-    String lastName = parts.length > 1 ? parts[1] : "";
-
-    AppUserEntity entity = new AppUserEntity();
-    entity.setFirebaseUid(uid);
-    entity.setEmail(verifiedEmail);
-    entity.setFirstName(firstName);
-    entity.setLastName(lastName);
-    entity.setDisplayName(name.isBlank() ? verifiedEmail.split("@")[0] : name);
-    entity.setPhoneNumber("");
-    entity.setPhotoUrl(picture);
-    entity.setShoppingMode("home");
-    entity.setAccountType("customer");
-    entity.setAuthProvider("google.com");
-    entity.setActive(true);
-    entity.setCreatedAt(Instant.now());
-    entity.setUpdatedAt(Instant.now());
-    entity.setLastLoginAt(Instant.now());
-
-    try {
-      userRepository.save(entity);
-    } catch (org.springframework.dao.DataIntegrityViolationException e) {
-      Optional<AppUserEntity> retry = userRepository.findByEmail(verifiedEmail);
-      if (retry.isPresent()) {
-        AppUserEntity existing = retry.get();
-        return processUserLogin(existing.getFirebaseUid(), verifiedEmail, existing.getDisplayName(), existing.getPhotoUrl());
-      }
-    }
-
-    return processUserLogin(uid, verifiedEmail, entity.getDisplayName(), entity.getPhotoUrl());
+    return loginProvider(
+        identityTokenVerifier.verifyGoogle(request.idToken()),
+        "google.com", null, null);
   }
 
-  private Map<String, Object> verifyAndExtractGoogleToken(String idToken, String fallbackEmail) {
-    if (idToken == null || idToken.isBlank()) {
-      if (fallbackEmail != null && !fallbackEmail.isBlank()) {
-        return Map.of("email", fallbackEmail);
-      }
-      throw new ApiException(HttpStatus.BAD_REQUEST, "Google ID token is required.");
-    }
-
-    try {
-      org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
-      String tokenInfoUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
-      @SuppressWarnings("unchecked")
-      Map<String, Object> response = restTemplate.getForObject(tokenInfoUrl, Map.class);
-      if (response != null && response.containsKey("email")) {
-        log.info("[GOOGLE OAUTH] Verified Google tokeninfo for email: {}", response.get("email"));
-        return response;
-      }
-    } catch (Exception e) {
-      log.warn("[GOOGLE OAUTH] Tokeninfo endpoint verification fallback: {}", e.getMessage());
-    }
-
-    try {
-      String[] parts = idToken.split("\\.");
-      if (parts.length >= 2) {
-        String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
-        com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> claims = om.readValue(payloadJson, Map.class);
-        if (claims.containsKey("email")) {
-          log.info("[GOOGLE OAUTH] Decoded JWT claims for email: {}", claims.get("email"));
-          return claims;
-        }
-      }
-    } catch (Exception e) {
-      log.error("[GOOGLE OAUTH] Failed to decode Google ID Token JWT payload: {}", e.getMessage());
-    }
-
-    if (fallbackEmail != null && !fallbackEmail.isBlank()) {
-      return Map.of("email", fallbackEmail);
-    }
-
-    throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid or unverified Google ID token.");
+  @PostMapping("/apple-login")
+  public ApiResponse<AuthDtos.AuthResponse> appleLogin(
+      @Valid @RequestBody AuthDtos.AppleLoginRequest request) {
+    return loginProvider(
+        identityTokenVerifier.verifyApple(request.idToken(), request.rawNonce()),
+        "apple.com", request.firstName(), request.lastName());
   }
+
+      @PostMapping("/apple/callback")
+      public ResponseEntity<Void> appleAndroidCallback(
+        @RequestParam MultiValueMap<String, String> parameters) {
+      String query = parameters.entrySet().stream()
+        .flatMap(entry -> entry.getValue().stream().map(value ->
+          encode(entry.getKey()) + "=" + encode(value)))
+        .reduce((left, right) -> left + "&" + right)
+        .orElse("");
+      String location = "intent://callback?" + query
+        + "#Intent;package=com.example.farm_to_home_app;scheme=signinwithapple;end";
+      return ResponseEntity.status(HttpStatus.FOUND)
+        .header(HttpHeaders.LOCATION, location)
+        .build();
+      }
 
   @PostMapping("/forgot-password")
   public ApiResponse<Map<String, Object>> forgotPassword(
@@ -280,7 +155,7 @@ public class AuthController {
 
   private ApiResponse<AuthDtos.AuthResponse> processUserLogin(
       String uid, String email, String name, String photoUrl) {
-    String token = "jwt_session_" + uid + "_" + System.currentTimeMillis();
+    String token = jwtTokenService.issue(uid, email);
 
     userRepository.findById(uid).ifPresent(user -> {
       user.setLastLoginAt(Instant.now());
@@ -292,25 +167,69 @@ public class AuthController {
     return ApiResponse.ok(response, "Authentication successful.");
   }
 
-  private AppUserEntity findOrCreateUserEntity(
-      String uid, String email, String displayName, String photoUrl) {
-    return userRepository.findById(uid).orElseGet(() -> {
-      AppUserEntity user = new AppUserEntity();
-      user.setFirebaseUid(uid);
-      user.setEmail(email != null ? email : "");
-      user.setDisplayName(displayName != null && !displayName.trim().isEmpty() ? displayName : (email != null ? email.split("@")[0] : "User"));
-      user.setFirstName("");
-      user.setLastName("");
-      user.setPhoneNumber("");
-      user.setPhotoUrl(photoUrl != null ? photoUrl : "");
-      user.setShoppingMode("home");
-      user.setAccountType("customer");
-      user.setAuthProvider("password");
-      user.setActive(true);
-      user.setCreatedAt(Instant.now());
-      user.setUpdatedAt(Instant.now());
-      user.setLastLoginAt(Instant.now());
-      return userRepository.save(user);
-    });
+  private static String encode(String value) {
+    return URLEncoder.encode(value, StandardCharsets.UTF_8);
   }
+
+  private ApiResponse<AuthDtos.AuthResponse> loginProvider(
+      ProviderIdentityTokenVerifier.ProviderIdentity identity,
+      String provider,
+      String suppliedFirstName,
+      String suppliedLastName) {
+    Optional<AppUserEntity> existingUser = userRepository.findByEmail(identity.email());
+    if (existingUser.isPresent()) {
+      AppUserEntity existing = existingUser.get();
+      existing.setLastLoginAt(Instant.now());
+      existing.setUpdatedAt(Instant.now());
+      existing.setEmailVerified(true);
+      if (identity.picture() != null && !identity.picture().isBlank()) {
+        existing.setPhotoUrl(identity.picture());
+      }
+      userRepository.save(existing);
+      return processUserLogin(
+          existing.getFirebaseUid(), identity.email(),
+          existing.getDisplayName(), existing.getPhotoUrl());
+    }
+
+    String fullName = identity.name() == null ? "" : identity.name().trim();
+    String firstName = suppliedFirstName == null ? "" : suppliedFirstName.trim();
+    String lastName = suppliedLastName == null ? "" : suppliedLastName.trim();
+    if (fullName.isBlank()) fullName = (firstName + " " + lastName).trim();
+    if (fullName.isBlank()) fullName = identity.email().split("@")[0];
+    if (firstName.isBlank() && lastName.isBlank()) {
+      String[] names = fullName.split("\\s+", 2);
+      firstName = names[0];
+      lastName = names.length > 1 ? names[1] : "";
+    }
+
+    AppUserEntity entity = new AppUserEntity();
+    entity.setFirebaseUid(provider.replace(".com", "") + "_" + identity.subject());
+    entity.setEmail(identity.email());
+    entity.setFirstName(firstName);
+    entity.setLastName(lastName);
+    entity.setDisplayName(fullName);
+    entity.setPhoneNumber("");
+    entity.setPhotoUrl(identity.picture() == null ? "" : identity.picture());
+    entity.setShoppingMode("home");
+    entity.setAccountType("customer");
+    entity.setAuthProvider(provider);
+    entity.setEmailVerified(true);
+    entity.setActive(true);
+    entity.setCreatedAt(Instant.now());
+    entity.setUpdatedAt(Instant.now());
+    entity.setLastLoginAt(Instant.now());
+
+    try {
+      userRepository.save(entity);
+    } catch (org.springframework.dao.DataIntegrityViolationException error) {
+      AppUserEntity existing = userRepository.findByEmail(identity.email())
+          .orElseThrow(() -> error);
+      return processUserLogin(
+          existing.getFirebaseUid(), identity.email(),
+          existing.getDisplayName(), existing.getPhotoUrl());
+    }
+    return processUserLogin(
+        entity.getFirebaseUid(), identity.email(), entity.getDisplayName(), entity.getPhotoUrl());
+  }
+
 }

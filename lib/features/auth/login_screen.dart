@@ -1,12 +1,18 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
 
+import 'package:crypto/crypto.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../app/app_routes.dart';
+import 'widgets/google_web_sign_in_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +23,17 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
+  static const String _googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue:
+        '1066615778167-ochceogaf54rramkojskbrbqlkfr3fi6.apps.googleusercontent.com',
+  );
+  static const String _appleServiceId = String.fromEnvironment(
+    'APPLE_SERVICE_ID',
+  );
+  static const String _appleRedirectUri = String.fromEnvironment(
+    'APPLE_REDIRECT_URI',
+  );
   static const Color _green = Color(0xFF2E7D32);
   static const Color _deepGreen = Color(0xFF1B5E20);
   static const Color _background = Color(0xFFF9FAF9);
@@ -30,6 +47,8 @@ class _LoginScreenState extends State<LoginScreen>
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _identifierFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
+  late final GoogleSignIn _googleSignIn;
+  StreamSubscription<GoogleSignInAccount?>? _googleAccountSubscription;
 
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
@@ -42,6 +61,18 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
+    _googleSignIn = GoogleSignIn(
+      scopes: const <String>['email', 'profile'],
+      clientId: kIsWeb ? _googleWebClientId : null,
+      serverClientId: kIsWeb ? null : _googleWebClientId,
+    );
+    if (kIsWeb) {
+      _googleAccountSubscription = _googleSignIn.onCurrentUserChanged.listen((
+        GoogleSignInAccount? account,
+      ) {
+        if (account != null) unawaited(_authenticateGoogleUser(account));
+      });
+    }
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 720),
@@ -61,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
+    _googleAccountSubscription?.cancel();
     _animationController.dispose();
     _identifierController.dispose();
     _passwordController.dispose();
@@ -152,78 +184,23 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      GoogleSignInAccount? googleUser;
-      String? idToken;
-      String email = '';
-      String firstName = '';
-      String lastName = '';
-      String? photoUrl;
-
-      try {
-        final GoogleSignIn googleSignIn = GoogleSignIn(
-          scopes: <String>['email', 'profile'],
-        );
-        googleUser = await googleSignIn.signIn();
-        if (googleUser != null) {
-          final GoogleSignInAuthentication googleAuth =
-              await googleUser.authentication;
-          idToken = googleAuth.idToken;
-          email = googleUser.email;
-          final String displayName = googleUser.displayName ?? '';
-          final List<String> nameParts =
-              displayName.trim().split(RegExp(r'\s+'));
-          firstName = nameParts.isNotEmpty ? nameParts.first : '';
-          lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-          photoUrl = googleUser.photoUrl;
-        }
-      } catch (e) {
-        debugPrint('Google OAuth prompt notice: $e');
-      }
-
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        setState(() {
-          _loading = false;
-          _socialLoading = null;
-        });
-
-        final Map<String, String>? account = await _showSocialAuthDialog(
-          provider: 'Google',
-          icon: Icons.g_mobiledata_rounded,
-          color: const Color(0xFF4285F4),
+        throw BackendAuthException(
+          code: 'popup-closed-by-user',
+          message: 'Google sign-in was cancelled.',
         );
-
-        if (account == null) {
-          if (mounted) _showInfo('Google sign-in was cancelled.');
-          return;
-        }
-
-        setState(() {
-          _loading = true;
-          _socialLoading = 'google';
-        });
-
-        email = account['email']!;
-        firstName = account['firstName'] ?? '';
-        lastName = account['lastName'] ?? '';
-        photoUrl = account['photoUrl'];
       }
 
-      final UserCredential credential = idToken != null && idToken.isNotEmpty
-          ? await BackendAuth.instance.signInWithGoogle(
-              idToken: idToken,
-              email: email,
-              name: '$firstName $lastName'.trim(),
-              photoUrl: photoUrl,
-            )
-          : await BackendAuth.instance.signInWithSocial(
-              provider: 'google',
-              email: email,
-              firstName: firstName,
-              lastName: lastName,
-              photoUrl: photoUrl,
-            );
-
-      await _completeSocialSignIn(credential);
+      await _authenticateGoogleUser(googleUser);
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      if (error.code == 'sign_in_canceled') {
+        _showInfo('Google sign-in was cancelled.');
+      } else {
+        _showError(error.message ?? 'Google sign-in could not be completed.');
+      }
     } on BackendAuthException catch (error) {
       if (mounted) _showError(_authErrorMessage(error));
     } catch (e, stackTrace) {
@@ -241,201 +218,128 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<Map<String, String>?> _showSocialAuthDialog({
-    required String provider,
-    required IconData icon,
-    required Color color,
-  }) async {
-    final TextEditingController emailController = TextEditingController(
-      text:
-          provider == 'Google'
-              ? 'veeramallasaipichaiah456@gmail.com'
-              : 'veeramalla.sai@icloud.com',
-    );
-    final TextEditingController nameController = TextEditingController(
-      text: 'Veeramalla Sai',
-    );
-
-    return showDialog<Map<String, String>>(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFFF2F4EC),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-          title: Row(
-            children: <Widget>[
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDCE8F5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text(
-                    'G',
-                    style: TextStyle(
-                      color: Color(0xFF4285F4),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'Sign In with $provider',
-                  style: const TextStyle(
-                    color: Color(0xFF111111),
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Text(
-                  'Select or enter your $provider account credentials to sign in to Farm To Home.',
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    color: Color(0xFF666666),
-                    height: 1.45,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF222222),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: '$provider Email Address',
-                    filled: true,
-                    fillColor: const Color(0xFFE8EBE2),
-                    prefixIcon: Icon(Icons.email_outlined, color: color),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: color, width: 2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: nameController,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF222222),
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    filled: true,
-                    fillColor: const Color(0xFFE8EBE2),
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF555555)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFFDBDFD5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: color, width: 2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(null),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: Color(0xFF666666),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: color,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: () {
-                final String email = emailController.text.trim();
-                if (email.isEmpty || !email.contains('@')) {
-                  return;
-                }
-                final List<String> parts = nameController.text
-                    .trim()
-                    .split(RegExp(r'\s+'));
-                final String firstName =
-                    parts.isNotEmpty ? parts.first : 'User';
-                final String lastName =
-                    parts.length > 1 ? parts.sublist(1).join(' ') : '';
-                Navigator.of(dialogContext).pop(<String, String>{
-                  'email': email,
-                  'firstName': firstName,
-                  'lastName': lastName,
-                  'photoUrl':
-                      'https://lh3.googleusercontent.com/a/default-user',
-                });
-              },
-              child: Text(
-                'Continue with $provider',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
+  Future<void> _authenticateGoogleUser(GoogleSignInAccount googleUser) async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _socialLoading = 'google';
+      });
+    }
+    try {
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String idToken = googleAuth.idToken ?? '';
+      if (idToken.isEmpty) {
+        throw BackendAuthException(
+          code: 'missing-id-token',
+          message:
+              'Google did not return an ID token. Check the OAuth client configuration.',
         );
-      },
-    );
+      }
+      final UserCredential credential = await BackendAuth.instance
+          .signInWithGoogle(idToken: idToken);
+      await _completeSocialSignIn(credential);
+    } on BackendAuthException catch (error) {
+      if (mounted) _showError(_authErrorMessage(error));
+    } catch (error, stackTrace) {
+      debugPrint('GOOGLE TOKEN EXCHANGE ERROR: $error\n$stackTrace');
+      if (mounted) {
+        _showError('Unable to complete Google sign-in. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _socialLoading = null;
+        });
+      }
+    }
   }
 
   Future<void> _continueWithApple() async {
-    final isApplePlatform = defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
-    if (kIsWeb || !isApplePlatform) {
-      _showInfo('Apple Sign-In is supported on iOS / macOS devices.');
-      return;
+    setState(() {
+      _loading = true;
+      _socialLoading = 'apple';
+    });
+
+    try {
+      final bool nativeApple =
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS);
+      if (!nativeApple &&
+          (_appleServiceId.isEmpty || _appleRedirectUri.isEmpty)) {
+        throw BackendAuthException(
+          code: 'apple-not-configured',
+          message:
+              'Apple Sign-In is not configured for this platform. Set APPLE_SERVICE_ID and APPLE_REDIRECT_URI.',
+        );
+      }
+
+      final String rawNonce = _generateNonce();
+      final AuthorizationCredentialAppleID appleCredential =
+          await SignInWithApple.getAppleIDCredential(
+            scopes: const <AppleIDAuthorizationScopes>[
+              AppleIDAuthorizationScopes.email,
+              AppleIDAuthorizationScopes.fullName,
+            ],
+            nonce: sha256.convert(utf8.encode(rawNonce)).toString(),
+            webAuthenticationOptions:
+                nativeApple
+                    ? null
+                    : WebAuthenticationOptions(
+                      clientId: _appleServiceId,
+                      redirectUri: Uri.parse(_appleRedirectUri),
+                    ),
+          );
+      final String identityToken = appleCredential.identityToken ?? '';
+      if (identityToken.isEmpty) {
+        throw BackendAuthException(
+          code: 'missing-id-token',
+          message: 'Apple did not return an identity token.',
+        );
+      }
+
+      final UserCredential credential = await BackendAuth.instance
+          .signInWithApple(
+            idToken: identityToken,
+            rawNonce: rawNonce,
+            firstName: appleCredential.givenName,
+            lastName: appleCredential.familyName,
+          );
+      await _completeSocialSignIn(credential);
+    } on SignInWithAppleAuthorizationException catch (error) {
+      if (!mounted) return;
+      if (error.code == AuthorizationErrorCode.canceled) {
+        _showInfo('Apple sign-in was cancelled.');
+      } else {
+        _showError(error.message);
+      }
+    } on BackendAuthException catch (error) {
+      if (mounted) _showError(_authErrorMessage(error));
+    } catch (error, stackTrace) {
+      debugPrint('APPLE AUTH ERROR: $error\n$stackTrace');
+      if (mounted) {
+        _showError('Unable to complete Apple sign-in. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _socialLoading = null;
+        });
+      }
     }
-    _showInfo('Apple Sign-In is coming soon.');
+  }
+
+  String _generateNonce([int length = 32]) {
+    const String characters =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final Random random = Random.secure();
+    return List<String>.generate(
+      length,
+      (_) => characters[random.nextInt(characters.length)],
+    ).join();
   }
 
   void _showInfo(String message) {
@@ -467,13 +371,15 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(AppRoutes.home, (Route<dynamic> route) => false);
   }
 
   String _authErrorMessage(BackendAuthException error) {
     switch (error.code) {
       case 'user-not-found':
-        return error.message ?? 'No account was found with these details.';
+        return error.message;
       case 'wrong-password':
       case 'invalid-credential':
         return 'Incorrect email/mobile number or password.';
@@ -490,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen>
       case 'account-exists-with-different-credential':
         return 'An account already exists with this email using another sign-in method.';
       default:
-        return error.message ?? 'Authentication failed. Please try again.';
+        return error.message;
     }
   }
 
@@ -796,32 +702,37 @@ class _LoginScreenState extends State<LoginScreen>
               ],
             ),
             const SizedBox(height: 18),
-            _SocialButton(
-              enabled: !_loading,
-              onPressed: _continueWithGoogle,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  if (_socialLoading == 'google')
-                    const SizedBox(
-                      width: 21,
-                      height: 21,
-                      child: CircularProgressIndicator(strokeWidth: 2.3),
-                    )
-                  else
-                    Image.asset(
-                      'assets/icons/google logo.png',
-                      width: 22,
-                      height: 22,
-                      errorBuilder:
-                          (_, __, ___) =>
-                              const Icon(Icons.g_mobiledata_rounded, size: 28),
-                    ),
-                  const SizedBox(width: 11),
-                  const Text('Continue with Google'),
-                ],
+            if (kIsWeb)
+              buildGoogleWebSignInButton()
+            else
+              _SocialButton(
+                enabled: !_loading,
+                onPressed: _continueWithGoogle,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    if (_socialLoading == 'google')
+                      const SizedBox(
+                        width: 21,
+                        height: 21,
+                        child: CircularProgressIndicator(strokeWidth: 2.3),
+                      )
+                    else
+                      Image.asset(
+                        'assets/icons/google logo.png',
+                        width: 22,
+                        height: 22,
+                        errorBuilder:
+                            (_, __, ___) => const Icon(
+                              Icons.g_mobiledata_rounded,
+                              size: 28,
+                            ),
+                      ),
+                    const SizedBox(width: 11),
+                    const Text('Continue with Google'),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 12),
             _SocialButton(
               enabled: !_loading,

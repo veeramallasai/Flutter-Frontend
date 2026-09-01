@@ -16,6 +16,9 @@ dependencies:
   animate_do: ^3.0.2
   shimmer: ^3.0.0
   google_sign_in: ^6.2.2
+  google_sign_in_web: ^0.12.4+4
+  sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.6
 
 
   geolocator: ^10.1.0

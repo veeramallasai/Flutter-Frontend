@@ -1,8 +1,8 @@
 package com.farmtohome.api.auth;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 public class AuthDtos {
@@ -19,20 +19,15 @@ public class AuthDtos {
       String lastName
   ) {}
 
-  public record SocialLoginRequest(
-      @NotBlank String provider,
-      @NotBlank @Email String email,
-      String firstName,
-      String lastName,
-      String photoUrl,
-      String idToken
+  public record GoogleLoginRequest(
+      @NotBlank String idToken
   ) {}
 
-  public record GoogleLoginRequest(
-      String idToken,
-      String email,
-      String name,
-      String photoUrl
+  public record AppleLoginRequest(
+      @NotBlank String idToken,
+      @NotBlank String rawNonce,
+      String firstName,
+      String lastName
   ) {}
 
   public record ForgotPasswordRequest(
