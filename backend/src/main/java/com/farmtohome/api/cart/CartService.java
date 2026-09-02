@@ -1,10 +1,5 @@
 package com.farmtohome.api.cart;
 
-import com.farmtohome.api.common.ApiException;
-import com.farmtohome.api.coupon.CouponEntity;
-import com.farmtohome.api.coupon.CouponRepository;
-import com.farmtohome.api.product.ProductEntity;
-import com.farmtohome.api.product.ProductRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -13,9 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.farmtohome.api.common.ApiException;
+import com.farmtohome.api.coupon.CouponEntity;
+import com.farmtohome.api.coupon.CouponRepository;
+import com.farmtohome.api.product.ProductEntity;
+import com.farmtohome.api.product.ProductRepository;
 
 @Service
 public class CartService {
@@ -153,8 +155,8 @@ public class CartService {
       ProductEntity product = productMap.get(item.getProductId());
       if (product == null || !product.isActive()) continue;
       boolean shop = "shop".equals(item.getShoppingMode());
-      BigDecimal price = shop ? product.getShopPrice() : product.getPrice();
-      BigDecimal mrp = shop ? product.getShopMrp() : product.getMrp();
+      BigDecimal price = priceFor(product, shop);
+      BigDecimal mrp = mrpFor(product, shop, price);
       subtotal = subtotal.add(price.multiply(BigDecimal.valueOf(item.getQuantity())));
       mrpTotal = mrpTotal.add(mrp.multiply(BigDecimal.valueOf(item.getQuantity())));
       itemCount += item.getQuantity();
@@ -169,6 +171,21 @@ public class CartService {
         uid, cart.getShoppingMode(), result, cart.getCouponCode(), money(discount),
         money(subtotal), money(mrpTotal.subtract(subtotal).max(ZERO)), money(total),
         itemCount, cart.getUpdatedAt() == null ? Instant.now() : cart.getUpdatedAt());
+  }
+
+  private BigDecimal priceFor(ProductEntity product, boolean shop) {
+    BigDecimal price = shop ? product.getShopPrice() : product.getPrice();
+    if (price == null && shop) price = product.getPrice();
+    if (price == null || price.signum() <= 0) {
+      throw new ApiException(HttpStatus.CONFLICT, "Product price is unavailable. Please try another product.");
+    }
+    return price;
+  }
+
+  private BigDecimal mrpFor(ProductEntity product, boolean shop, BigDecimal price) {
+    BigDecimal mrp = shop ? product.getShopMrp() : product.getMrp();
+    if (mrp == null && shop) mrp = product.getMrp();
+    return mrp == null || mrp.compareTo(price) < 0 ? price : mrp;
   }
 
   public BigDecimal calculateDiscount(String code, BigDecimal subtotal) {
