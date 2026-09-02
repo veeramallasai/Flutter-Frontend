@@ -1,9 +1,9 @@
 package com.farmtohome.api.migration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 class MigrationCoverageTest {
@@ -15,7 +15,8 @@ class MigrationCoverageTest {
         resource("/db/migration/V4__app_users.sql"),
         resource("/db/migration/V5__addresses.sql"),
         resource("/db/migration/V6__platform_modules.sql"),
-        resource("/db/migration/V7__notification_preferences.sql"));
+        resource("/db/migration/V7__notification_preferences.sql"),
+        resource("/db/migration/V14__cart_customer_foreign_key.sql"));
 
     for (String table : new String[] {
         "products", "coupons", "carts", "cart_items", "orders",

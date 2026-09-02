@@ -198,6 +198,26 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
   }
 
+  Future<void> _addRelatedProduct(ProductModel product) async {
+    if (_isAdding) return;
+
+    setState(() => _isAdding = true);
+    try {
+      await _cartRepository.addProduct(product);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${product.name} added to cart.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _isAdding = false);
+    }
+  }
+
   void _openRelatedProduct(ProductModel product) {
     Navigator.pushReplacementNamed(
       context,
@@ -319,22 +339,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       RelatedProducts(
                         products: _relatedProducts,
                         onProductTap: _openRelatedProduct,
-                        onAddTap: (ProductModel item) async {
-                          try {
-                            await _cartRepository.addProduct(item);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${item.name} added to cart.'),
-                              ),
-                            );
-                          } catch (error) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(_friendlyError(error))),
-                            );
-                          }
-                        },
+                        onAddTap: _addRelatedProduct,
                       ),
                     ],
                   ],

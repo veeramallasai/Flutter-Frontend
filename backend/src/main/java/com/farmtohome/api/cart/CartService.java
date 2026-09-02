@@ -18,6 +18,8 @@ import com.farmtohome.api.coupon.CouponEntity;
 import com.farmtohome.api.coupon.CouponRepository;
 import com.farmtohome.api.product.ProductEntity;
 import com.farmtohome.api.product.ProductRepository;
+import com.farmtohome.api.user.AppUserEntity;
+import com.farmtohome.api.user.AppUserRepository;
 
 @Service
 public class CartService {
@@ -26,16 +28,19 @@ public class CartService {
   private final CartItemRepository items;
   private final ProductRepository products;
   private final CouponRepository coupons;
+  private final AppUserRepository users;
 
   public CartService(
       CartRepository carts,
       CartItemRepository items,
       ProductRepository products,
-      CouponRepository coupons) {
+      CouponRepository coupons,
+      AppUserRepository users) {
     this.carts = carts;
     this.items = items;
     this.products = products;
     this.coupons = coupons;
+    this.users = users;
   }
 
   @Transactional(readOnly = true)
@@ -46,6 +51,7 @@ public class CartService {
 
   @Transactional
   public CartDtos.Cart add(String uid, CartDtos.AddItemRequest request) {
+    requireActiveUser(uid);
     String mode = "shop".equalsIgnoreCase(request.shoppingMode()) ? "shop" : "home";
     ProductEntity product = products.findById(request.productId().trim())
         .filter(ProductEntity::isActive)
@@ -60,7 +66,7 @@ public class CartService {
     }
     cart.setShoppingMode(mode);
     cart.touch();
-    carts.save(cart);
+    carts.saveAndFlush(cart);
 
     String defaultUnit = mode.equals("shop") ? product.getShopUnit() : product.getUnit();
     String unit = request.unit() == null || request.unit().isBlank()
@@ -80,6 +86,12 @@ public class CartService {
     item.setQuantity(quantity);
     items.save(item);
     return view(uid);
+  }
+
+  private void requireActiveUser(String uid) {
+    users.findById(uid)
+        .filter(AppUserEntity::isActive)
+        .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Please sign in to manage your cart."));
   }
 
   @Transactional

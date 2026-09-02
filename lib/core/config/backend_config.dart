@@ -31,7 +31,7 @@ class BackendConfig {
 
   /// Default production Railway backend URL
   static const String fallbackRailwayBackendUrl =
-      'https://farmtohome-backend-production-3378.up.railway.app';
+      'https://farmtohome-backend-production-161f.up.railway.app';
 
   static const String _useLocalBackend = String.fromEnvironment(
     'USE_LOCAL_BACKEND',
