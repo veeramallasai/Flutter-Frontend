@@ -12,6 +12,7 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/product_provider.dart';
+import '../categories/widgets/category_product_grid.dart';
 import 'widgets/floating_cart_bar.dart';
 import 'widgets/banner_slider.dart';
 import 'widgets/bottom_navigation.dart';
@@ -995,31 +996,31 @@ class _HomeScreenState extends State<HomeScreen> {
           (BuildContext context, Widget? child) => ListenableBuilder(
             listenable: _cartProvider,
             builder:
-                (BuildContext context, Widget? child) => SizedBox(
-                  height: desktop ? 355 : 326,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
+                (BuildContext context, Widget? child) => LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final double width = constraints.maxWidth;
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: premiumCategoryProductGrid(width),
                     itemCount: _products.length,
-                    separatorBuilder:
-                        (BuildContext context, int index) =>
-                            const SizedBox(width: 14),
                     itemBuilder: (BuildContext context, int index) {
                       final _ProductItem product = _products[index];
                       final int quantity = _quantityFor(product);
-                      return SizedBox(
-                        width: desktop ? 228 : 190,
-                        child: _ProductCard(
-                          product: product,
-                          quantity: quantity,
-                          onTap: () => _openProduct(product),
-                          onAdd: () => _addToCart(product),
-                          onDecrease: () => _changeQuantity(product, -1),
-                          onIncrease: () => _changeQuantity(product, 1),
-                          adding: _addingProducts.contains(product.id),
-                        ),
+
+                      return _ProductCard(
+                        product: product,
+                        quantity: quantity,
+                        onTap: () => _openProduct(product),
+                        onAdd: () => _addToCart(product),
+                        onDecrease: () => _changeQuantity(product, -1),
+                        onIncrease: () => _changeQuantity(product, 1),
+                        adding: _addingProducts.contains(product.id),
                       );
                     },
-                  ),
+                    );
+                  },
                 ),
           ),
     );
