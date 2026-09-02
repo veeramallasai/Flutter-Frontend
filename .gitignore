@@ -85,6 +85,9 @@ backend/target/
 # OS temporary files
 Thumbs.db
 Desktop.ini
+*.zip
+Edit.zip
 
 # Android generated build files
 android/build/
+

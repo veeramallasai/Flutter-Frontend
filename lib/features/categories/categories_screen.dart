@@ -468,9 +468,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       label: 'Home',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.grid_view_outlined),
-                      selectedIcon: Icon(Icons.grid_view_rounded),
-                      label: 'Categories',
+                      icon: Icon(Icons.inventory_2_outlined),
+                      selectedIcon: Icon(Icons.inventory_2_rounded),
+                      label: 'Products',
                     ),
                     NavigationDestination(
                       icon: Icon(Icons.shopping_bag_outlined),
