@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:farm_to_home_app/core/auth/backend_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -1426,18 +1427,25 @@ class _ProductImage extends StatelessWidget {
     }
 
     if (image.startsWith('http://') || image.startsWith('https://')) {
-      return Image.network(
-        image,
+      return CachedNetworkImage(
+        imageUrl: image,
         fit: BoxFit.contain,
-        errorBuilder: (
-          BuildContext context,
-          Object error,
-          StackTrace? stackTrace,
-        ) {
-          return const Center(
-            child: Icon(Icons.eco_rounded, color: AppColors.primary, size: 42),
-          );
-        },
+        placeholder:
+            (context, url) => const Center(
+              child: Icon(
+                Icons.eco_rounded,
+                color: AppColors.primary,
+                size: 42,
+              ),
+            ),
+        errorWidget:
+            (context, url, error) => const Center(
+              child: Icon(
+                Icons.eco_rounded,
+                color: AppColors.primary,
+                size: 42,
+              ),
+            ),
       );
     }
 

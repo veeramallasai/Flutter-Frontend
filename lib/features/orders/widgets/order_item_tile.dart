@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -146,11 +147,22 @@ class _OrderProductImage extends StatelessWidget {
     }
 
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.contain,
-        errorBuilder:
-            (_, __, ___) => const Icon(
+        placeholder:
+            (context, url) => const Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+        errorWidget:
+            (context, url, error) => const Icon(
               Icons.image_not_supported_outlined,
               color: AppColors.textSecondary,
             ),

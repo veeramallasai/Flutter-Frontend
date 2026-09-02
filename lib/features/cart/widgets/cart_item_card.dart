@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -187,12 +188,22 @@ class _CartImage extends StatelessWidget {
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: Image.network(
-          path,
+        child: CachedNetworkImage(
+          imageUrl: path,
           width: double.infinity,
           height: double.infinity,
           fit: BoxFit.cover,
-          errorBuilder: _error,
+          placeholder:
+              (context, url) => const ColoredBox(
+                color: Color(0xFFF1F8F4),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+          errorWidget: (context, url, error) => _error(context, error, null),
         ),
       );
     }

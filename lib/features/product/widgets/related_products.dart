@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -167,7 +168,18 @@ class _ProductImage extends StatelessWidget {
       return const Icon(Icons.eco_rounded, color: AppColors.primary, size: 42);
     }
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      return Image.network(path, fit: BoxFit.contain, errorBuilder: _error);
+      return CachedNetworkImage(
+        imageUrl: path,
+        fit: BoxFit.contain,
+        placeholder:
+            (context, url) => const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+        errorWidget: (context, url, error) => _error(context, error, null),
+      );
     }
     return Image.asset(path, fit: BoxFit.contain, errorBuilder: _error);
   }

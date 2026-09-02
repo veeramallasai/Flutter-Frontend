@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -170,12 +171,15 @@ class PremiumProductImage extends StatelessWidget {
     if (path.trim().isEmpty) return const _ImageFallback();
     final Widget image =
         path.startsWith('http://') || path.startsWith('https://')
-            ? Image.network(
-              path,
+            ? CachedNetworkImage(
+              imageUrl: path,
               width: double.infinity,
               height: double.infinity,
               fit: fit,
-              errorBuilder: _error,
+              placeholder:
+                  (context, url) => const _ImageFallback(),
+              errorWidget:
+                  (context, url, error) => const _ImageFallback(),
             )
             : Image.asset(
               path,

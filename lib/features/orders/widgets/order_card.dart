@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -256,10 +257,11 @@ class OrderCard extends StatelessWidget {
 
     if (normalizedPath.startsWith('http://') ||
         normalizedPath.startsWith('https://')) {
-      return Image.network(
-        normalizedPath,
+      return CachedNetworkImage(
+        imageUrl: normalizedPath,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _fallbackImage(),
+        placeholder: (context, url) => _fallbackImage(),
+        errorWidget: (context, url, error) => _fallbackImage(),
       );
     }
 

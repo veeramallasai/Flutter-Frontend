@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -21,34 +22,22 @@ class NetworkImageWidget extends StatelessWidget {
     if (url.trim().isEmpty) return _fallback();
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: Image.network(
-        url,
+      child: CachedNetworkImage(
+        imageUrl: url,
         width: double.infinity,
         height: double.infinity,
         fit: fit,
-        loadingBuilder: (
-          BuildContext context,
-          Widget child,
-          ImageChunkEvent? progress,
-        ) {
-          if (progress == null) return child;
-          final int? total = progress.expectedTotalBytes;
-          return ColoredBox(
-            color: const Color(0xFFF1F8F4),
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                value:
-                    total == null
-                        ? null
-                        : progress.cumulativeBytesLoaded / total,
-              ),
+        placeholder: (BuildContext context, String url) => const ColoredBox(
+          color: Color(0xFFF1F8F4),
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
             ),
-          );
-        },
-        errorBuilder:
-            (BuildContext context, Object error, StackTrace? stackTrace) =>
-                _fallback(),
+          ),
+        ),
+        errorWidget: (BuildContext context, String url, dynamic error) =>
+            _fallback(),
       ),
     );
   }
