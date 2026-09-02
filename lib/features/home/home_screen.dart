@@ -157,14 +157,13 @@ class _HomeScreenState extends State<HomeScreen> {
               product.shoppingMode.isEmpty ||
               product.shoppingMode == _shoppingMode,
         )
-        .take(12)
         .toList(growable: false);
     final List<ProductModel> values =
         backendProducts.isNotEmpty
             ? backendProducts
-            : LocalProductCatalog.featured(
+            : LocalProductCatalog.products(
               shoppingMode: _shoppingMode,
-              limit: 12,
+              limit: 200,
             );
     return values.map(_ProductItem.fromModel).toList(growable: false);
   }
@@ -507,25 +506,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 30),
                           ProductSection(
-                            title:
-                                _shoppingMode == 'home'
-                                    ? 'Fresh picks for you'
-                                    : 'Wholesale favourites',
-                            subtitle:
-                                _shoppingMode == 'home'
-                                    ? 'Fresh products for your everyday needs'
-                                    : 'Popular bulk products for your business',
+                            title: 'All Products',
+                            subtitle: 'Explore every product available for you',
                             products: _buildProducts(desktop: desktop),
                             onViewAll: () => _go('/categories'),
                             header: _buildSectionHeader(
-                              title:
-                                  _shoppingMode == 'home'
-                                      ? 'Fresh picks for you'
-                                      : 'Wholesale favourites',
+                              title: 'All Products',
                               subtitle:
-                                  _shoppingMode == 'home'
-                                      ? 'Fresh products for your everyday needs'
-                                      : 'Popular bulk products for your business',
+                                  'Explore every product available for you',
                               action: 'View all',
                               onTap: () => _go('/categories'),
                             ),
